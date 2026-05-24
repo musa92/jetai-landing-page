@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JetIQ | Electric Jet Engine Intelligence Platform</title>
+  <meta name="description" content="AI-powered smart analyzer for electric and gas turbine fleets. Connect to existing SCADA & historians. Detect failures and optimize performance weeks before they happen.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Three.js — 3D turbofan engine -->
+  <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
+
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       NAVIGATION
+  ═══════════════════════════════════════ -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <!-- JetIQ: front-view turbofan intake · 8 swept blades · electric bolt hub -->
+        <svg width="30" height="30" viewBox="0 0 28 28" fill="none">
+          <!-- Nacelle outer ring -->
+          <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
+          <!-- Orange electric arc — top-right quadrant, thrust/power indicator -->
+          <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
+          <!-- 8 swept fan blades (front view, staggered opacity for 3-D depth) -->
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.88" transform="rotate(0 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.72" transform="rotate(45 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(90 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.40" transform="rotate(135 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(180 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.70" transform="rotate(225 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(270 14 14)"/>
+          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.78" transform="rotate(315 14 14)"/>
+          <!-- Hub disc (dark fill hides blade root intersections) -->
+          <circle cx="14" cy="14" r="5" fill="#020810"/>
+          <circle cx="14" cy="14" r="5" stroke="#00d4ff" stroke-width="0.8"/>
+          <!-- Electric bolt — eVTOL / smart-analyzer icon -->
+          <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+        </svg>
+        <span class="logo-text">Jet<span class="logo-accent">IQ</span></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#solution">Platform</a></li>
+        <li><a href="#integration">Integrations</a></li>
+        <li><a href="#features">Capabilities</a></li>
+        <li><a href="#results">Results</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="#cta" class="btn-nav">Request Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════ -->
+  <section id="hero">
+    <canvas id="hero-canvas"></canvas>
+
+    <div class="hero-content">
+      <div class="eyebrow-tag" data-animate="fade-up">
+        <span class="dot-pulse"></span>
+        Electric Jet Engine Intelligence &mdash; GE Frame 5 / 6 / 7 &middot; LM-Series &middot; eVTOL
+      </div>
+
+      <h1 class="hero-headline" data-animate="fade-up" data-delay="0.15">
+        Smart Engine Analyzer<br>
+        <span class="gradient-text">For Every Turbine Fleet</span>
+      </h1>
+
+      <p class="hero-sub" data-animate="fade-up" data-delay="0.3">
+        Real-time AI diagnostics for gas turbines, hybrid-electric propulsion, and eVTOL powertrains.<br>
+        Detect combustion instability, blade fouling, and bearing degradation
+        <strong>weeks before failure</strong> &mdash; zero hardware changes.
+      </p>
+
+      <div class="hero-actions" data-animate="fade-up" data-delay="0.45">
+        <a href="#cta" class="btn-primary">
+          <span>Request Demo</span>
+          <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#turbofan-explore" class="btn-ghost scroll-to">
+          <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M6 8l2 2 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          See Inside the Engine
+        </a>
+      </div>
+
+      <div class="hero-stats" data-animate="fade-up" data-delay="0.6">
+        <div class="stat-item">
+          <span class="stat-num" data-count="23">0</span><span class="stat-unit">wk</span>
+          <span class="stat-label">Early Detection Lead Time</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" data-count="99">0</span><span class="stat-unit">.2%</span>
+          <span class="stat-label">Anomaly Detection Precision</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">$50K</span>
+          <span class="stat-label">Avg. Prevented Failure Cost</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" data-count="0">0</span><span class="stat-unit"> hardware</span>
+          <span class="stat-label">Changes Required</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-hint">
+      <div class="scroll-line"></div>
+      <span>Scroll to explore</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       TURBOFAN EXPLORE — canvas engine
+  ═══════════════════════════════════════ -->
+  <section id="turbofan-explore">
+    <div class="explore-sticky">
+
+      <div class="explore-header">
+        <div class="explore-stage-label" id="stage-label">Exterior View</div>
+        <div class="explore-progress-bar">
+          <div class="explore-progress-fill" id="explore-progress-fill"></div>
+        </div>
+        <div class="explore-stage-hint" id="stage-hint">Scroll to zoom inside the engine</div>
+      </div>
+
+      <div class="engine-viewport" id="engine-viewport">
+        <canvas id="engine-canvas"></canvas>
+
+        <div class="info-panel info-panel-left" id="panel-sensors">
+          <div class="panel-dot"></div>
+          <div class="panel-title">8 Critical Sensor Streams</div>
+          <div class="panel-items">
+            <div class="panel-item"><span class="tag-cyan">T1/P1</span> Inlet temp &amp; pressure</div>
+            <div class="panel-item"><span class="tag-cyan">T3/P3</span> Compressor exit</div>
+            <div class="panel-item"><span class="tag-orange">EGT</span> Exhaust gas temp</div>
+            <div class="panel-item"><span class="tag-orange">T4</span> Turbine inlet temp</div>
+            <div class="panel-item"><span class="tag-cyan">BRG1/2</span> Vibration signatures</div>
+            <div class="panel-item"><span class="tag-orange">FF</span> Fuel flow rate</div>
+          </div>
+        </div>
+
+        <div class="info-panel info-panel-right" id="panel-ai">
+          <div class="panel-dot panel-dot-purple"></div>
+          <div class="panel-title">ML Engine</div>
+          <div class="panel-items">
+            <div class="panel-item"><span class="tag-purple">Multivariate</span> Anomaly detection</div>
+            <div class="panel-item"><span class="tag-purple">RUL</span> Remaining useful life</div>
+            <div class="panel-item"><span class="tag-purple">Self-learning</span> Per-asset models</div>
+            <div class="panel-item"><span class="tag-purple">&lt;200ms</span> Inference latency</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+    <!-- ═══════════════════════════════════════
+       NETWORK FLOW — canvas visualization
+  ═══════════════════════════════════════ -->
+  <section id="data-flow-section">
+    <div class="section-container">
+      <div class="section-eyebrow">Architecture</div>
+      <h2 class="section-headline">From Raw Sensor Data<br>to Actionable Intelligence</h2>
+      <p class="section-sub">A zero-latency pipeline from plant floor to AI inference &mdash; with no new hardware.</p>
+    </div>
+    <div class="network-canvas-wrap">
+      <canvas id="network-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       PROBLEM SECTION
+  ═══════════════════════════════════════ -->
+  <section id="problem">
+    <div class="section-container">
+      <div class="section-eyebrow">The $50B Problem</div>
+      <h2 class="section-headline">Unplanned Turbine Downtime<br>Is Destroying Your Margins</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-stat" data-animate="slide-up">
+        <div class="problem-number">$50B</div>
+        <div class="problem-label">Annual cost of unplanned downtime in global power generation</div>
+      </div>
+      <div class="problem-stat" data-animate="slide-up" data-delay="0.1">
+        <div class="problem-number">72hrs</div>
+        <div class="problem-label">Average time to diagnose a combustion instability event post-failure</div>
+      </div>
+      <div class="problem-stat" data-animate="slide-up" data-delay="0.2">
+        <div class="problem-number">3-5%</div>
+        <div class="problem-label">Heat rate efficiency loss from undetected blade fouling per year</div>
+      </div>
+      <div class="problem-stat" data-animate="slide-up" data-delay="0.3">
+        <div class="problem-number">68%</div>
+        <div class="problem-label">Of major failures show warning signatures 2+ weeks prior in sensor data</div>
+      </div>
+    </div>
+    <div class="problem-callout" data-animate="fade-up">
+      <div class="callout-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 8v4M12 16h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ff6b00" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <p>Your historians are already capturing this data. You're just not acting on it fast enough.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       INTEGRATION SECTION
+  ═══════════════════════════════════════ -->
+  <section id="integration">
+    <div class="section-container">
+      <div class="section-eyebrow">Zero-Friction Integration</div>
+      <h2 class="section-headline">Plug Into Your Existing<br>Plant Infrastructure</h2>
+      <p class="section-sub">No new hardware. No rip-and-replace. API connectors for every major industrial historian and control system &mdash; live in days.</p>
+    </div>
+
+    <div class="integration-grid">
+      <div class="integration-card" data-animate="fade-up">
+        <div class="integration-logo">
+          <div class="int-badge" style="color:#00a651;">PI</div>
+        </div>
+        <div class="integration-name">OSIsoft PI System</div>
+        <div class="integration-desc">Native PI Web API connector with tag-level subscription streaming</div>
+        <div class="integration-tag">OPC-DA · AF · PI Vision</div>
+      </div>
+
+      <div class="integration-card" data-animate="fade-up" data-delay="0.1">
+        <div class="integration-logo">
+          <div class="int-badge" style="color:#0078d4;">GE</div>
+        </div>
+        <div class="integration-name">GE APM / Asset360</div>
+        <div class="integration-desc">Bidirectional APM integration for alert write-back and case management</div>
+        <div class="integration-tag">REST · GraphQL · Asset Model</div>
+      </div>
+
+      <div class="integration-card" data-animate="fade-up" data-delay="0.2">
+        <div class="integration-logo">
+          <div class="int-badge" style="color:#e8a020;">OPC</div>
+        </div>
+        <div class="integration-name">OPC-UA Server</div>
+        <div class="integration-desc">Standard IEC 62541 OPC-UA subscription model for real-time historian bypass</div>
+        <div class="integration-tag">IEC 62541 · Unified Architecture</div>
+      </div>
+
+      <div class="integration-card" data-animate="fade-up" data-delay="0.3">
+        <div class="integration-logo">
+          <div class="int-badge" style="color:#c0392b;">DCS</div>
+        </div>
+        <div class="integration-name">DCS / SCADA</div>
+        <div class="integration-desc">Honeywell Experion, ABB Symphony, Emerson DeltaV, Siemens SPPA-T3000</div>
+        <div class="integration-tag">Modbus · DNP3 · IEC 61850</div>
+      </div>
+
+      <div class="integration-card" data-animate="fade-up" data-delay="0.4">
+        <div class="integration-logo">
+          <div class="int-badge" style="color:#7c3aed;">CMMS</div>
+        </div>
+        <div class="integration-name">CMMS Systems</div>
+        <div class="integration-desc">Automatic work order generation into SAP PM, IBM Maximo, and Infor EAM</div>
+        <div class="integration-tag">SAP PM · Maximo · Infor</div>
+      </div>
+
+      <div class="integration-card" data-animate="fade-up" data-delay="0.5">
+        <div class="integration-logo">
+          <div class="int-badge" style="color:#00d4ff;">API</div>
+        </div>
+        <div class="integration-name">Custom REST API</div>
+        <div class="integration-desc">Open webhook and REST API for bespoke integrations and data lake pipelines</div>
+        <div class="integration-tag">REST · Kafka · InfluxDB</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       FEATURES SECTION
+  ═══════════════════════════════════════ -->
+  <section id="features">
+    <div class="section-container">
+      <div class="section-eyebrow">Capabilities</div>
+      <h2 class="section-headline">What the Platform Does</h2>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card feature-card-large" data-animate="fade-up">
+        <div class="feature-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M5 28L13 18L19 24L27 12L35 20" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="35" cy="20" r="3" fill="#00d4ff"/>
+            <circle cx="5" cy="28" r="3" fill="#00d4ff" opacity="0.5"/>
+          </svg>
+        </div>
+        <h3>Multivariate Anomaly Detection</h3>
+        <p>Isolation Forest and LSTM autoencoder models trained on GE Frame 5/6/7 and LM-series operating patterns. Detects subtle cross-parameter deviations invisible to threshold-based alarms.</p>
+        <div class="feature-spec">
+          <span>Frame 5 · Frame 6 · Frame 7</span>
+          <span>LM2500 · LM6000</span>
+        </div>
+      </div>
+
+      <div class="feature-card" data-animate="fade-up" data-delay="0.1">
+        <div class="feature-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path d="M18 6v24M6 18h24" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+            <path d="M18 6 C22 10 28 14 30 18 C28 22 22 26 18 30" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="18" cy="18" r="4" fill="#7c3aed" opacity="0.3"/>
+            <circle cx="18" cy="18" r="2" fill="#7c3aed"/>
+          </svg>
+        </div>
+        <h3>Predicted Remaining Useful Life</h3>
+        <p>Bayesian RUL models output a degradation curve with confidence intervals for each asset. Maintenance windows ranked by criticality and operational context.</p>
+      </div>
+
+      <div class="feature-card" data-animate="fade-up" data-delay="0.2">
+        <div class="feature-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect x="6" y="6" width="24" height="24" rx="3" stroke="#ff6b00" stroke-width="1.5"/>
+            <path d="M6 14h24M14 6v24" stroke="#ff6b00" stroke-width="1" opacity="0.4"/>
+            <path d="M10 22l4-5 4 3 4-6 4 4" stroke="#ff6b00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Combustion Instability Detection</h3>
+        <p>Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset.</p>
+      </div>
+
+      <div class="feature-card" data-animate="fade-up" data-delay="0.1">
+        <div class="feature-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path d="M18 4 L32 12 L32 24 L18 32 L4 24 L4 12 Z" stroke="#00d4ff" stroke-width="1.5" fill="none"/>
+            <path d="M18 4 L18 32 M4 12 L32 24 M32 12 L4 24" stroke="#00d4ff" stroke-width="0.5" opacity="0.3"/>
+          </svg>
+        </div>
+        <h3>Blade Fouling &amp; Degradation</h3>
+        <p>Continuous compressor performance monitoring using modified Flett efficiency map methods to detect fouling accumulation and stage stall margin erosion.</p>
+      </div>
+
+      <div class="feature-card" data-animate="fade-up" data-delay="0.2">
+        <div class="feature-icon">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="10" stroke="#00d4ff" stroke-width="1.5"/>
+            <path d="M18 8 A10 10 0 0 1 28 18" stroke="#ff6b00" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="18" cy="18" r="3" fill="#00d4ff" opacity="0.4"/>
+            <circle cx="18" cy="18" r="1.5" fill="#00d4ff"/>
+          </svg>
+        </div>
+        <h3>Bearing Degradation Tracking</h3>
+        <p>Envelope analysis and kurtosis trend monitoring on raw vibration time-series. Detects inner/outer race defects and roller element spalling weeks ahead of threshold breach.</p>
+      </div>
+
+      <div class="feature-card feature-card-large" data-animate="fade-up" data-delay="0.3">
+        <div class="feature-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M8 32 L8 16 L16 20 L20 10 L24 22 L32 8 L32 32 Z" fill="#7c3aed" opacity="0.2" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round"/>
+            <circle cx="32" cy="8" r="3" fill="#7c3aed"/>
+          </svg>
+        </div>
+        <h3>Continuous Per-Asset Model Retraining</h3>
+        <p>Every turbine builds its own operational baseline. Models retrain nightly on each plant's operational history, accounting for fuel quality, ambient conditions, and load profile — creating a proprietary dataset moat that strengthens over time.</p>
+        <div class="feature-spec">
+          <span>AutoML retraining pipeline</span>
+          <span>Federated learning architecture</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       RESULTS / METRICS
+  ═══════════════════════════════════════ -->
+  <section id="results">
+    <div class="results-inner">
+      <div class="section-container">
+        <div class="section-eyebrow results-eyebrow">Proven Results</div>
+        <h2 class="section-headline results-headline">Built for the World's Most<br>Demanding Turbine Fleets</h2>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card" data-animate="scale-in">
+          <div class="metric-value"><span class="counter" data-target="23">0</span><span class="metric-unit">wk</span></div>
+          <div class="metric-label">Average early detection lead time</div>
+          <div class="metric-context">Before failure &mdash; not before alarm</div>
+        </div>
+        <div class="metric-card" data-animate="scale-in" data-delay="0.1">
+          <div class="metric-value"><span class="counter" data-target="99">0</span><span class="metric-unit">.2%</span></div>
+          <div class="metric-label">Anomaly detection precision</div>
+          <div class="metric-context">Across Frame 7 and LM6000 fleets</div>
+        </div>
+        <div class="metric-card" data-animate="scale-in" data-delay="0.2">
+          <div class="metric-value"><span class="metric-unit">$</span><span class="counter" data-target="50">0</span><span class="metric-unit">K</span></div>
+          <div class="metric-label">Average value per prevented failure</div>
+          <div class="metric-context">Parts + labor + lost generation</div>
+        </div>
+        <div class="metric-card" data-animate="scale-in" data-delay="0.3">
+          <div class="metric-value"><span class="counter" data-target="4">0</span><span class="metric-unit">hr</span></div>
+          <div class="metric-label">Time to first live data connection</div>
+          <div class="metric-context">Via OPC-UA or PI Web API</div>
+        </div>
+        <div class="metric-card" data-animate="scale-in" data-delay="0.4">
+          <div class="metric-value"><span class="counter" data-target="3">0</span><span class="metric-unit">%</span></div>
+          <div class="metric-label">Heat rate improvement via fouling ops</div>
+          <div class="metric-context">Optimizing compressor wash schedules</div>
+        </div>
+        <div class="metric-card" data-animate="scale-in" data-delay="0.5">
+          <div class="metric-value"><span class="metric-unit">&lt;</span><span class="counter" data-target="200">0</span><span class="metric-unit">ms</span></div>
+          <div class="metric-label">End-to-end inference latency</div>
+          <div class="metric-context">From sensor to scored alert</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       DASHBOARD PREVIEW
+  ═══════════════════════════════════════ -->
+  <section id="dashboard">
+    <div class="section-container">
+      <div class="section-eyebrow">Platform</div>
+      <h2 class="section-headline">Operator Intelligence Dashboard</h2>
+      <p class="section-sub">Built for plant engineers &mdash; not data scientists. Actionable, prioritized, and explained in plain language.</p>
+    </div>
+
+    <!-- ── Premium two-panel layout: browser + phone ── -->
+    <div class="dashboard-layout" data-animate="fade-up">
+
+      <!-- ── Browser mockup ── -->
+      <div class="browser-chrome">
+        <div class="browser-titlebar">
+          <div class="browser-dots">
+            <span class="bdot bdot-red"></span>
+            <span class="bdot bdot-yellow"></span>
+            <span class="bdot bdot-green"></span>
+          </div>
+          <div class="browser-urlbar">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zM4 6a2 2 0 104 0 2 2 0 00-4 0z" fill="#4a7aab" opacity="0.7"/></svg>
+            <span>app.jetiq.ai/plant/alpha/live</span>
+          </div>
+          <div class="browser-actions">
+            <div class="browser-live-badge"><span class="live-dot"></span>LIVE</div>
+          </div>
+        </div>
+
+        <div class="dash-app">
+          <!-- Sidebar nav -->
+          <div class="dash-sidenav">
+            <div class="dash-nav-logo">
+              <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
+                <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.88" transform="rotate(0 14 14)"/>
+                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.65" transform="rotate(90 14 14)"/>
+                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(180 14 14)"/>
+                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.75" transform="rotate(270 14 14)"/>
+                <circle cx="14" cy="14" r="5" fill="#060d1a"/>
+                <circle cx="14" cy="14" r="5" stroke="#00d4ff" stroke-width="0.8"/>
+                <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+              </svg>
+            </div>
+            <div class="dash-nav-items">
+              <div class="dash-nav-item dash-nav-active" title="Fleet">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <div class="dash-nav-item" title="Anomalies">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <div class="dash-nav-item" title="Analytics">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18M7 16l4-4 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="dash-nav-item" title="Maintenance">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="dash-nav-bottom">
+              <div class="dash-nav-item" title="Settings">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main dashboard content -->
+          <div class="dash-content">
+            <!-- Topbar -->
+            <div class="dash-topbar">
+              <div class="dash-topbar-left">
+                <span class="dash-breadcrumb">Plant Alpha</span>
+                <span class="dash-sep">›</span>
+                <span class="dash-breadcrumb dash-breadcrumb-active">Fleet Overview</span>
+              </div>
+              <div class="dash-topbar-right">
+                <div class="dash-alert-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="#ff6b00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>2 Alerts</span>
+                </div>
+                <div class="dash-time" id="dash-clock">14:32:07 UTC</div>
+              </div>
+            </div>
+
+            <!-- KPI cards row -->
+            <div class="kpi-row">
+              <div class="kpi-card kpi-warning">
+                <div class="kpi-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#ff6b00" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <div class="kpi-data">
+                  <div class="kpi-value">2</div>
+                  <div class="kpi-label">Active Anomalies</div>
+                </div>
+                <div class="kpi-trend kpi-trend-up">+1 today</div>
+              </div>
+              <div class="kpi-card kpi-ok">
+                <div class="kpi-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#00d4ff" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <div class="kpi-data">
+                  <div class="kpi-value">847<span class="kpi-unit">h</span></div>
+                  <div class="kpi-label">Lowest Fleet RUL</div>
+                </div>
+                <div class="kpi-trend kpi-trend-warn">GT-07</div>
+              </div>
+              <div class="kpi-card kpi-green">
+                <div class="kpi-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="kpi-data">
+                  <div class="kpi-value">$1.4<span class="kpi-unit">M</span></div>
+                  <div class="kpi-label">Failures Prevented</div>
+                </div>
+                <div class="kpi-trend kpi-trend-green">YTD</div>
+              </div>
+              <div class="kpi-card kpi-purple">
+                <div class="kpi-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#7c3aed" stroke-width="1.5"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+                <div class="kpi-data">
+                  <div class="kpi-value">Jun 12</div>
+                  <div class="kpi-label">Next Scheduled</div>
+                </div>
+                <div class="kpi-trend">GT-01 overhaul</div>
+              </div>
+            </div>
+
+            <!-- Main panels row -->
+            <div class="dash-panels-row">
+              <!-- Left: Anomaly ring + fleet list -->
+              <div class="dash-panel-left">
+                <div class="panel-header">
+                  <span class="panel-title">Fleet Status</span>
+                  <span class="panel-badge panel-badge-live">LIVE</span>
+                </div>
+                <div class="fleet-list">
+                  <div class="fleet-row fleet-row-active">
+                    <div class="fleet-indicator ind-warning"></div>
+                    <div class="fleet-info">
+                      <div class="fleet-name">GT-07 <span class="fleet-type">Frame 7</span></div>
+                      <div class="fleet-status">Combustion anomaly · 87% conf.</div>
+                    </div>
+                    <div class="fleet-rul">
+                      <div class="rul-num">847</div>
+                      <div class="rul-unit">hrs</div>
+                    </div>
+                    <div class="fleet-sparkline">
+                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
+                        <path d="M0,14 L10,12 L20,10 L30,9 L40,7 L50,5 L60,3" fill="none" stroke="#ff6b00" stroke-width="1.5"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="fleet-row fleet-row-critical">
+                    <div class="fleet-indicator ind-critical"></div>
+                    <div class="fleet-info">
+                      <div class="fleet-name">GT-01 <span class="fleet-type">Frame 5</span></div>
+                      <div class="fleet-status">Fouling stage 5 · schedule wash</div>
+                    </div>
+                    <div class="fleet-rul">
+                      <div class="rul-num" style="color:#ef4444">312</div>
+                      <div class="rul-unit">hrs</div>
+                    </div>
+                    <div class="fleet-sparkline">
+                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
+                        <path d="M0,6 L10,7 L20,9 L30,11 L40,13 L50,15 L60,18" fill="none" stroke="#ef4444" stroke-width="1.5"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="fleet-row">
+                    <div class="fleet-indicator ind-ok"></div>
+                    <div class="fleet-info">
+                      <div class="fleet-name">GT-04 <span class="fleet-type">LM6000</span></div>
+                      <div class="fleet-status">Normal operations</div>
+                    </div>
+                    <div class="fleet-rul">
+                      <div class="rul-num" style="color:#22c55e">2,340</div>
+                      <div class="rul-unit">hrs</div>
+                    </div>
+                    <div class="fleet-sparkline">
+                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
+                        <path d="M0,10 L10,10 L20,9 L30,10 L40,9 L50,10 L60,10" fill="none" stroke="#22c55e" stroke-width="1.5"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="fleet-row">
+                    <div class="fleet-indicator ind-ok"></div>
+                    <div class="fleet-info">
+                      <div class="fleet-name">GT-02 <span class="fleet-type">Frame 6</span></div>
+                      <div class="fleet-status">Normal operations</div>
+                    </div>
+                    <div class="fleet-rul">
+                      <div class="rul-num" style="color:#22c55e">1,920</div>
+                      <div class="rul-unit">hrs</div>
+                    </div>
+                    <div class="fleet-sparkline">
+                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
+                        <path d="M0,9 L10,10 L20,9 L30,9 L40,10 L50,9 L60,9" fill="none" stroke="#22c55e" stroke-width="1.5"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Alerts + EGT chart -->
+              <div class="dash-panel-right">
+                <!-- Priority alert -->
+                <div class="priority-alert">
+                  <div class="alert-pill alert-pill-high">HIGH</div>
+                  <div class="alert-body">
+                    <div class="alert-title2">Combustion Instability Precursor · GT-07</div>
+                    <div class="alert-sub">T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.</div>
+                    <div class="alert-meta-row">
+                      <span class="alert-meta"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ~23 days to fault</span>
+                      <span class="alert-meta">CI: 18–31 days</span>
+                      <span class="alert-meta alert-meta-action">Create WO →</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- EGT trend sparkline -->
+                <div class="trend-panel">
+                  <div class="trend-header">
+                    <span class="trend-label">EGT · GT-07</span>
+                    <span class="trend-value trend-value-hot" id="egt-live">614°C</span>
+                    <span class="trend-delta">↑ +14°C</span>
+                  </div>
+                  <div class="trend-chart-wrap">
+                    <svg viewBox="0 0 300 56" preserveAspectRatio="none" class="trend-svg">
+                      <defs>
+                        <linearGradient id="egt-grad2" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#ff6b00" stop-opacity="0.35"/>
+                          <stop offset="100%" stop-color="#ff6b00" stop-opacity="0"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2 L300,56 L0,56 Z" fill="url(#egt-grad2)"/>
+                      <path d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2" fill="none" stroke="#ff6b00" stroke-width="2"/>
+                      <line x1="0" y1="12" x2="300" y2="12" stroke="#ff4500" stroke-width="0.8" stroke-dasharray="6,4" opacity="0.5"/>
+                      <text x="4" y="10" font-size="7" fill="#ff4500" opacity="0.7" font-family="monospace">THRESHOLD</text>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- RUL arc gauge -->
+                <div class="rul-panel">
+                  <div class="rul-gauge-wrap">
+                    <svg viewBox="0 0 120 72" class="rul-gauge-svg">
+                      <defs>
+                        <linearGradient id="rul-arc-grad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stop-color="#22c55e"/>
+                          <stop offset="50%" stop-color="#f59e0b"/>
+                          <stop offset="100%" stop-color="#ef4444"/>
+                        </linearGradient>
+                      </defs>
+                      <!-- background arc -->
+                      <path d="M12,66 A54,54 0 0,1 108,66" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" stroke-linecap="round"/>
+                      <!-- filled arc (847 / 2000 ≈ 42% → angle) -->
+                      <path d="M12,66 A54,54 0 0,1 108,66" fill="none" stroke="url(#rul-arc-grad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="97" opacity="0.95"/>
+                      <!-- value text -->
+                      <text x="60" y="58" text-anchor="middle" font-size="18" font-weight="700" fill="#f8fafc" font-family="Space Grotesk, sans-serif">847</text>
+                      <text x="60" y="68" text-anchor="middle" font-size="8" fill="#64748b" font-family="monospace" letter-spacing="0.08em">HRS REMAINING</text>
+                    </svg>
+                  </div>
+                  <div class="rul-breakdown">
+                    <div class="rul-row"><span class="rul-key">Asset</span><span class="rul-val">GT-07 Frame 7</span></div>
+                    <div class="rul-row"><span class="rul-key">Confidence</span><span class="rul-val" style="color:#f59e0b">87%</span></div>
+                    <div class="rul-row"><span class="rul-key">Action</span><span class="rul-val" style="color:#ff6b00">Inspect in 23d</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- END browser mockup -->
+
+      <!-- ── iPhone 15 Pro mockup ── -->
+      <div class="iphone-wrap">
+        <div class="iphone-frame">
+          <!-- Side buttons -->
+          <div class="iphone-vol-up"></div>
+          <div class="iphone-vol-dn"></div>
+          <div class="iphone-power"></div>
+
+          <!-- Screen -->
+          <div class="iphone-screen">
+            <!-- Dynamic Island -->
+            <div class="dynamic-island">
+              <div class="di-dot di-dot-l"></div>
+              <div class="di-pill"></div>
+              <div class="di-dot di-dot-r"></div>
+            </div>
+
+            <!-- Status bar -->
+            <div class="iphone-statusbar">
+              <span class="sb-time">9:41</span>
+              <div class="sb-icons">
+                <svg width="15" height="11" viewBox="0 0 15 11" fill="white"><rect x="0" y="3" width="3" height="8" rx="0.5" opacity="0.4"/><rect x="4" y="2" width="3" height="9" rx="0.5" opacity="0.6"/><rect x="8" y="0" width="3" height="11" rx="0.5" opacity="0.8"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><path d="M8 1.5C5.6 1.5 3.4 2.5 1.8 4.1L0 2.3C2.1 0.8 4.9 0 8 0s5.9.8 8 2.3l-1.8 1.8C12.6 2.5 10.4 1.5 8 1.5z" opacity="0.4"/><path d="M8 4.5c-1.7 0-3.3.7-4.4 1.8L2 4.7C3.5 3.2 5.6 2.3 8 2.3s4.5.9 6 2.4L12.4 6.3C11.3 5.2 9.7 4.5 8 4.5z" opacity="0.7"/><path d="M8 7.5c-.9 0-1.8.4-2.4 1L4 6.9C5 5.7 6.4 5 8 5s3 .7 4 1.9l-1.6 1.6C9.8 7.9 8.9 7.5 8 7.5z"/><circle cx="8" cy="11" r="1.5"/></svg>
+                <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" stroke-opacity="0.35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="white"/><path d="M23 4v4a2 2 0 000-4z" fill="white" opacity="0.4"/></svg>
+              </div>
+            </div>
+
+            <!-- App content -->
+            <div class="iphone-content">
+              <div class="app-header">
+                <span class="app-logo">Jet<span style="color:#ff6b00">IQ</span></span>
+                <div class="app-alert-dot"></div>
+              </div>
+
+              <!-- Critical alert card — red glow -->
+              <div class="notif-card notif-critical">
+                <div class="notif-top-row">
+                  <div class="notif-app-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#ef4444" stroke-width="1.5"/></svg>
+                  </div>
+                  <span class="notif-app-name">ANOMALY ALERT</span>
+                  <span class="notif-time">now</span>
+                </div>
+                <div class="notif-title">Critical: GT-07 Combustion</div>
+                <div class="notif-body">EGT +14°C above trend. 87% confidence. Estimated 23 days to fault.</div>
+                <div class="notif-actions">
+                  <button class="notif-btn notif-btn-primary">View Details</button>
+                  <button class="notif-btn notif-btn-ghost">Dismiss</button>
+                </div>
+              </div>
+
+              <!-- RUL arc gauge (phone version) -->
+              <div class="phone-rul-card">
+                <div class="phone-rul-label">GT-07 Remaining Useful Life</div>
+                <div class="phone-rul-gauge">
+                  <svg viewBox="0 0 140 85" class="phone-rul-svg">
+                    <defs>
+                      <linearGradient id="phone-rul-grad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#22c55e"/>
+                        <stop offset="60%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#ef4444"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M14,78 A56,56 0 0,1 126,78" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M14,78 A56,56 0 0,1 126,78" fill="none" stroke="url(#phone-rul-grad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="102" opacity="0.95"/>
+                    <text x="70" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="#f8fafc" font-family="Space Grotesk, sans-serif">847</text>
+                    <text x="70" y="77" text-anchor="middle" font-size="8.5" fill="#64748b" font-family="monospace">HOURS REMAINING</text>
+                  </svg>
+                </div>
+                <div class="phone-rul-stats">
+                  <div class="phone-stat"><span class="ps-val ps-warn">23d</span><span class="ps-lbl">Predicted Fault</span></div>
+                  <div class="phone-stat"><span class="ps-val">87%</span><span class="ps-lbl">Confidence</span></div>
+                  <div class="phone-stat"><span class="ps-val ps-ok">4</span><span class="ps-lbl">Fleet OK</span></div>
+                </div>
+              </div>
+
+              <!-- Secondary notification -->
+              <div class="notif-card notif-warning">
+                <div class="notif-top-row">
+                  <div class="notif-app-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  </div>
+                  <span class="notif-app-name">MAINTENANCE</span>
+                  <span class="notif-time">2h ago</span>
+                </div>
+                <div class="notif-title">GT-01 Wash Recommended</div>
+                <div class="notif-body">Stage 5 efficiency −2.1%. Schedule offline wash within 8 days.</div>
+              </div>
+
+              <!-- Home indicator -->
+              <div class="iphone-home-bar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- END iPhone mockup -->
+
+    </div><!-- END dashboard-layout -->
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       CTA SECTION
+  ═══════════════════════════════════════ -->
+  <section id="cta">
+    <div class="cta-inner">
+      <div class="cta-glow"></div>
+      <div class="section-eyebrow cta-eyebrow">Get Started</div>
+      <h2 class="cta-headline">
+        Your First Anomaly Alert<br>
+        in Under <span class="gradient-text">4 Hours</span>
+      </h2>
+      <p class="cta-sub">Connect to your PI historian or SCADA system, import your tag list, and receive your first scored anomaly alert — without writing a single line of code.</p>
+
+      <form class="cta-form" id="demo-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="Jane Kowalski" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="email">Work Email</label>
+            <input type="email" id="email" placeholder="jane@powerplant.com" autocomplete="email">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="plant">Plant / Fleet Type</label>
+            <select id="plant">
+              <option value="">Select turbine type...</option>
+              <option>GE Frame 5</option>
+              <option>GE Frame 6</option>
+              <option>GE Frame 7</option>
+              <option>GE Frame 9</option>
+              <option>GE LM2500</option>
+              <option>GE LM6000</option>
+              <option>Siemens SGT Series</option>
+              <option>Mitsubishi M701</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="historian">Existing Historian / SCADA</label>
+            <select id="historian">
+              <option value="">Select system...</option>
+              <option>OSIsoft PI System</option>
+              <option>GE APM / Asset360</option>
+              <option>Honeywell Experion</option>
+              <option>ABB Symphony Plus</option>
+              <option>Emerson DeltaV</option>
+              <option>Siemens SPPA-T3000</option>
+              <option>Custom OPC-UA Server</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-cta-submit">
+          <span>Book a Technical Demo</span>
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p class="form-note">No commitment. Live demo on your actual plant data within 24 hours.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
+            <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.88" transform="rotate(0 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.72" transform="rotate(45 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(90 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.40" transform="rotate(135 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(180 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.70" transform="rotate(225 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(270 14 14)"/>
+            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.78" transform="rotate(315 14 14)"/>
+            <circle cx="14" cy="14" r="5" fill="#020810"/>
+            <circle cx="14" cy="14" r="5" stroke="#00d4ff" stroke-width="0.8"/>
+            <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+          </svg>
+          Jet<span style="color:#ff6b00">IQ</span>
+        </div>
+        <p class="footer-tagline">Smart engine intelligence for electric and gas turbine fleets worldwide.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <div class="footer-col-title">Platform</div>
+          <a href="#">Capabilities</a>
+          <a href="#">Integrations</a>
+          <a href="#">Security</a>
+          <a href="#">Pricing</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Resources</div>
+          <a href="#">Documentation</a>
+          <a href="#">API Reference</a>
+          <a href="#">Case Studies</a>
+          <a href="#">Webinars</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Company</div>
+          <a href="#">About</a>
+          <a href="#">Blog</a>
+          <a href="#">Careers</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 JetIQ Intelligence, Inc. All rights reserved.</span>
+      <span>SOC 2 Type II &nbsp;&middot;&nbsp; ISO 27001 &nbsp;&middot;&nbsp; IEC 62443</span>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+  <script src="js/turbofan.js"></script>
+  <script src="js/dataflow.js"></script>
+  <script src="js/network.js"></script>
+
+</body>
+</html>

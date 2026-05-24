@@ -1,0 +1,338 @@
+/* ═══════════════════════════════════════════════
+   TurboFan Intelligence — Animations
+═══════════════════════════════════════════════ */
+
+/* ── Keyframes ── */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+@keyframes fade-scroll-hint {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) translateY(0); }
+  50%       { opacity: 0.7; transform: translateX(-50%) translateY(6px); }
+}
+
+@keyframes particle-flow {
+  0%   { left: -20px; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+@keyframes sensor-pulse-ring {
+  0%   { r: 8; opacity: 0.8; }
+  100% { r: 22; opacity: 0; }
+}
+
+@keyframes sensor-pulse-ring-2 {
+  0%   { r: 8; opacity: 0.5; }
+  100% { r: 32; opacity: 0; }
+}
+
+@keyframes flow-dash {
+  0%   { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes engine-glow {
+  0%, 100% { opacity: 0.06; }
+  50%       { opacity: 0.12; }
+}
+
+@keyframes combustor-flicker {
+  0%   { opacity: 0.8; transform: scaleX(1)   scaleY(1); }
+  25%  { opacity: 0.9; transform: scaleX(1.02) scaleY(0.98); }
+  50%  { opacity: 0.75; transform: scaleX(0.98) scaleY(1.02); }
+  75%  { opacity: 0.85; transform: scaleX(1.01) scaleY(0.99); }
+  100% { opacity: 0.8; transform: scaleX(1)   scaleY(1); }
+}
+
+@keyframes fan-spin {
+  from { transform-origin: 258px 300px; transform: rotate(0deg); }
+  to   { transform-origin: 258px 300px; transform: rotate(360deg); }
+}
+
+@keyframes float-panel {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50%       { transform: translateY(-50%) translateX(-3px); }
+}
+
+@keyframes float-panel-right {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50%       { transform: translateY(-50%) translateX(3px); }
+}
+
+@keyframes data-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(0, 212, 255, 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes counter-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.93); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes hero-orb-1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, -30px) scale(1.05); }
+  66%  { transform: translate(-20px, 20px) scale(0.98); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes hero-orb-2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(-30px, 20px) scale(0.96); }
+  66%  { transform: translate(20px, -25px) scale(1.04); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes nav-line-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes grid-line-fade {
+  0%, 100% { opacity: 0.03; }
+  50%       { opacity: 0.07; }
+}
+
+/* ── Hero Canvas Particles ── */
+/* (handled by JS, but glow effects here) */
+#hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(124, 58, 237, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 20%, rgba(255, 107, 0, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── Animated background grid ── */
+#hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
+  background-position: center;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+  animation: grid-line-fade 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Sensor pulses are rendered on canvas — no CSS needed */
+
+/* ── Info panel float animation ── */
+.info-panel-left.visible {
+  animation: float-panel 6s ease-in-out infinite;
+  animation-delay: 1s;
+}
+.info-panel-right.visible {
+  animation: float-panel-right 6s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+/* ── Data flow arrow particles ── */
+.arrow-particle {
+  position: absolute;
+  width: 30px;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--cyan, #00d4ff));
+  border-radius: 1px;
+  animation: particle-flow 1.8s linear infinite;
+}
+
+/* ── Scroll-triggered animation classes ── */
+[data-animate] {
+  opacity: 0;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+[data-animate="fade-up"] { transform: translateY(24px); }
+[data-animate="slide-up"] { transform: translateY(32px); }
+[data-animate="scale-in"] { transform: scale(0.93); }
+[data-animate].animated {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Number counter animation ── */
+.counter {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+/* ── Turbofan section background texture ── */
+#turbofan-explore::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 30% at 20% 30%, rgba(124, 58, 237, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Flow diagram node number badges ── */
+.flow-node[data-node]::after {
+  content: attr(data-node);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: var(--cyan, #00d4ff);
+  color: #000;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 20px;
+  text-align: center;
+}
+.flow-node-highlight[data-node]::after {
+  background: var(--purple, #7c3aed);
+  color: #fff;
+}
+
+/* ── CTA form select arrow ── */
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* ── Gradient border effect on feature cards ── */
+.feature-card-large::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: calc(var(--radius-lg, 20px) + 1px);
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), transparent 50%, rgba(124, 58, 237, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.feature-card-large:hover::after { opacity: 1; }
+
+/* ── Metric card shimmer on hover ── */
+.metric-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg, 20px);
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(0, 212, 255, 0.04) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.metric-card { position: relative; overflow: hidden; }
+.metric-card:hover::after {
+  opacity: 1;
+  animation: shimmer 1.5s ease infinite;
+}
+
+/* ── Loading spinner for form submit ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.btn-cta-submit.loading .btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.018;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Engine canvas ambient glow via box-shadow on the viewport */
+.engine-viewport::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 55%,
+    rgba(0, 212, 255, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Dashboard chart bar animation ── */
+@keyframes chart-draw {
+  from { stroke-dashoffset: 500; }
+  to   { stroke-dashoffset: 0; }
+}
+.dash-chart-card path[stroke] {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+}
+.dashboard-mockup.visible .dash-chart-card path[stroke],
+.dashboard-layout.visible .trend-svg path[stroke] {
+  animation: chart-draw 1.5s ease forwards;
+}
+
+/* ── Problem callout reveal ── */
+.problem-callout {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.problem-callout.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Section transition line ── */
+section + section::before {
+  content: '';
+  display: block;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border, rgba(30,74,110,0.4)), transparent);
+}
