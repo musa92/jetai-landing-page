@@ -22,9 +22,9 @@ class TurbofanEngine3D {
     this.fanAngle       = 0;
     this.hpAngle        = 0;
 
-    /* smooth camera target — start from front intake approach */
-    this._camPos  = new THREE.Vector3(0.05, 0.12, -4.8);
-    this._camLook = new THREE.Vector3(0, 0, -0.8);
+    /* smooth camera target — start wide 3/4 overview of the whole package */
+    this._camPos  = new THREE.Vector3(4.5, 2.8, 3.5);
+    this._camLook = new THREE.Vector3(0, 0.1, 0.5);
     /* reusable projection vector — avoids per-frame GC */
     this._tmpV    = new THREE.Vector3();
 
@@ -116,20 +116,17 @@ class TurbofanEngine3D {
      ENGINE GEOMETRY
   ═══════════════════════════════════════════════════ */
   _buildEngine() {
-    /* clipping plane: plane normal (0,-1,0), constant=d
-       clips everything above y = d
-       d=0.65 → nothing clipped; d=-0.25 → top half removed */
-    this.clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.65);
+    /* No clipping plane — turbine core is openly visible through enclosure window */
+    this.clipPlane = null;
 
     /* ── material palette ── */
     this.M = {
+      /* stage casings: industrial steel finish */
       nacelle: new THREE.MeshStandardMaterial({
-        color:             0x3c4e60,
-        metalness:         0.88,
-        roughness:         0.22,
-        clippingPlanes:    [this.clipPlane],
-        clipShadows:       true,
-        side:              THREE.DoubleSide,
+        color:     0x2e3e50,
+        metalness: 0.88,
+        roughness: 0.26,
+        side:      THREE.DoubleSide,
       }),
       nacelleInner: new THREE.MeshStandardMaterial({
         color:    0x121e2c,
@@ -186,9 +183,14 @@ class TurbofanEngine3D {
         roughness:         0.28,
         emissive:          new THREE.Color(0x200600),
         emissiveIntensity: 0.35,
-        clippingPlanes:    [this.clipPlane],
-        clipShadows:       true,
         side:              THREE.DoubleSide,
+      }),
+      /* enclosure / skid steel — gray industrial panels */
+      enclosureSteel: new THREE.MeshStandardMaterial({
+        color:     0x2a3848,
+        metalness: 0.72,
+        roughness: 0.40,
+        side:      THREE.DoubleSide,
       }),
       darkMetal: new THREE.MeshStandardMaterial({
         color:     0x1c2a38,
@@ -224,7 +226,13 @@ class TurbofanEngine3D {
     this.engineGroup.add(this.lpGroup);
     this.engineGroup.add(this.hpGroup);
 
-    this._buildNacelle();
+    /* ── Surrounding package structure (built first, behind turbine) ── */
+    this._buildSkidFrame();
+    this._buildInletBox();
+    this._buildEnclosure();
+
+    /* ── Turbine core — exposed inside the enclosure window ── */
+    this._buildCoreCasings();
     this._buildSpinner();
     this._buildFan();
     this._buildOGV();
@@ -235,10 +243,13 @@ class TurbofanEngine3D {
     this._buildHPT();
     this._buildLPT();
     this._buildExhaust();
-    this._buildGenerator();
 
-    /* slight yaw so we see the 3/4 view at start */
-    this.engineGroup.rotation.y = 0.12;
+    /* ── Exhaust system + generator box ── */
+    this._buildExhaustStack();
+    this._buildGeneratorBox();
+
+    /* slight yaw for 3/4 industrial view */
+    this.engineGroup.rotation.y = 0.18;
 
     /* sensor markers added after geometry, before scene add */
     this._buildSensorMarkers();
@@ -246,35 +257,162 @@ class TurbofanEngine3D {
     this.scene.add(this.engineGroup);
   }
 
-  /* ─── Nacelle ───────────────────────────────────── */
-  _buildNacelle() {
-    /* LatheGeometry profile: Vector2(radius, y-along-engine)
-       after rotateX(PI/2): y-axis → z-axis (forward = positive z) */
-    /* Power-turbine nacelle: smooth bullet capsule, wide enough to
-       fully enclose all fan/compressor stages (max r=0.575 at mid) */
-    const outerPts = [
-      [0.01, -2.00], [0.09, -1.90], [0.24, -1.72],
-      [0.40, -1.46], [0.51, -1.14], [0.548,-0.76],
-      [0.568,-0.34], [0.575, 0.12], [0.562, 0.58],
-      [0.540, 0.98], [0.500, 1.36], [0.420, 1.62],
-      [0.280, 1.84], [0.100, 1.96], [0.010, 2.02],
-    ].map(([r, z]) => new THREE.Vector2(r, z));
+  /* ─── Steel Skid Frame ──────────────────────────── */
+  _buildSkidFrame() {
+    const BY = -0.60;   /* beam y center */
+    const Z1 = -2.30, Z2 = 2.20;
+    const XO =  0.58;
+    const BH =  0.055, BW = 0.038;
+    const mat = this.M.darkMetal;
 
-    const innerPts = outerPts.slice(3, -3).map(v =>
-      new THREE.Vector2(v.x * 0.945, v.y)
-    );
+    /* two longitudinal I-beams */
+    [-XO, XO].forEach(x => {
+      const g = new THREE.BoxGeometry(BW, BH, Z2 - Z1);
+      const b = new THREE.Mesh(g, mat);
+      b.position.set(x, BY, (Z1 + Z2) / 2);
+      this.engineGroup.add(b);
+    });
+    /* cross members */
+    for (let z = Z1; z <= Z2 + 0.01; z += 0.72) {
+      const g = new THREE.BoxGeometry(XO * 2 + BW, BH * 0.7, BW);
+      const c = new THREE.Mesh(g, mat);
+      c.position.set(0, BY, z);
+      this.engineGroup.add(c);
+    }
+    /* four corner legs */
+    [Z1 + 0.28, Z2 - 0.28].forEach(z => [-XO, XO].forEach(x => {
+      const g = new THREE.BoxGeometry(0.028, 0.20, 0.028);
+      const l = new THREE.Mesh(g, mat);
+      l.position.set(x, BY - 0.10, z);
+      this.engineGroup.add(l);
+    }));
+  }
 
-    const makeLathe = (pts, seg) => {
-      const g = new THREE.LatheGeometry(pts, seg);
-      g.rotateX(Math.PI / 2);
-      return g;
+  /* ─── Inlet Air Filter Box ───────────────────────── */
+  _buildInletBox() {
+    /* Large louvered intake plenum on the negative-Z end */
+    const CZ = -3.20, IW = 1.30, IH = 1.18, ID = 1.72, CY = 0.0;
+    const mat = this.M.enclosureSteel;
+
+    const addPanel = (w, h, rx, ry, px, py, pz) => {
+      const g = new THREE.PlaneGeometry(w, h);
+      if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
+      const m = new THREE.Mesh(g, mat);
+      m.position.set(px, py, pz);
+      this.engineGroup.add(m);
     };
+    addPanel(IW, IH,  0,          Math.PI,      0,      CY,          CZ - ID / 2); /* back */
+    addPanel(ID, IH,  0,          Math.PI / 2, -IW / 2, CY,          CZ);          /* left */
+    addPanel(ID, IH,  0,         -Math.PI / 2,  IW / 2, CY,          CZ);          /* right */
+    addPanel(IW, ID, -Math.PI / 2, 0,           0,      CY + IH / 2, CZ);          /* top */
 
-    const outer = new THREE.Mesh(makeLathe(outerPts, 96), this.M.nacelle);
-    const inner = new THREE.Mesh(makeLathe(innerPts, 64), this.M.nacelleInner);
-    this.engineGroup.add(outer);
-    this.engineGroup.add(inner);
-    this.nacelleMesh = outer;
+    /* horizontal intake louver fins */
+    const FN = 12;
+    for (let i = 0; i < FN; i++) {
+      const fy = CY - IH / 2 + (i + 0.5) * (IH / FN);
+      const g  = new THREE.BoxGeometry(IW * 0.88, 0.018, 0.055);
+      const f  = new THREE.Mesh(g, this.M.darkMetal);
+      f.position.set(0, fy, CZ + ID / 2);
+      f.rotation.x = 0.20;
+      this.engineGroup.add(f);
+    }
+
+    /* connecting duct from plenum to engine inlet */
+    const dg = new THREE.CylinderGeometry(0.53, 0.56, 0.82, 36, 1, true);
+    dg.rotateX(Math.PI / 2);
+    const d  = new THREE.Mesh(dg, this.M.darkMetal);
+    d.position.z = CZ + ID / 2 + 0.41;
+    this.engineGroup.add(d);
+
+    /* inlet bellmouth ring */
+    const bg = new THREE.TorusGeometry(0.530, 0.040, 12, 52);
+    bg.rotateX(Math.PI / 2);
+    const bm = new THREE.Mesh(bg, this.M.disc);
+    bm.position.z = CZ + ID / 2 + 0.83;
+    this.engineGroup.add(bm);
+  }
+
+  /* ─── Outer Rectangular Enclosure ───────────────── */
+  _buildEnclosure() {
+    /* Open-sided industrial housing — turbine visible through near window */
+    const Z1 = -2.05, Z2 = 2.10, EX = 0.70, EY1 = -0.56, EY2 = 0.74;
+    const EW = Z2 - Z1, EH = EY2 - EY1, CY = (EY1 + EY2) / 2;
+    const mat = this.M.enclosureSteel;
+
+    const addFlat = (w, h, rx, ry, px, py, pz) => {
+      const g = new THREE.PlaneGeometry(w, h);
+      if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
+      const m = new THREE.Mesh(g, mat);
+      m.position.set(px, py, pz); this.engineGroup.add(m);
+    };
+    addFlat(EW, EH,  0,          Math.PI / 2, -EX, CY, (Z1 + Z2) / 2); /* back wall */
+    addFlat(EX*2, EW,-Math.PI/2, 0,            0, EY2, (Z1 + Z2) / 2); /* top */
+    addFlat(EX*2, EW, Math.PI/2, 0,            0, EY1, (Z1 + Z2) / 2); /* floor */
+
+    /* corner uprights (viewer side is open — the "window") */
+    [[EX, Z1], [EX, Z2], [-EX, Z1], [-EX, Z2]].forEach(([x, z]) => {
+      const g = new THREE.BoxGeometry(0.038, EH + 0.04, 0.038);
+      const c = new THREE.Mesh(g, this.M.disc);
+      c.position.set(x, CY, z); this.engineGroup.add(c);
+    });
+    /* horizontal edge rails on viewer side */
+    [EY1, EY2].forEach(y => {
+      const g = new THREE.BoxGeometry(0.026, 0.026, EW + 0.04);
+      const r = new THREE.Mesh(g, this.M.disc);
+      r.position.set(EX, y, (Z1 + Z2) / 2); this.engineGroup.add(r);
+    });
+    /* vertical end panels (z-ends) partial — leave turbine shaft holes */
+    [Z1, Z2].forEach((z, i) => {
+      addFlat(EX * 2, EH, 0, i === 0 ? Math.PI : 0, 0, CY, z);
+    });
+  }
+
+  /* ─── Turbine Core Stage Casings ────────────────── */
+  _buildCoreCasings() {
+    /* Bolted flanged cylindrical stage housings — no aerodynamic fairing */
+    const SECTIONS = [
+      { z: -1.15, len: 1.18, rF: 0.515, rR: 0.510 }, /* fan / inlet */
+      { z: -0.27, len: 0.56, rF: 0.385, rR: 0.375 }, /* LPC         */
+      { z:  0.14, len: 0.50, rF: 0.300, rR: 0.292 }, /* HPC         */
+      { z:  0.57, len: 0.40, rF: 0.362, rR: 0.352 }, /* combustor   */
+      { z:  1.12, len: 0.84, rF: 0.420, rR: 0.415 }, /* turbine     */
+    ];
+    SECTIONS.forEach(({ z, len, rF, rR }) => {
+      const g = new THREE.CylinderGeometry(rF, rR, len, 44, 1, true);
+      g.rotateX(Math.PI / 2);
+      const m = new THREE.Mesh(g, this.M.nacelle);
+      m.position.z = z;
+      this.engineGroup.add(m);
+      /* bolted flanges at each end */
+      [-len / 2, len / 2].forEach(dz => {
+        const fg = new THREE.TorusGeometry(Math.max(rF, rR) + 0.018, 0.018, 6, 40);
+        fg.rotateX(Math.PI / 2);
+        const f  = new THREE.Mesh(fg, this.M.disc);
+        f.position.z = z + dz;
+        this.engineGroup.add(f);
+      });
+    });
+
+    /* interstage diffuser (HPC → combustor) */
+    const dg = new THREE.CylinderGeometry(0.360, 0.300, 0.18, 36, 1, true);
+    dg.rotateX(Math.PI / 2);
+    const dm = new THREE.Mesh(dg, this.M.darkMetal);
+    dm.position.z = 0.38;
+    this.engineGroup.add(dm);
+
+    /* turbine exit nozzle */
+    const ng = new THREE.CylinderGeometry(0.385, 0.420, 0.22, 36, 1, true);
+    ng.rotateX(Math.PI / 2);
+    const nm = new THREE.Mesh(ng, this.M.exhaust);
+    nm.position.z = 1.56;
+    this.engineGroup.add(nm);
+
+    /* inlet flare cone */
+    const ifg = new THREE.CylinderGeometry(0.515, 0.60, 0.30, 44, 1, true);
+    ifg.rotateX(Math.PI / 2);
+    const ifc = new THREE.Mesh(ifg, this.M.darkMetal);
+    ifc.position.z = -1.90;
+    this.engineGroup.add(ifc);
   }
 
   /* ─── Spinner cone ──────────────────────────────── */
@@ -560,141 +698,106 @@ class TurbofanEngine3D {
     this.lpGroup.add(plug);
   }
 
-  /* ═══════════════════════════════════════════════════
-     ELECTRIC GENERATOR MODULE
-     Couples to LP power-turbine shaft — industrial
-     alternator style (salient poles, stator windings,
-     cooling fins, glowing power output terminal)
-  ═══════════════════════════════════════════════════ */
-  _buildGenerator() {
-    const GZ  = 2.95;   /* generator center Z (behind exhaust) */
-    const GR  = 0.34;   /* outer casing radius */
-    const GL  = 1.85;   /* generator length */
+  /* ─── Exhaust Transition + Stack ───────────────── */
+  _buildExhaustStack() {
+    /* Rectangular transition duct going upward from turbine exit */
+    const txG = new THREE.BoxGeometry(0.54, 0.50, 0.65);
+    const tx  = new THREE.Mesh(txG, this.M.darkMetal);
+    tx.position.set(0, 0.30, 1.65);
+    this.engineGroup.add(tx);
 
-    /* ── Transition / coupling bell ── */
-    const bellG = new THREE.CylinderGeometry(0.20, GR * 0.90, 0.32, 36, 1, true);
-    bellG.rotateX(Math.PI / 2);
-    const bell = new THREE.Mesh(bellG, this.M.darkMetal);
-    bell.position.z = GZ - GL / 2 - 0.16;
-    this.engineGroup.add(bell);
+    /* Elbow flange */
+    const efG = new THREE.BoxGeometry(0.50, 0.08, 0.50);
+    const ef  = new THREE.Mesh(efG, this.M.disc);
+    ef.position.set(0, 0.60, 1.65);
+    this.engineGroup.add(ef);
 
-    /* coupling ring flange */
-    const flangeG = new THREE.TorusGeometry(GR * 0.88, 0.022, 8, 40);
-    flangeG.rotateX(Math.PI / 2);
-    const flange = new THREE.Mesh(flangeG, this.M.disc);
-    flange.position.z = GZ - GL / 2;
-    this.engineGroup.add(flange);
+    /* Vertical stack */
+    const stG = new THREE.CylinderGeometry(0.22, 0.26, 1.90, 26);
+    const st  = new THREE.Mesh(stG, this.M.darkMetal);
+    st.position.set(0, 1.65, 1.65);
+    this.engineGroup.add(st);
 
-    /* ── Main casing (smooth steel cylinder) ── */
-    const casingG = new THREE.CylinderGeometry(GR, GR, GL, 56, 1, true);
-    casingG.rotateX(Math.PI / 2);
-    this.genCasing = new THREE.Mesh(casingG, this.M.genBody);
-    this.genCasing.position.z = GZ;
-    this.engineGroup.add(this.genCasing);
-
-    /* end caps */
-    [-GL / 2, GL / 2].forEach(dz => {
-      const capG = new THREE.CylinderGeometry(GR, GR, 0.045, 48);
-      capG.rotateX(Math.PI / 2);
-      const cap = new THREE.Mesh(capG, this.M.disc);
-      cap.position.z = GZ + dz + (dz > 0 ? -0.022 : 0.022);
-      this.engineGroup.add(cap);
+    /* Stack stiffener rings */
+    [0.85, 1.45].forEach(dy => {
+      const rg = new THREE.TorusGeometry(0.24, 0.018, 6, 24);
+      const rm = new THREE.Mesh(rg, this.M.disc);
+      rm.position.set(0, 0.72 + dy, 1.65);
+      this.engineGroup.add(rm);
     });
 
-    /* ── Axial cooling fins (36 radial blades along casing) ── */
-    const FIN_N = 36;
-    for (let i = 0; i < FIN_N; i++) {
-      const a     = (i / FIN_N) * Math.PI * 2;
-      const pivot = new THREE.Group();
-      pivot.rotation.z = a;
-      pivot.position.z = GZ;
-      const finG = new THREE.BoxGeometry(0.006, 0.028, GL * 0.90);
-      const fin  = new THREE.Mesh(finG, this.M.disc);
-      fin.position.y = GR + 0.014;
-      pivot.add(fin);
-      this.engineGroup.add(pivot);
+    /* Rain cap */
+    const rcG = new THREE.CylinderGeometry(0.29, 0.22, 0.06, 20);
+    const rc  = new THREE.Mesh(rcG, this.M.disc);
+    rc.position.set(0, 2.65, 1.65);
+    this.engineGroup.add(rc);
+  }
+
+  /* ─── Generator Enclosure Box ───────────────────── */
+  _buildGeneratorBox() {
+    /* Rectangular industrial generator housing (right side of package) */
+    const GZ = 3.25, GW = 1.22, GH = 1.26, GD = 1.82, CY = 0.07;
+    const mat = this.M.genBody;
+
+    const addPlane = (w, h, rx, ry, px, py, pz) => {
+      const g = new THREE.PlaneGeometry(w, h);
+      if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
+      const m = new THREE.Mesh(g, mat);
+      m.position.set(px, py, pz);
+      this.engineGroup.add(m);
+    };
+    addPlane(GW, GH,  0,           0,          0,      CY,          GZ + GD / 2);
+    addPlane(GW, GH,  0,           Math.PI,    0,      CY,          GZ - GD / 2);
+    addPlane(GD, GH,  0,           Math.PI/2, -GW/2,   CY,          GZ);
+    addPlane(GD, GH,  0,          -Math.PI/2,  GW/2,   CY,          GZ);
+    addPlane(GW, GD, -Math.PI / 2, 0,          0,      CY + GH / 2, GZ);
+
+    /* Vertical ventilation slats on near face */
+    const SN = 10;
+    for (let i = 0; i < SN; i++) {
+      const t  = i / (SN - 1);
+      const sx = -GW * 0.40 + t * GW * 0.80;
+      const sg = new THREE.BoxGeometry(0.016, GH * 0.52, 0.038);
+      const sl = new THREE.Mesh(sg, this.M.darkMetal);
+      sl.position.set(sx, CY + GH * 0.06, GZ + GD / 2 + 0.006);
+      sl.rotation.y = 0.22;
+      this.engineGroup.add(sl);
     }
 
-    /* ── Stator winding rings (copper coils, 12 evenly spaced) ── */
-    const COIL_N = 12;
-    for (let i = 0; i < COIL_N; i++) {
-      const z     = GZ - GL * 0.43 + i * (GL * 0.86 / (COIL_N - 1));
-      const coilG = new THREE.TorusGeometry(GR * 0.70, 0.015, 8, 40);
-      coilG.rotateX(Math.PI / 2);
-      const coil  = new THREE.Mesh(coilG, this.M.copper);
-      coil.position.z = z;
-      this.engineGroup.add(coil);
-    }
+    /* Control panel door on near-right side */
+    const panG = new THREE.BoxGeometry(0.36, GH * 0.40, 0.032);
+    const pan  = new THREE.Mesh(panG, this.M.darkMetal);
+    pan.position.set(-GW * 0.28, CY - GH * 0.05, GZ + GD / 2 + 0.018);
+    this.engineGroup.add(pan);
 
-    /* ── Rotor (spins with LP spool) ── */
-    const rotorG = new THREE.CylinderGeometry(0.155, 0.155, GL * 0.92, 28);
-    rotorG.rotateX(Math.PI / 2);
-    this.generatorRotor = new THREE.Mesh(rotorG, this.M.steelShaft);
+    /* Terminal wiring conduits */
+    [0.32, -0.32].forEach(ox => {
+      const cg = new THREE.CylinderGeometry(0.022, 0.022, 0.30, 10);
+      const c  = new THREE.Mesh(cg, this.M.steelShaft);
+      c.position.set(ox, CY + GH / 2 + 0.15, GZ + GD * 0.22);
+      this.engineGroup.add(c);
+    });
+
+    /* Drive coupling shaft stub */
+    const shG = new THREE.CylinderGeometry(0.065, 0.065, 0.65, 20);
+    shG.rotateX(Math.PI / 2);
+    const sh  = new THREE.Mesh(shG, this.M.steelShaft);
+    sh.position.z = GZ - GD / 2 - 0.325;
+    this.lpGroup.add(sh);
+
+    /* Generator rotor (spins with LP) */
+    const rotG = new THREE.CylinderGeometry(0.14, 0.14, GD * 0.90, 24);
+    rotG.rotateX(Math.PI / 2);
+    this.generatorRotor = new THREE.Mesh(rotG, this.M.steelShaft);
     this.generatorRotor.position.z = GZ;
     this.lpGroup.add(this.generatorRotor);
 
-    /* 4 salient pole pieces on rotor (copper, spin with LP) */
-    for (let i = 0; i < 4; i++) {
-      const a    = (i / 4) * Math.PI * 2;
-      const poleG = new THREE.BoxGeometry(0.058, 0.062, GL * 0.88);
-      const pole  = new THREE.Mesh(poleG, this.M.copper);
-      pole.position.set(Math.cos(a) * 0.175, Math.sin(a) * 0.175, GZ);
-      pole.rotation.z = a;
-      this.lpGroup.add(pole);
-    }
-
-    /* ── Drive coupling shaft (between engine exhaust and generator) ── */
-    const shaftG = new THREE.CylinderGeometry(0.065, 0.065, 0.62, 20);
-    shaftG.rotateX(Math.PI / 2);
-    const shaft  = new THREE.Mesh(shaftG, this.M.steelShaft);
-    shaft.position.z = GZ - GL / 2 - 0.31 - 0.02;
-    this.lpGroup.add(shaft);
-
-    /* ── Terminal box + power output glow ── */
-    const boxG  = new THREE.BoxGeometry(0.16, 0.11, 0.14);
-    const box   = new THREE.Mesh(boxG, this.M.darkMetal);
-    box.position.set(0, GR + 0.055, GZ + GL * 0.22);
-    this.engineGroup.add(box);
-
-    /* cyan terminal bushing */
-    const bushG = new THREE.CylinderGeometry(0.025, 0.025, 0.08, 12);
-    const bushMat = new THREE.MeshStandardMaterial({
-      color: 0x00d4ff, emissive: new THREE.Color(0x00aaff),
-      emissiveIntensity: 2.5, metalness: 0.2, roughness: 0.5,
-    });
-    [-0.04, 0, 0.04].forEach(ox => {
-      const bush = new THREE.Mesh(bushG, bushMat);
-      bush.position.set(ox, GR + 0.11 + 0.04, GZ + GL * 0.22);
-      this.engineGroup.add(bush);
-    });
-
-    /* glowing output orb */
-    const orbG   = new THREE.SphereGeometry(0.05, 14, 10);
-    const orbMat = new THREE.MeshStandardMaterial({
-      color: 0x00d4ff, emissive: new THREE.Color(0x00d4ff),
-      emissiveIntensity: 3.0, transparent: true, opacity: 0.80,
-      depthWrite: false,
-    });
-    this.termGlow = new THREE.Mesh(orbG, orbMat);
-    this.termGlow.position.set(0, GR + 0.21, GZ + GL * 0.22);
-    this.engineGroup.add(this.termGlow);
-
-    /* ── Generator point lights ── */
-    this.generatorLight = new THREE.PointLight(0x00d4ff, 4.5, 2.8);
-    this.generatorLight.position.set(0, GR + 0.22, GZ + GL * 0.22);
+    /* Generator point light */
+    this.generatorLight = new THREE.PointLight(0x00d4ff, 3.5, 2.5);
+    this.generatorLight.position.set(0, CY + 0.8, GZ);
     this.engineGroup.add(this.generatorLight);
 
-    /* warm amber light from copper windings */
-    const coilLight = new THREE.PointLight(0xff8800, 1.2, 1.6);
-    coilLight.position.set(0, 0, GZ);
-    this.engineGroup.add(coilLight);
-
-    /* ── Output shaft stub ── */
-    const outG   = new THREE.CylinderGeometry(0.07, 0.07, 0.28, 20);
-    outG.rotateX(Math.PI / 2);
-    const outShaft = new THREE.Mesh(outG, this.M.steelShaft);
-    outShaft.position.z = GZ + GL / 2 + 0.14;
-    this.lpGroup.add(outShaft);
+    this.termGlow = null;
   }
 
   /* ═══════════════════════════════════════════════════
@@ -755,7 +858,7 @@ class TurbofanEngine3D {
         id: 'GENOUT', label: 'GEN OUTPUT', detail: 'Alternator Power',   unit: 'MW',
         valueFn: t => (28.4 + Math.sin(t * 0.0006) * 0.8).toFixed(1),
         severity: 'normal',   alarm: false,
-        color: C.N,  pos: [0, 0.42, 2.95],
+        color: C.N,  pos: [0, 0.42, 3.25],
       },
     ];
 
@@ -947,42 +1050,42 @@ class TurbofanEngine3D {
   }
 
   /* ─── Camera path ───────────────────────────────── */
-  /* Phase 0→0.20 : head-on intake approach (fly into the fan)
-     Phase 0.20→0.42: arc to side, revealing fan & compressors
-     Phase 0.42→0.65: combustor zone side view
-     Phase 0.65→1.00: pull back to reveal full engine + generator */
+  /* Phase 0→0.22 : wide 3/4 overview of full package (inlet box, enclosure, gen)
+     Phase 0.22→0.45: zoom toward turbine core window — see stage casings
+     Phase 0.45→0.68: close-up compressor → combustor interior
+     Phase 0.68→1.00: pull back to show generator box + exhaust stack */
   _updateCamera() {
     const p = this.scrollProgress;
     let tx, ty, tz, lx, ly, lz;
 
-    if (p < 0.20) {
-      /* Approach dead-ahead into the intake */
-      const t = p / 0.20;
-      tx =  0.05;
-      ty =  0.12 - t * 0.04;
-      tz = -4.8  + t * 3.0;   /* -4.8 → -1.8 */
-      lx = 0; ly = 0; lz = -0.8 + t * 0.6;
-    } else if (p < 0.42) {
-      /* Arc to side: see fan blades & compressor interior */
-      const t = (p - 0.20) / 0.22;
-      tx =  0.05 + t * 2.15;
-      ty =  0.08 + t * 1.42;
-      tz = -1.80 + t * 1.50;  /* -1.8 → -0.3 */
-      lx = 0; ly = 0; lz = -0.2 + t * 0.55;
-    } else if (p < 0.65) {
-      /* Combustor side view */
-      const t = (p - 0.42) / 0.23;
-      tx =  2.20 - t * 0.40;
-      ty =  1.50 + t * 0.10;
-      tz = -0.30 + t * 1.60;  /* -0.3 → 1.3 */
-      lx = 0; ly = 0; lz = 0.35 + t * 0.75;
+    if (p < 0.22) {
+      /* Wide overview — whole package visible */
+      const t = p / 0.22;
+      tx = 4.5 - t * 1.6;
+      ty = 2.8 - t * 0.9;
+      tz = 3.5 - t * 2.8;   /* 3.5 → 0.7 */
+      lx = 0; ly = 0.1; lz = 0.5 - t * 0.6;
+    } else if (p < 0.45) {
+      /* Zoom in toward the turbine window in the enclosure */
+      const t = (p - 0.22) / 0.23;
+      tx = 2.9 - t * 1.2;
+      ty = 1.9 - t * 0.8;
+      tz = 0.7 - t * 1.1;   /* 0.7 → -0.4 */
+      lx = 0; ly = 0.05; lz = -0.1 - t * 0.35;
+    } else if (p < 0.68) {
+      /* Close-up on compressor stages → combustor */
+      const t = (p - 0.45) / 0.23;
+      tx = 1.7 - t * 0.15;
+      ty = 1.1 + t * 0.05;
+      tz = -0.4 + t * 1.0;
+      lx = 0; ly = 0; lz = -0.45 + t * 0.85;
     } else {
-      /* Pull back wide — reveal engine + generator together */
-      const t = (p - 0.65) / 0.35;
-      tx =  1.80 + t * 2.40;
-      ty =  1.60 + t * 0.90;
-      tz =  1.30 + t * 3.20;  /* 1.3 → 4.5 (behind generator) */
-      lx = 0; ly = 0.05; lz = 1.10 + t * 1.90;  /* look toward generator */
+      /* Pull back wide — generator box + exhaust stack in frame */
+      const t = (p - 0.68) / 0.32;
+      tx = 1.55 + t * 3.0;
+      ty = 1.15 + t * 1.5;
+      tz = 0.6  + t * 3.5;   /* → generator end at z≈4 */
+      lx = 0; ly = 0.15; lz = 0.4 + t * 2.8;
     }
 
     const k = 0.065;
@@ -998,17 +1101,9 @@ class TurbofanEngine3D {
   }
 
   /* ─── Clipping ──────────────────────────────────── */
-  _updateClipping() {
-    const p = this.scrollProgress;
-    let d;
-    if (p < 0.08) {
-      d = 0.65;
-    } else {
-      const t = Math.min(1, (p - 0.08) / 0.30);
-      d = 0.65 - t * 0.92;  /* 0.65 → -0.27 */
-    }
-    this.clipPlane.constant = d;
-  }
+  /* No clip plane on the industrial design — turbine visible through
+     the open enclosure window. Method kept as no-op for compatibility. */
+  _updateClipping() {}
 }
 
 /* ── Bootstrap ───────────────────────────────────── */
@@ -1033,11 +1128,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const panelR  = document.getElementById('panel-ai');
 
   const STAGES = [
-    { p: 0.00, l: 'Intake Approach',         h: 'Fly into the engine front' },
-    { p: 0.20, l: 'Entering the Engine',     h: 'Nacelle cutaway revealing' },
-    { p: 0.42, l: 'Fan & Compressor Stages', h: '18 titanium fan blades · dual LP/HP spool' },
-    { p: 0.65, l: 'Combustion Chamber',      h: 'Fuel injectors · EGT sensors active' },
-    { p: 0.82, l: 'Generator Module',        h: 'Power turbine driving the alternator' },
+    { p: 0.00, l: 'Gas Turbine Package',     h: 'Inlet filter · turbine core · generator' },
+    { p: 0.22, l: 'Turbine Core',            h: 'Exposed stage casings · flanged joints' },
+    { p: 0.45, l: 'Compressor & Combustor',  h: '18-blade fan · LP/HP spool · annular combustor' },
+    { p: 0.68, l: 'Power Turbine',           h: 'HPT + LPT · driving the generator shaft' },
+    { p: 0.85, l: 'Generator Module',        h: 'Alternator enclosure · electrical output' },
   ];
 
   if (typeof ScrollTrigger !== 'undefined') {
