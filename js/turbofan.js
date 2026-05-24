@@ -22,9 +22,9 @@ class TurbofanEngine3D {
     this.fanAngle       = 0;
     this.hpAngle        = 0;
 
-    /* smooth camera target */
-    this._camPos  = new THREE.Vector3(3.2, 2.0, -2.8);
-    this._camLook = new THREE.Vector3(0, 0, 0);
+    /* smooth camera target — start from front intake approach */
+    this._camPos  = new THREE.Vector3(0.05, 0.12, -4.8);
+    this._camLook = new THREE.Vector3(0, 0, -0.8);
     /* reusable projection vector — avoids per-frame GC */
     this._tmpV    = new THREE.Vector3();
 
@@ -200,6 +200,19 @@ class TurbofanEngine3D {
         metalness: 0.88,
         roughness: 0.22,
       }),
+      /* ── Generator materials ── */
+      copper: new THREE.MeshStandardMaterial({
+        color:             0xc87030,
+        metalness:         0.95,
+        roughness:         0.18,
+        emissive:          new THREE.Color(0x1a0500),
+        emissiveIntensity: 0.3,
+      }),
+      genBody: new THREE.MeshStandardMaterial({
+        color:     0x1c2a38,
+        metalness: 0.85,
+        roughness: 0.30,
+      }),
     };
 
     /* LP spool (fan + LPC + LPT + spinner + plug) */
@@ -222,6 +235,7 @@ class TurbofanEngine3D {
     this._buildHPT();
     this._buildLPT();
     this._buildExhaust();
+    this._buildGenerator();
 
     /* slight yaw so we see the 3/4 view at start */
     this.engineGroup.rotation.y = 0.12;
@@ -236,13 +250,14 @@ class TurbofanEngine3D {
   _buildNacelle() {
     /* LatheGeometry profile: Vector2(radius, y-along-engine)
        after rotateX(PI/2): y-axis → z-axis (forward = positive z) */
+    /* Power-turbine nacelle: smooth bullet capsule, wide enough to
+       fully enclose all fan/compressor stages (max r=0.575 at mid) */
     const outerPts = [
-      [0.01, -1.62], [0.05, -1.58], [0.14, -1.50],
-      [0.25, -1.38], [0.36, -1.22], [0.44, -1.04],
-      [0.49, -0.82], [0.515,-0.50], [0.525, 0.00],
-      [0.525, 0.50], [0.515, 0.90], [0.50,  1.22],
-      [0.45,  1.48], [0.36,  1.68], [0.22,  1.82],
-      [0.08,  1.92], [0.01,  1.96],
+      [0.01, -2.00], [0.09, -1.90], [0.24, -1.72],
+      [0.40, -1.46], [0.51, -1.14], [0.548,-0.76],
+      [0.568,-0.34], [0.575, 0.12], [0.562, 0.58],
+      [0.540, 0.98], [0.500, 1.36], [0.420, 1.62],
+      [0.280, 1.84], [0.100, 1.96], [0.010, 2.02],
     ].map(([r, z]) => new THREE.Vector2(r, z));
 
     const innerPts = outerPts.slice(3, -3).map(v =>
@@ -264,9 +279,10 @@ class TurbofanEngine3D {
 
   /* ─── Spinner cone ──────────────────────────────── */
   _buildSpinner() {
-    const g = new THREE.ConeGeometry(0.10, 0.42, 36);
+    /* Ogive nose cone — sits deep inside the widened intake */
+    const g = new THREE.ConeGeometry(0.10, 0.52, 36);
     g.rotateX(-Math.PI / 2);
-    g.translate(0, 0, -1.42);
+    g.translate(0, 0, -1.72);
     const cap = new THREE.Mesh(g, this.M.steelShaft);
     this.lpGroup.add(cap);
 
@@ -275,16 +291,17 @@ class TurbofanEngine3D {
       (() => { const dg = new THREE.CylinderGeometry(0.10,0.10,0.035,32); dg.rotateX(Math.PI/2); return dg; })(),
       this.M.disc
     );
-    disc.position.z = -1.21;
+    disc.position.z = -1.46;
     this.lpGroup.add(disc);
   }
 
   /* ─── Fan ───────────────────────────────────────── */
   _buildFan() {
-    const FAN_Z    = -1.15;
+    /* FAN_Z=-0.88: nacelle inner radius here ≈0.538 — fan tip (0.455) safely inside */
+    const FAN_Z    = -0.88;
     const N        = 18;
     const HUB_R    = 0.102;
-    const TIP_R    = 0.465;
+    const TIP_R    = 0.455;
     const SPAN     = TIP_R - HUB_R;
     const CHORD    = 0.060;  /* blade chord */
     const THICK    = 0.012;  /* blade thickness */
@@ -544,6 +561,143 @@ class TurbofanEngine3D {
   }
 
   /* ═══════════════════════════════════════════════════
+     ELECTRIC GENERATOR MODULE
+     Couples to LP power-turbine shaft — industrial
+     alternator style (salient poles, stator windings,
+     cooling fins, glowing power output terminal)
+  ═══════════════════════════════════════════════════ */
+  _buildGenerator() {
+    const GZ  = 2.95;   /* generator center Z (behind exhaust) */
+    const GR  = 0.34;   /* outer casing radius */
+    const GL  = 1.85;   /* generator length */
+
+    /* ── Transition / coupling bell ── */
+    const bellG = new THREE.CylinderGeometry(0.20, GR * 0.90, 0.32, 36, 1, true);
+    bellG.rotateX(Math.PI / 2);
+    const bell = new THREE.Mesh(bellG, this.M.darkMetal);
+    bell.position.z = GZ - GL / 2 - 0.16;
+    this.engineGroup.add(bell);
+
+    /* coupling ring flange */
+    const flangeG = new THREE.TorusGeometry(GR * 0.88, 0.022, 8, 40);
+    flangeG.rotateX(Math.PI / 2);
+    const flange = new THREE.Mesh(flangeG, this.M.disc);
+    flange.position.z = GZ - GL / 2;
+    this.engineGroup.add(flange);
+
+    /* ── Main casing (smooth steel cylinder) ── */
+    const casingG = new THREE.CylinderGeometry(GR, GR, GL, 56, 1, true);
+    casingG.rotateX(Math.PI / 2);
+    this.genCasing = new THREE.Mesh(casingG, this.M.genBody);
+    this.genCasing.position.z = GZ;
+    this.engineGroup.add(this.genCasing);
+
+    /* end caps */
+    [-GL / 2, GL / 2].forEach(dz => {
+      const capG = new THREE.CylinderGeometry(GR, GR, 0.045, 48);
+      capG.rotateX(Math.PI / 2);
+      const cap = new THREE.Mesh(capG, this.M.disc);
+      cap.position.z = GZ + dz + (dz > 0 ? -0.022 : 0.022);
+      this.engineGroup.add(cap);
+    });
+
+    /* ── Axial cooling fins (36 radial blades along casing) ── */
+    const FIN_N = 36;
+    for (let i = 0; i < FIN_N; i++) {
+      const a     = (i / FIN_N) * Math.PI * 2;
+      const pivot = new THREE.Group();
+      pivot.rotation.z = a;
+      pivot.position.z = GZ;
+      const finG = new THREE.BoxGeometry(0.006, 0.028, GL * 0.90);
+      const fin  = new THREE.Mesh(finG, this.M.disc);
+      fin.position.y = GR + 0.014;
+      pivot.add(fin);
+      this.engineGroup.add(pivot);
+    }
+
+    /* ── Stator winding rings (copper coils, 12 evenly spaced) ── */
+    const COIL_N = 12;
+    for (let i = 0; i < COIL_N; i++) {
+      const z     = GZ - GL * 0.43 + i * (GL * 0.86 / (COIL_N - 1));
+      const coilG = new THREE.TorusGeometry(GR * 0.70, 0.015, 8, 40);
+      coilG.rotateX(Math.PI / 2);
+      const coil  = new THREE.Mesh(coilG, this.M.copper);
+      coil.position.z = z;
+      this.engineGroup.add(coil);
+    }
+
+    /* ── Rotor (spins with LP spool) ── */
+    const rotorG = new THREE.CylinderGeometry(0.155, 0.155, GL * 0.92, 28);
+    rotorG.rotateX(Math.PI / 2);
+    this.generatorRotor = new THREE.Mesh(rotorG, this.M.steelShaft);
+    this.generatorRotor.position.z = GZ;
+    this.lpGroup.add(this.generatorRotor);
+
+    /* 4 salient pole pieces on rotor (copper, spin with LP) */
+    for (let i = 0; i < 4; i++) {
+      const a    = (i / 4) * Math.PI * 2;
+      const poleG = new THREE.BoxGeometry(0.058, 0.062, GL * 0.88);
+      const pole  = new THREE.Mesh(poleG, this.M.copper);
+      pole.position.set(Math.cos(a) * 0.175, Math.sin(a) * 0.175, GZ);
+      pole.rotation.z = a;
+      this.lpGroup.add(pole);
+    }
+
+    /* ── Drive coupling shaft (between engine exhaust and generator) ── */
+    const shaftG = new THREE.CylinderGeometry(0.065, 0.065, 0.62, 20);
+    shaftG.rotateX(Math.PI / 2);
+    const shaft  = new THREE.Mesh(shaftG, this.M.steelShaft);
+    shaft.position.z = GZ - GL / 2 - 0.31 - 0.02;
+    this.lpGroup.add(shaft);
+
+    /* ── Terminal box + power output glow ── */
+    const boxG  = new THREE.BoxGeometry(0.16, 0.11, 0.14);
+    const box   = new THREE.Mesh(boxG, this.M.darkMetal);
+    box.position.set(0, GR + 0.055, GZ + GL * 0.22);
+    this.engineGroup.add(box);
+
+    /* cyan terminal bushing */
+    const bushG = new THREE.CylinderGeometry(0.025, 0.025, 0.08, 12);
+    const bushMat = new THREE.MeshStandardMaterial({
+      color: 0x00d4ff, emissive: new THREE.Color(0x00aaff),
+      emissiveIntensity: 2.5, metalness: 0.2, roughness: 0.5,
+    });
+    [-0.04, 0, 0.04].forEach(ox => {
+      const bush = new THREE.Mesh(bushG, bushMat);
+      bush.position.set(ox, GR + 0.11 + 0.04, GZ + GL * 0.22);
+      this.engineGroup.add(bush);
+    });
+
+    /* glowing output orb */
+    const orbG   = new THREE.SphereGeometry(0.05, 14, 10);
+    const orbMat = new THREE.MeshStandardMaterial({
+      color: 0x00d4ff, emissive: new THREE.Color(0x00d4ff),
+      emissiveIntensity: 3.0, transparent: true, opacity: 0.80,
+      depthWrite: false,
+    });
+    this.termGlow = new THREE.Mesh(orbG, orbMat);
+    this.termGlow.position.set(0, GR + 0.21, GZ + GL * 0.22);
+    this.engineGroup.add(this.termGlow);
+
+    /* ── Generator point lights ── */
+    this.generatorLight = new THREE.PointLight(0x00d4ff, 4.5, 2.8);
+    this.generatorLight.position.set(0, GR + 0.22, GZ + GL * 0.22);
+    this.engineGroup.add(this.generatorLight);
+
+    /* warm amber light from copper windings */
+    const coilLight = new THREE.PointLight(0xff8800, 1.2, 1.6);
+    coilLight.position.set(0, 0, GZ);
+    this.engineGroup.add(coilLight);
+
+    /* ── Output shaft stub ── */
+    const outG   = new THREE.CylinderGeometry(0.07, 0.07, 0.28, 20);
+    outG.rotateX(Math.PI / 2);
+    const outShaft = new THREE.Mesh(outG, this.M.steelShaft);
+    outShaft.position.z = GZ + GL / 2 + 0.14;
+    this.lpGroup.add(outShaft);
+  }
+
+  /* ═══════════════════════════════════════════════════
      SENSOR NODES + HUD
      Each sensor: emissive sphere + billboard ring pulses
      + screen-space CSS label with live telemetry values
@@ -559,13 +713,13 @@ class TurbofanEngine3D {
         id: 'BRG1',  label: 'BRG-1',      detail: 'Front Bearing',      unit: 'g',
         valueFn: t => (0.82 + Math.sin(t * 0.0011) * 0.02).toFixed(2),
         severity: 'normal',   alarm: false,
-        color: C.N,  pos: [0, 0, -1.05],
+        color: C.N,  pos: [0, 0, -0.92],
       },
       {
         id: 'FAN',   label: 'FAN η_is',   detail: 'Isentropic Eff.',    unit: '%',
         valueFn: t => (94.2 + Math.sin(t * 0.0008) * 0.4).toFixed(1),
         severity: 'warning',  alarm: true,  alarmText: 'BELOW BASELINE',
-        color: C.W,  pos: [0, 0.32, -1.12],
+        color: C.W,  pos: [0, 0.33, -0.88],
       },
       {
         id: 'T3P3',  label: 'T3 / P3',   detail: 'HPC Exit',           unit: 'bar',
@@ -596,6 +750,12 @@ class TurbofanEngine3D {
         valueFn: t => (1.42 + Math.sin(t * 0.0013) * 0.06).toFixed(2),
         severity: 'warning',  alarm: true,  alarmText: 'VIBRATION ELEVATED',
         color: C.W,  pos: [0, 0, 1.30],
+      },
+      {
+        id: 'GENOUT', label: 'GEN OUTPUT', detail: 'Alternator Power',   unit: 'MW',
+        valueFn: t => (28.4 + Math.sin(t * 0.0006) * 0.8).toFixed(1),
+        severity: 'normal',   alarm: false,
+        color: C.N,  pos: [0, 0.42, 2.95],
       },
     ];
 
@@ -698,8 +858,8 @@ class TurbofanEngine3D {
   _updateSensorHUD() {
     if (!this._sensors || !this._hudEl) return;
 
-    /* Fade the whole HUD in once interior is revealed */
-    const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.27) / 0.15));
+    /* Fade the whole HUD in once interior is revealed (after nacelle cuts open) */
+    const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.32) / 0.15));
     this._hudEl.style.opacity = String(vis);
     if (vis < 0.02) return;
 
@@ -771,6 +931,15 @@ class TurbofanEngine3D {
     if (this.combustorLight)
       this.combustorLight.intensity = 7.0 * flk + 3.0;
 
+    /* generator electric glow pulse */
+    if (this.generatorLight) {
+      const gf = 0.82 + 0.18 * Math.sin(this.time * 0.0044) * Math.sin(this.time * 0.0071);
+      this.generatorLight.intensity = 3.5 * gf + 1.0;
+    }
+    if (this.termGlow) {
+      this.termGlow.material.emissiveIntensity = 2.5 + 0.8 * Math.sin(this.time * 0.0053);
+    }
+
     this._updateCamera();
     this._updateClipping();
     this._updateSensorMarkers(dt);
@@ -778,44 +947,50 @@ class TurbofanEngine3D {
   }
 
   /* ─── Camera path ───────────────────────────────── */
+  /* Phase 0→0.20 : head-on intake approach (fly into the fan)
+     Phase 0.20→0.42: arc to side, revealing fan & compressors
+     Phase 0.42→0.65: combustor zone side view
+     Phase 0.65→1.00: pull back to reveal full engine + generator */
   _updateCamera() {
     const p = this.scrollProgress;
-    let tx, ty, tz, lz;
+    let tx, ty, tz, lx, ly, lz;
 
-    if (p < 0.18) {
-      /* exterior: 3/4 front-right view */
-      const t = p / 0.18;
-      tx = 3.2 - t * 0.6;
-      ty = 2.0 - t * 0.4;
-      tz = -2.8 + t * 1.0;
-      lz = -0.3 + t * 0.3;
+    if (p < 0.20) {
+      /* Approach dead-ahead into the intake */
+      const t = p / 0.20;
+      tx =  0.05;
+      ty =  0.12 - t * 0.04;
+      tz = -4.8  + t * 3.0;   /* -4.8 → -1.8 */
+      lx = 0; ly = 0; lz = -0.8 + t * 0.6;
     } else if (p < 0.42) {
-      /* zooming in, fan & compressor focus */
-      const t = (p - 0.18) / 0.24;
-      tx = 2.6 - t * 0.9;
-      ty = 1.6 - t * 0.35;
-      tz = -1.8 + t * 1.4;
-      lz =  0.0 + t * 0.35;
-    } else if (p < 0.66) {
-      /* combustor zone */
-      const t = (p - 0.42) / 0.24;
-      tx = 1.7 - t * 0.15;
-      ty = 1.25 + t * 0.05;
-      tz = -0.4 + t * 0.9;
-      lz =  0.35 + t * 0.20;
+      /* Arc to side: see fan blades & compressor interior */
+      const t = (p - 0.20) / 0.22;
+      tx =  0.05 + t * 2.15;
+      ty =  0.08 + t * 1.42;
+      tz = -1.80 + t * 1.50;  /* -1.8 → -0.3 */
+      lx = 0; ly = 0; lz = -0.2 + t * 0.55;
+    } else if (p < 0.65) {
+      /* Combustor side view */
+      const t = (p - 0.42) / 0.23;
+      tx =  2.20 - t * 0.40;
+      ty =  1.50 + t * 0.10;
+      tz = -0.30 + t * 1.60;  /* -0.3 → 1.3 */
+      lx = 0; ly = 0; lz = 0.35 + t * 0.75;
     } else {
-      /* wide: full engine */
-      const t = (p - 0.66) / 0.34;
-      tx = 1.55 + t * 1.3;
-      ty = 1.30 + t * 0.55;
-      tz =  0.5 + t * 1.35;
-      lz =  0.55 + t * 0.35;
+      /* Pull back wide — reveal engine + generator together */
+      const t = (p - 0.65) / 0.35;
+      tx =  1.80 + t * 2.40;
+      ty =  1.60 + t * 0.90;
+      tz =  1.30 + t * 3.20;  /* 1.3 → 4.5 (behind generator) */
+      lx = 0; ly = 0.05; lz = 1.10 + t * 1.90;  /* look toward generator */
     }
 
     const k = 0.065;
     this._camPos.x  += (tx - this._camPos.x)  * k;
     this._camPos.y  += (ty - this._camPos.y)  * k;
     this._camPos.z  += (tz - this._camPos.z)  * k;
+    this._camLook.x += (lx - this._camLook.x) * k;
+    this._camLook.y += (ly - this._camLook.y) * k;
     this._camLook.z += (lz - this._camLook.z) * k;
 
     this.camera.position.copy(this._camPos);
@@ -858,11 +1033,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const panelR  = document.getElementById('panel-ai');
 
   const STAGES = [
-    { p: 0.00, l: 'Exterior View',           h: 'Scroll to zoom inside the engine' },
-    { p: 0.18, l: 'Entering the Engine',     h: 'Nacelle cutaway revealing' },
-    { p: 0.38, l: 'Fan & Compressor Stages', h: '18 titanium fan blades · LP & HP shafts' },
-    { p: 0.60, l: 'Combustion Chamber',      h: 'Fuel igniting · EGT sensors active' },
-    { p: 0.80, l: 'Turbine & Exhaust',       h: '6 turbine stages · data streams live' },
+    { p: 0.00, l: 'Intake Approach',         h: 'Fly into the engine front' },
+    { p: 0.20, l: 'Entering the Engine',     h: 'Nacelle cutaway revealing' },
+    { p: 0.42, l: 'Fan & Compressor Stages', h: '18 titanium fan blades · dual LP/HP spool' },
+    { p: 0.65, l: 'Combustion Chamber',      h: 'Fuel injectors · EGT sensors active' },
+    { p: 0.82, l: 'Generator Module',        h: 'Power turbine driving the alternator' },
   ];
 
   if (typeof ScrollTrigger !== 'undefined') {
@@ -883,8 +1058,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (label) label.textContent = cur.l;
         if (hint)  hint.textContent  = cur.h;
 
-        if (panelL) panelL.classList.toggle('visible', p > 0.38);
-        if (panelR) panelR.classList.toggle('visible', p > 0.78);
+        if (panelL) panelL.classList.toggle('visible', p > 0.42);
+        if (panelR) panelR.classList.toggle('visible', p > 0.82);
       },
     });
   }
