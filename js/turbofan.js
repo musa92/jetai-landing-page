@@ -116,17 +116,21 @@ class TurbofanEngine3D {
      ENGINE GEOMETRY
   ═══════════════════════════════════════════════════ */
   _buildEngine() {
-    /* No clipping plane — turbine core is openly visible through enclosure window */
-    this.clipPlane = null;
+    /* Clip plane: normal (-1,0,0), constant d
+       Visible when: -x + d >= 0  →  x <= d
+       d=0.70 → whole casing visible   d=0.00 → near half cut, interior exposed */
+    this.clipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0.70);
 
     /* ── material palette ── */
     this.M = {
-      /* stage casings: industrial steel finish */
+      /* stage casings — clipped open to expose interior when camera zooms in */
       nacelle: new THREE.MeshStandardMaterial({
-        color:     0x2e3e50,
-        metalness: 0.88,
-        roughness: 0.26,
-        side:      THREE.DoubleSide,
+        color:          0x2e3e50,
+        metalness:      0.88,
+        roughness:      0.26,
+        side:           THREE.DoubleSide,
+        clippingPlanes: [this.clipPlane],
+        clipShadows:    true,
       }),
       nacelleInner: new THREE.MeshStandardMaterial({
         color:    0x121e2c,
@@ -961,8 +965,8 @@ class TurbofanEngine3D {
   _updateSensorHUD() {
     if (!this._sensors || !this._hudEl) return;
 
-    /* Fade the whole HUD in once interior is revealed (after nacelle cuts open) */
-    const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.32) / 0.15));
+    /* Fade HUD in as stage casings cut open (scroll 0.38 → 0.52) */
+    const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.38) / 0.14));
     this._hudEl.style.opacity = String(vis);
     if (vis < 0.02) return;
 
@@ -1101,9 +1105,17 @@ class TurbofanEngine3D {
   }
 
   /* ─── Clipping ──────────────────────────────────── */
-  /* No clip plane on the industrial design — turbine visible through
-     the open enclosure window. Method kept as no-op for compatibility. */
-  _updateClipping() {}
+  /* Cuts the near side of stage casings open as camera zooms in.
+     d=0.70 (no cut) → d≈-0.05 (half cylinder removed, interior visible) */
+  _updateClipping() {
+    const p = this.scrollProgress;
+    if (p < 0.30) {
+      this.clipPlane.constant = 0.70;
+      return;
+    }
+    const t = Math.min(1, (p - 0.30) / 0.28);   /* 0.30 → 0.58 */
+    this.clipPlane.constant = 0.70 - t * 0.78;   /* 0.70 → -0.08 */
+  }
 }
 
 /* ── Bootstrap ───────────────────────────────────── */
