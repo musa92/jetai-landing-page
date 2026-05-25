@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,7 +22,16 @@ jobs:
       - name: Add Wasmer to PATH
         run: echo "$HOME/.wasmer/bin" >> $GITHUB_PATH
 
+      - name: Verify Wasmer install
+        run: wasmer --version
+
+      - name: Bump package version
+        run: |
+          VERSION="0.1.$(date +%Y%m%d%H%M%S)"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" wasmer.toml
+          echo "Deploying version $VERSION"
+
       - name: Deploy to Wasmer Edge
         env:
           WASMER_TOKEN: ${{ secrets.WASMER_TOKEN }}
-        run: wasmer deploy --non-interactive
+        run: wasmer deploy --non-interactive --verbose
