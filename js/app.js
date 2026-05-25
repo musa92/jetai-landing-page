@@ -7,6 +7,22 @@
 // ── Register GSAP Plugins ──────────────────────
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
+// ── Nav logo scroll spin ───────────────────────
+(function initLogoSpin() {
+  const logo = document.getElementById('nav-logo-spin');
+  if (!logo) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const deg = window.scrollY * 0.12;
+      logo.style.transform = `rotate(${deg}deg)`;
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
 // ── Navbar scroll state ────────────────────────
 (function initNavbar() {
   const nav = document.getElementById('navbar');
