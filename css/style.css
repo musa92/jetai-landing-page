@@ -121,6 +121,7 @@ input, select, button { font-family: inherit; }
 }
 /* IQ accent — orange to match the electric bolt in the logo mark */
 .logo-accent { color: var(--orange); }
+.logo-dot { color: rgba(0, 212, 255, 0.55); font-size: 0.8em; }
 
 /* Logo fan blades hint-spin on hover */
 .nav-logo svg {
@@ -982,6 +983,24 @@ input, select, button { font-family: inherit; }
   font-size: 0.7rem;
   color: var(--text-3);
 }
+/* Browser tab (favicon + site name) */
+.browser-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 7px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+}
+.browser-tab-name {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
 .browser-actions { flex-shrink: 0; }
 .browser-live-badge {
   display: flex;
@@ -1871,6 +1890,22 @@ input, select, button { font-family: inherit; }
 /* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */
+/* ── 1280px: tighten dashboard padding ── */
+@media (max-width: 1280px) {
+  .dashboard-layout { gap: 28px; padding: 0 32px; }
+}
+
+/* ── 1100px: shrink iphone slightly ── */
+@media (max-width: 1100px) {
+  .dashboard-layout { gap: 20px; padding: 0 24px; }
+  .iphone-wrap { width: 265px; }
+  .iphone-frame { width: 265px; }
+  .iphone-screen { min-height: 520px; }
+  .dash-app { height: 510px; }
+  .browser-tab-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* ── 1024px: general grid collapses ── */
 @media (max-width: 1024px) {
   .problem-grid { grid-template-columns: repeat(2, 1fr); }
   .integration-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1880,28 +1915,64 @@ input, select, button { font-family: inherit; }
   .flow-diagram { gap: 8px; }
   .flow-arrow { min-width: 48px; }
   .flow-node { width: 130px; padding: 20px 16px; }
+  /* Dashboard: stack vertically */
+  .dashboard-layout { flex-direction: column; align-items: center; }
+  .browser-chrome { width: 100%; max-width: 780px; }
+  .dash-app { height: 480px; }
+  .iphone-wrap { width: 280px; }
+  .iphone-frame { width: 280px; }
+  .iphone-screen { min-height: 540px; }
 }
+
+/* ── 768px: mobile layout ── */
 @media (max-width: 768px) {
   .nav-links { display: none; }
-  .nav-inner { padding: 0 24px; }
-  .hero-content { padding: 100px 24px 80px; }
-  .section-container { padding: 0 24px; }
+  .nav-inner { padding: 0 20px; }
+  .hero-content { padding: 100px 20px 80px; }
+  .section-container { padding: 0 20px; }
   .problem-grid,
   .integration-grid,
   .features-grid,
-  .metrics-grid { padding: 0 24px; grid-template-columns: 1fr; }
+  .metrics-grid { padding: 0 20px; grid-template-columns: 1fr; }
   .feature-card-large { grid-column: span 1; }
-  .flow-diagram { flex-direction: column; padding: 0 24px; }
+  .flow-diagram { flex-direction: column; padding: 0 20px; }
   .flow-arrow { transform: rotate(90deg); }
   .hero-stats { flex-direction: column; }
   .stat-divider { width: 40px; height: 1px; }
-  .dashboard-mockup { margin: 0 24px; padding: 0; }
-  .dash-charts-row { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .footer-inner { flex-direction: column; padding: 0 24px; gap: 32px; }
-  .footer-links { flex-wrap: wrap; gap: 32px; }
-  .footer-bottom { flex-direction: column; gap: 8px; padding: 20px 24px; }
+  .footer-inner { flex-direction: column; padding: 0 20px; gap: 28px; }
+  .footer-links { flex-wrap: wrap; gap: 28px; }
+  .footer-bottom { flex-direction: column; gap: 8px; padding: 20px 20px; }
   .info-panel-left, .info-panel-right { display: none; }
+  /* Dashboard on mobile */
+  .dashboard-layout { padding: 0 16px; gap: 20px; }
+  .browser-tab { display: none; }  /* hide tab on small screens */
+  .dash-app { height: 440px; }
+  .dash-sidenav { width: 40px; padding: 12px 0; gap: 6px; }
+  .dash-nav-item { width: 30px; height: 30px; }
+  .dash-nav-logo { margin-bottom: 10px; }
+  .kpi-row { gap: 3px; }
+  .kpi-card { padding: 8px 10px; }
+  .kpi-value { font-size: 0.9rem; }
+  .kpi-trend { display: none; }
+  .fleet-sparkline { display: none; }
+  .iphone-wrap { display: none; }  /* hide phone on mobile — browser takes full width */
+  .browser-urlbar span { font-size: 0.6rem; }
+}
+
+/* ── 480px: very small phones ── */
+@media (max-width: 480px) {
+  .hero-headline { font-size: 1.8rem; }
+  .hero-sub { font-size: 0.9rem; }
+  .hero-actions { flex-direction: column; gap: 12px; }
+  .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
+  .section-headline { font-size: 1.6rem; }
+  .dash-app { height: 400px; }
+  .dash-topbar-right { display: none; }
+  .dash-panels-row { flex-direction: column; overflow-y: auto; }
+  .dash-panel-left, .dash-panel-right { flex: none; max-height: none; }
+  .browser-titlebar { padding: 8px 10px; gap: 6px; }
+  .bdot { width: 10px; height: 10px; }
 }
 
 /* ══════════════════════════════════════════════
