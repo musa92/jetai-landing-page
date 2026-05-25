@@ -22,9 +22,9 @@ class TurbofanEngine3D {
     this.fanAngle       = 0;
     this.hpAngle        = 0;
 
-    /* smooth camera target — start wide 3/4 overview of the whole package */
-    this._camPos  = new THREE.Vector3(4.5, 2.8, 3.5);
-    this._camLook = new THREE.Vector3(0, 0.1, 0.5);
+    /* Titan 350: wide side view of full package at start */
+    this._camPos  = new THREE.Vector3(9.5, 4.8, 0.0);
+    this._camLook = new THREE.Vector3(0, 0.6, -0.5);
     /* reusable projection vector — avoids per-frame GC */
     this._tmpV    = new THREE.Vector3();
 
@@ -58,7 +58,7 @@ class TurbofanEngine3D {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x020810);
     /* faint depth fog */
-    this.scene.fog = new THREE.FogExp2(0x020810, 0.055);
+    this.scene.fog = new THREE.FogExp2(0x020810, 0.022);  /* reduced for larger scene */
   }
 
   /* ─── Lights ────────────────────────────────────── */
@@ -96,7 +96,7 @@ class TurbofanEngine3D {
   _initCamera() {
     const el  = this.canvas.parentElement;
     const asp = el ? el.clientWidth / el.clientHeight : 16 / 9;
-    this.camera = new THREE.PerspectiveCamera(42, asp, 0.05, 60);
+    this.camera = new THREE.PerspectiveCamera(42, asp, 0.05, 120);
     this.camera.position.copy(this._camPos);
     this.camera.lookAt(this._camLook);
   }
@@ -116,10 +116,10 @@ class TurbofanEngine3D {
      ENGINE GEOMETRY
   ═══════════════════════════════════════════════════ */
   _buildEngine() {
-    /* Clip plane: normal (-1,0,0), constant d
-       Visible when: -x + d >= 0  →  x <= d
-       d=0.70 → whole casing visible   d=0.00 → near half cut, interior exposed */
-    this.clipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0.70);
+    /* Clip plane: top-down Y cut — reveals turbine interior like a cutaway diagram
+       normal (0,-1,0), constant d: visible when y <= d
+       d=0.65 → nothing cut   d→-0.07 → top half removed, blades visible */
+    this.clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.65);
 
     /* ── material palette ── */
     this.M = {
@@ -230,12 +230,12 @@ class TurbofanEngine3D {
     this.engineGroup.add(this.lpGroup);
     this.engineGroup.add(this.hpGroup);
 
-    /* ── Surrounding package structure (built first, behind turbine) ── */
+    /* ── Titan 350 package structure ── */
     this._buildSkidFrame();
-    this._buildInletBox();
-    this._buildEnclosure();
+    this._buildControlCabinet();
+    this._buildInletSystem();
 
-    /* ── Turbine core — exposed inside the enclosure window ── */
+    /* ── Exposed turbine core (16-stage axial, annular combustor) ── */
     this._buildCoreCasings();
     this._buildSpinner();
     this._buildFan();
@@ -248,12 +248,13 @@ class TurbofanEngine3D {
     this._buildLPT();
     this._buildExhaust();
 
-    /* ── Exhaust system + generator box ── */
-    this._buildExhaustStack();
+    /* ── Hot section, coupling, alternator ── */
+    this._buildExhaustCollector();
+    this._buildGearbox();
     this._buildGeneratorBox();
 
-    /* slight yaw for 3/4 industrial view */
-    this.engineGroup.rotation.y = 0.18;
+    /* 3/4 view yaw — match the Titan 350 product render angle */
+    this.engineGroup.rotation.y = 0.30;
 
     /* sensor markers added after geometry, before scene add */
     this._buildSensorMarkers();
@@ -261,113 +262,158 @@ class TurbofanEngine3D {
     this.scene.add(this.engineGroup);
   }
 
-  /* ─── Steel Skid Frame ──────────────────────────── */
+  /* ─── Titan 350 Skid Frame ──────────────────────── */
+  /* Heavy-duty common baseplate, full package length */
   _buildSkidFrame() {
-    const BY = -0.60;   /* beam y center */
-    const Z1 = -2.30, Z2 = 2.20;
-    const XO =  0.58;
-    const BH =  0.055, BW = 0.038;
+    const BY = -0.68, Z1 = -6.50, Z2 = 5.90, XO = 1.10;
     const mat = this.M.darkMetal;
 
-    /* two longitudinal I-beams */
+    /* Two longitudinal main stringers */
     [-XO, XO].forEach(x => {
-      const g = new THREE.BoxGeometry(BW, BH, Z2 - Z1);
+      const g = new THREE.BoxGeometry(0.06, 0.14, Z2 - Z1);
       const b = new THREE.Mesh(g, mat);
-      b.position.set(x, BY, (Z1 + Z2) / 2);
+      b.position.set(x, BY - 0.07, (Z1 + Z2) / 2);
       this.engineGroup.add(b);
+      /* top flange cap */
+      const fg = new THREE.BoxGeometry(0.16, 0.024, Z2 - Z1);
+      const fl = new THREE.Mesh(fg, mat);
+      fl.position.set(x, BY, (Z1 + Z2) / 2);
+      this.engineGroup.add(fl);
     });
-    /* cross members */
-    for (let z = Z1; z <= Z2 + 0.01; z += 0.72) {
-      const g = new THREE.BoxGeometry(XO * 2 + BW, BH * 0.7, BW);
+
+    /* Cross beams */
+    for (let z = Z1; z <= Z2 + 0.01; z += 0.65) {
+      const g = new THREE.BoxGeometry(XO * 2 + 0.12, 0.09, 0.058);
       const c = new THREE.Mesh(g, mat);
-      c.position.set(0, BY, z);
+      c.position.set(0, BY - 0.045, z);
       this.engineGroup.add(c);
     }
-    /* four corner legs */
-    [Z1 + 0.28, Z2 - 0.28].forEach(z => [-XO, XO].forEach(x => {
-      const g = new THREE.BoxGeometry(0.028, 0.20, 0.028);
-      const l = new THREE.Mesh(g, mat);
-      l.position.set(x, BY - 0.10, z);
-      this.engineGroup.add(l);
-    }));
+
+    /* Bottom plate */
+    const bg = new THREE.BoxGeometry(XO * 2 + 0.12, 0.045, Z2 - Z1);
+    const bm = new THREE.Mesh(bg, mat);
+    bm.position.set(0, BY - 0.135, (Z1 + Z2) / 2);
+    this.engineGroup.add(bm);
+
+    /* Leg supports every ~2 units */
+    [-5.8, -3.8, -1.2, 1.5, 3.8, 5.5].forEach(z => {
+      [-XO, XO].forEach(x => {
+        const lg = new THREE.BoxGeometry(0.09, 0.22, 0.09);
+        const lm = new THREE.Mesh(lg, mat);
+        lm.position.set(x, BY - 0.24, z);
+        this.engineGroup.add(lm);
+      });
+    });
   }
 
-  /* ─── Inlet Air Filter Box ───────────────────────── */
-  _buildInletBox() {
-    /* Large louvered intake plenum on the negative-Z end */
-    const CZ = -3.20, IW = 1.30, IH = 1.18, ID = 1.72, CY = 0.0;
+  /* ─── Control & Starter Cabinet ─────────────────── */
+  /* Small electrical cabinet on the far-left end of skid */
+  _buildControlCabinet() {
+    const CZ = -5.90, CW = 0.78, CH = 1.25, CD = 0.85, CY = -0.06;
     const mat = this.M.enclosureSteel;
+    const imat = this.M.darkMetal;
 
-    const addPanel = (w, h, rx, ry, px, py, pz) => {
+    const addP = (w, h, rx, ry, px, py, pz) => {
       const g = new THREE.PlaneGeometry(w, h);
       if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
       const m = new THREE.Mesh(g, mat);
       m.position.set(px, py, pz);
       this.engineGroup.add(m);
     };
-    addPanel(IW, IH,  0,          Math.PI,      0,      CY,          CZ - ID / 2); /* back */
-    addPanel(ID, IH,  0,          Math.PI / 2, -IW / 2, CY,          CZ);          /* left */
-    addPanel(ID, IH,  0,         -Math.PI / 2,  IW / 2, CY,          CZ);          /* right */
-    addPanel(IW, ID, -Math.PI / 2, 0,           0,      CY + IH / 2, CZ);          /* top */
+    const cy = CY + CH / 2;
+    addP(CW, CH, 0, 0,          0,    cy, CZ + CD / 2);
+    addP(CW, CH, 0, Math.PI,    0,    cy, CZ - CD / 2);
+    addP(CD, CH, 0, Math.PI/2, -CW/2, cy, CZ);
+    addP(CD, CH, 0,-Math.PI/2,  CW/2, cy, CZ);
+    addP(CW, CD,-Math.PI/2, 0,  0, CY + CH, CZ);
 
-    /* horizontal intake louver fins */
-    const FN = 12;
-    for (let i = 0; i < FN; i++) {
-      const fy = CY - IH / 2 + (i + 0.5) * (IH / FN);
-      const g  = new THREE.BoxGeometry(IW * 0.88, 0.018, 0.055);
-      const f  = new THREE.Mesh(g, this.M.darkMetal);
-      f.position.set(0, fy, CZ + ID / 2);
-      f.rotation.x = 0.20;
-      this.engineGroup.add(f);
-    }
+    /* Door panel */
+    const dp = new THREE.BoxGeometry(CW * 0.42, CH * 0.48, 0.028);
+    const dm = new THREE.Mesh(dp, imat);
+    dm.position.set(-CW * 0.18, cy + CH * 0.0, CZ + CD / 2 + 0.015);
+    this.engineGroup.add(dm);
 
-    /* connecting duct from plenum to engine inlet */
-    const dg = new THREE.CylinderGeometry(0.53, 0.56, 0.82, 36, 1, true);
-    dg.rotateX(Math.PI / 2);
-    const d  = new THREE.Mesh(dg, this.M.darkMetal);
-    d.position.z = CZ + ID / 2 + 0.41;
-    this.engineGroup.add(d);
-
-    /* inlet bellmouth ring */
-    const bg = new THREE.TorusGeometry(0.530, 0.040, 12, 52);
-    bg.rotateX(Math.PI / 2);
-    const bm = new THREE.Mesh(bg, this.M.disc);
-    bm.position.z = CZ + ID / 2 + 0.83;
-    this.engineGroup.add(bm);
+    /* Conduit runs down from cabinet */
+    const cg = new THREE.CylinderGeometry(0.020, 0.020, 0.40, 8);
+    const cm = new THREE.Mesh(cg, imat);
+    cm.position.set(CW * 0.28, CY - 0.20, CZ + CD * 0.25);
+    this.engineGroup.add(cm);
   }
 
-  /* ─── Outer Rectangular Enclosure ───────────────── */
-  _buildEnclosure() {
-    /* Open-sided industrial housing — turbine visible through near window */
-    const Z1 = -2.05, Z2 = 2.10, EX = 0.70, EY1 = -0.56, EY2 = 0.74;
-    const EW = Z2 - Z1, EH = EY2 - EY1, CY = (EY1 + EY2) / 2;
-    const mat = this.M.enclosureSteel;
+  /* ─── Titan 350 Air Inlet Hopper / Silencer ─────── */
+  /* Large upward-angled plenum + inlet silencer, left of turbine */
+  _buildInletSystem() {
+    const mat  = this.M.enclosureSteel;
+    const imat = this.M.darkMetal;
 
-    const addFlat = (w, h, rx, ry, px, py, pz) => {
+    /* ── Main silencer plenum (tall rectangular box) ── */
+    const PZ1 = -5.10, PZ2 = -3.40;
+    const PX  = 0.88,  PY_BOT = -0.20, PY_TOP = 2.50;
+    const PW  = PX * 2, PH = PY_TOP - PY_BOT, PD = PZ2 - PZ1;
+    const PCY = (PY_BOT + PY_TOP) / 2, PCZ = (PZ1 + PZ2) / 2;
+
+    const addFace = (w, h, rx, ry, px, py, pz) => {
       const g = new THREE.PlaneGeometry(w, h);
       if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
       const m = new THREE.Mesh(g, mat);
-      m.position.set(px, py, pz); this.engineGroup.add(m);
+      m.position.set(px, py, pz);
+      this.engineGroup.add(m);
     };
-    addFlat(EW, EH,  0,          Math.PI / 2, -EX, CY, (Z1 + Z2) / 2); /* back wall */
-    addFlat(EX*2, EW,-Math.PI/2, 0,            0, EY2, (Z1 + Z2) / 2); /* top */
-    addFlat(EX*2, EW, Math.PI/2, 0,            0, EY1, (Z1 + Z2) / 2); /* floor */
 
-    /* corner uprights (viewer side is open — the "window") */
-    [[EX, Z1], [EX, Z2], [-EX, Z1], [-EX, Z2]].forEach(([x, z]) => {
-      const g = new THREE.BoxGeometry(0.038, EH + 0.04, 0.038);
-      const c = new THREE.Mesh(g, this.M.disc);
-      c.position.set(x, CY, z); this.engineGroup.add(c);
+    addFace(PW, PH, 0, 0,         0,    PCY, PZ2);       /* near face */
+    addFace(PW, PH, 0, Math.PI,   0,    PCY, PZ1);       /* far face */
+    addFace(PD, PH, 0, Math.PI/2,-PX,   PCY, PCZ);       /* left */
+    addFace(PD, PH, 0,-Math.PI/2,  PX,  PCY, PCZ);       /* right */
+    addFace(PW, PD,-Math.PI/2, 0,  0, PY_TOP, PCZ);      /* top */
+    addFace(PW, PD, Math.PI/2, 0,  0, PY_BOT, PCZ);      /* bottom */
+
+    /* Horizontal louver baffles on near face */
+    for (let i = 0; i < 20; i++) {
+      const fy = PY_BOT + (i + 0.5) * (PH / 20);
+      const fg = new THREE.BoxGeometry(PW * 0.86, 0.018, 0.060);
+      const fm = new THREE.Mesh(fg, imat);
+      fm.position.set(0, fy, PZ2 + 0.004);
+      fm.rotation.x = 0.14;
+      this.engineGroup.add(fm);
+    }
+
+    /* Corner uprights / stiffeners */
+    [[PX, PZ1],[PX, PZ2],[-PX, PZ1],[-PX, PZ2]].forEach(([x, z]) => {
+      const cg = new THREE.BoxGeometry(0.042, PH + 0.04, 0.042);
+      const cm = new THREE.Mesh(cg, this.M.disc);
+      cm.position.set(x, PCY, z);
+      this.engineGroup.add(cm);
     });
-    /* horizontal edge rails on viewer side */
-    [EY1, EY2].forEach(y => {
-      const g = new THREE.BoxGeometry(0.026, 0.026, EW + 0.04);
-      const r = new THREE.Mesh(g, this.M.disc);
-      r.position.set(EX, y, (Z1 + Z2) / 2); this.engineGroup.add(r);
-    });
-    /* vertical end panels (z-ends) partial — leave turbine shaft holes */
-    [Z1, Z2].forEach((z, i) => {
-      addFlat(EX * 2, EH, 0, i === 0 ? Math.PI : 0, 0, CY, z);
+
+    /* ── Angled transition section (hopper narrows to duct) ── */
+    /* Tapered box from plenum bottom → inlet duct */
+    const TZ1 = -3.80, TZ2 = -2.50;
+    const tg  = new THREE.BoxGeometry(PW * 0.58, 0.62, TZ2 - TZ1);
+    const tm  = new THREE.Mesh(tg, mat);
+    tm.position.set(0, -0.52, (TZ1 + TZ2) / 2);
+    this.engineGroup.add(tm);
+
+    /* Flanged inlet duct to compressor */
+    const dg = new THREE.CylinderGeometry(0.55, 0.58, 0.68, 36, 1, true);
+    dg.rotateX(Math.PI / 2);
+    const dm = new THREE.Mesh(dg, imat);
+    dm.position.z = -2.18;
+    this.engineGroup.add(dm);
+
+    /* Inlet bellmouth */
+    const bg = new THREE.TorusGeometry(0.55, 0.042, 12, 52);
+    bg.rotateX(Math.PI / 2);
+    const bm = new THREE.Mesh(bg, this.M.disc);
+    bm.position.z = -1.85;
+    this.engineGroup.add(bm);
+
+    /* Access pipes / blow-off valves on side of plenum */
+    [PCZ - 0.40, PCZ + 0.40].forEach(z => {
+      const pg = new THREE.CylinderGeometry(0.030, 0.030, 0.30, 8);
+      const pm = new THREE.Mesh(pg, imat);
+      pm.rotation.z = Math.PI / 2;
+      pm.position.set(PX + 0.15, PCY - PH * 0.22, z);
+      this.engineGroup.add(pm);
     });
   }
 
@@ -702,105 +748,175 @@ class TurbofanEngine3D {
     this.lpGroup.add(plug);
   }
 
-  /* ─── Exhaust Transition + Stack ───────────────── */
-  _buildExhaustStack() {
-    /* Rectangular transition duct going upward from turbine exit */
-    const txG = new THREE.BoxGeometry(0.54, 0.50, 0.65);
-    const tx  = new THREE.Mesh(txG, this.M.darkMetal);
-    tx.position.set(0, 0.30, 1.65);
-    this.engineGroup.add(tx);
+  /* ─── Titan 350 Exhaust Collector ───────────────── */
+  /* Large upward-facing rectangular exhaust plenum above the hot turbine */
+  _buildExhaustCollector() {
+    const mat  = this.M.enclosureSteel;
+    const imat = this.M.darkMetal;
+    const ECZ  = 1.10, EX = 0.75, EZH = 0.58;   /* center, half-width, half-depth */
+    const EYB  = 0.52, EYT = 2.75;               /* bottom / top Y */
+    const EH   = EYT - EYB, CY = (EYB + EYT) / 2;
 
-    /* Elbow flange */
-    const efG = new THREE.BoxGeometry(0.50, 0.08, 0.50);
-    const ef  = new THREE.Mesh(efG, this.M.disc);
-    ef.position.set(0, 0.60, 1.65);
-    this.engineGroup.add(ef);
-
-    /* Vertical stack */
-    const stG = new THREE.CylinderGeometry(0.22, 0.26, 1.90, 26);
-    const st  = new THREE.Mesh(stG, this.M.darkMetal);
-    st.position.set(0, 1.65, 1.65);
-    this.engineGroup.add(st);
-
-    /* Stack stiffener rings */
-    [0.85, 1.45].forEach(dy => {
-      const rg = new THREE.TorusGeometry(0.24, 0.018, 6, 24);
-      const rm = new THREE.Mesh(rg, this.M.disc);
-      rm.position.set(0, 0.72 + dy, 1.65);
-      this.engineGroup.add(rm);
-    });
-
-    /* Rain cap */
-    const rcG = new THREE.CylinderGeometry(0.29, 0.22, 0.06, 20);
-    const rc  = new THREE.Mesh(rcG, this.M.disc);
-    rc.position.set(0, 2.65, 1.65);
-    this.engineGroup.add(rc);
-  }
-
-  /* ─── Generator Enclosure Box ───────────────────── */
-  _buildGeneratorBox() {
-    /* Rectangular industrial generator housing (right side of package) */
-    const GZ = 3.25, GW = 1.22, GH = 1.26, GD = 1.82, CY = 0.07;
-    const mat = this.M.genBody;
-
-    const addPlane = (w, h, rx, ry, px, py, pz) => {
+    const addP = (w, h, rx, ry, px, py, pz) => {
       const g = new THREE.PlaneGeometry(w, h);
       if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
       const m = new THREE.Mesh(g, mat);
       m.position.set(px, py, pz);
       this.engineGroup.add(m);
     };
-    addPlane(GW, GH,  0,           0,          0,      CY,          GZ + GD / 2);
-    addPlane(GW, GH,  0,           Math.PI,    0,      CY,          GZ - GD / 2);
-    addPlane(GD, GH,  0,           Math.PI/2, -GW/2,   CY,          GZ);
-    addPlane(GD, GH,  0,          -Math.PI/2,  GW/2,   CY,          GZ);
-    addPlane(GW, GD, -Math.PI / 2, 0,          0,      CY + GH / 2, GZ);
+    /* Four vertical sides */
+    addP(EX*2, EH, 0, 0,         0,  CY, ECZ + EZH);   /* near */
+    addP(EX*2, EH, 0, Math.PI,   0,  CY, ECZ - EZH);   /* far */
+    addP(EZH*2, EH, 0,-Math.PI/2, EX,  CY, ECZ);        /* right */
+    addP(EZH*2, EH, 0, Math.PI/2,-EX,  CY, ECZ);        /* left */
+    /* Top opening rim */
+    addP(EX*2, EZH*2,-Math.PI/2, 0, 0, EYT, ECZ);
 
-    /* Vertical ventilation slats on near face */
-    const SN = 10;
-    for (let i = 0; i < SN; i++) {
-      const t  = i / (SN - 1);
-      const sx = -GW * 0.40 + t * GW * 0.80;
-      const sg = new THREE.BoxGeometry(0.016, GH * 0.52, 0.038);
-      const sl = new THREE.Mesh(sg, this.M.darkMetal);
-      sl.position.set(sx, CY + GH * 0.06, GZ + GD / 2 + 0.006);
-      sl.rotation.y = 0.22;
-      this.engineGroup.add(sl);
-    }
-
-    /* Control panel door on near-right side */
-    const panG = new THREE.BoxGeometry(0.36, GH * 0.40, 0.032);
-    const pan  = new THREE.Mesh(panG, this.M.darkMetal);
-    pan.position.set(-GW * 0.28, CY - GH * 0.05, GZ + GD / 2 + 0.018);
-    this.engineGroup.add(pan);
-
-    /* Terminal wiring conduits */
-    [0.32, -0.32].forEach(ox => {
-      const cg = new THREE.CylinderGeometry(0.022, 0.022, 0.30, 10);
-      const c  = new THREE.Mesh(cg, this.M.steelShaft);
-      c.position.set(ox, CY + GH / 2 + 0.15, GZ + GD * 0.22);
-      this.engineGroup.add(c);
+    /* Horizontal stiffening ribs */
+    [0.28, 0.55, 0.80].forEach(t => {
+      const rg = new THREE.BoxGeometry(EX*2+0.04, 0.032, 0.032);
+      const rm = new THREE.Mesh(rg, this.M.disc);
+      rm.position.set(0, EYB + t * EH, ECZ + EZH + 0.002);
+      this.engineGroup.add(rm);
     });
 
-    /* Drive coupling shaft stub */
-    const shG = new THREE.CylinderGeometry(0.065, 0.065, 0.65, 20);
-    shG.rotateX(Math.PI / 2);
-    const sh  = new THREE.Mesh(shG, this.M.steelShaft);
-    sh.position.z = GZ - GD / 2 - 0.325;
-    this.lpGroup.add(sh);
+    /* Top cap frame */
+    const tfG = new THREE.BoxGeometry(EX*2 + 0.05, 0.048, EZH*2 + 0.05);
+    const tf  = new THREE.Mesh(tfG, this.M.disc);
+    tf.position.set(0, EYT, ECZ);
+    this.engineGroup.add(tf);
 
-    /* Generator rotor (spins with LP) */
-    const rotG = new THREE.CylinderGeometry(0.14, 0.14, GD * 0.90, 24);
-    rotG.rotateX(Math.PI / 2);
-    this.generatorRotor = new THREE.Mesh(rotG, this.M.steelShaft);
+    /* Bottom transition flange (connects to turbine exit) */
+    const bfG = new THREE.BoxGeometry(EX*2 - 0.06, 0.060, EZH*2 - 0.06);
+    const bf  = new THREE.Mesh(bfG, this.M.disc);
+    bf.position.set(0, EYB, ECZ);
+    this.engineGroup.add(bf);
+
+    /* Cross brace pipe on the side */
+    const pg = new THREE.CylinderGeometry(0.025, 0.025, EH * 0.55, 8);
+    const pm = new THREE.Mesh(pg, imat);
+    pm.position.set(EX + 0.025, CY, ECZ);
+    this.engineGroup.add(pm);
+  }
+
+  /* ─── Reduction Gearbox / Coupling ──────────────── */
+  _buildGearbox() {
+    const GZ = 2.60, GR = 0.38, GL = 0.85;
+    const mat = this.M.darkMetal;
+
+    /* Main casing */
+    const cg = new THREE.CylinderGeometry(GR, GR, GL, 32, 1, true);
+    cg.rotateX(Math.PI / 2);
+    const cm = new THREE.Mesh(cg, mat);
+    cm.position.z = GZ;
+    this.engineGroup.add(cm);
+
+    /* End flanges */
+    [GZ - GL/2, GZ + GL/2].forEach(z => {
+      const eg = new THREE.TorusGeometry(GR * 0.92, 0.028, 8, 30);
+      eg.rotateX(Math.PI / 2);
+      const em = new THREE.Mesh(eg, this.M.disc);
+      em.position.z = z;
+      this.engineGroup.add(em);
+    });
+
+    /* Oil cooler box on side */
+    const ocG = new THREE.BoxGeometry(0.12, 0.26, 0.28);
+    const oc  = new THREE.Mesh(ocG, mat);
+    oc.position.set(GR + 0.06, 0.13, GZ + 0.18);
+    this.engineGroup.add(oc);
+
+    /* Oil cooler fins */
+    for (let i = 0; i < 6; i++) {
+      const fg = new THREE.BoxGeometry(0.028, 0.22, 0.006);
+      const fm = new THREE.Mesh(fg, this.M.disc);
+      fm.position.set(GR + 0.06 + i * 0.016 - 0.04, 0.13, GZ + 0.18);
+      this.engineGroup.add(fm);
+    }
+
+    /* Mounting feet */
+    [-GR*0.45, GR*0.45].forEach(x => {
+      const mg = new THREE.BoxGeometry(0.16, 0.09, GL * 0.48);
+      const mm = new THREE.Mesh(mg, this.M.disc);
+      mm.position.set(x, -GR - 0.045, GZ);
+      this.engineGroup.add(mm);
+    });
+  }
+
+  /* ─── Titan 350 Generator (38 MW Alternator) ─────── */
+  _buildGeneratorBox() {
+    const GZ = 4.30, GW = 1.42, GH = 1.52, GD = 2.30, CY = 0.0;
+    const mat  = this.M.enclosureSteel;
+    const imat = this.M.darkMetal;
+
+    const addP = (w, h, rx, ry, px, py, pz) => {
+      const g = new THREE.PlaneGeometry(w, h);
+      if (rx) g.rotateX(rx); if (ry) g.rotateY(ry);
+      const m = new THREE.Mesh(g, mat);
+      m.position.set(px, py, pz);
+      this.engineGroup.add(m);
+    };
+    /* Six faces */
+    addP(GW, GH, 0, 0,         0,   CY, GZ + GD/2);       /* near */
+    addP(GW, GH, 0, Math.PI,   0,   CY, GZ - GD/2);       /* far */
+    addP(GD, GH, 0,-Math.PI/2,  GW/2, CY, GZ);            /* right */
+    addP(GD, GH, 0, Math.PI/2, -GW/2, CY, GZ);            /* left */
+    addP(GW, GD,-Math.PI/2, 0,  0, CY + GH/2, GZ);        /* top */
+    addP(GW, GD, Math.PI/2, 0,  0, CY - GH/2, GZ);        /* bottom */
+
+    /* Horizontal cooling vent strips on side faces */
+    const VN = 16;
+    for (let i = 0; i < VN; i++) {
+      const vy = CY - GH*0.40 + i * (GH * 0.80 / (VN - 1));
+      [GW/2 + 0.005, -(GW/2 + 0.005)].forEach(x => {
+        const vg = new THREE.BoxGeometry(0.032, 0.016, GD * 0.84);
+        const vm = new THREE.Mesh(vg, imat);
+        vm.position.set(x, vy, GZ);
+        this.engineGroup.add(vm);
+      });
+    }
+
+    /* Terminal box on top */
+    const tbG = new THREE.BoxGeometry(GW * 0.38, 0.24, 0.44);
+    const tb  = new THREE.Mesh(tbG, imat);
+    tb.position.set(0, CY + GH/2 + 0.12, GZ - GD * 0.12);
+    this.engineGroup.add(tb);
+
+    /* Exciter on the far end — smaller cylinder */
+    const exG = new THREE.CylinderGeometry(GW*0.28, GW*0.28, 0.58, 28, 1, true);
+    exG.rotateX(Math.PI / 2);
+    const exM = new THREE.Mesh(exG, mat);
+    exM.position.z = GZ + GD/2 + 0.29;
+    this.engineGroup.add(exM);
+
+    /* Exciter end cap */
+    const ecG = new THREE.CylinderGeometry(GW*0.28, GW*0.28, 0.038, 28);
+    ecG.rotateX(Math.PI / 2);
+    const ecM = new THREE.Mesh(ecG, this.M.disc);
+    ecM.position.z = GZ + GD/2 + 0.56;
+    this.engineGroup.add(ecM);
+
+    /* Mounting feet */
+    [GZ - GD*0.36, GZ + GD*0.36].forEach(z => {
+      [-GW/2, GW/2].forEach(x => {
+        const fg = new THREE.BoxGeometry(0.14, 0.11, 0.16);
+        const fm = new THREE.Mesh(fg, imat);
+        fm.position.set(x, CY - GH/2 - 0.055, z);
+        this.engineGroup.add(fm);
+      });
+    });
+
+    /* Generator rotor (spins with LP spool) */
+    const rg = new THREE.CylinderGeometry(0.22, 0.22, GD * 0.88, 28);
+    rg.rotateX(Math.PI / 2);
+    this.generatorRotor = new THREE.Mesh(rg, this.M.steelShaft);
     this.generatorRotor.position.z = GZ;
     this.lpGroup.add(this.generatorRotor);
 
-    /* Generator point light */
-    this.generatorLight = new THREE.PointLight(0x00d4ff, 3.5, 2.5);
-    this.generatorLight.position.set(0, CY + 0.8, GZ);
+    /* Power output point light */
+    this.generatorLight = new THREE.PointLight(0x00d4ff, 3.0, 3.5);
+    this.generatorLight.position.set(0, CY + 1.0, GZ);
     this.engineGroup.add(this.generatorLight);
-
     this.termGlow = null;
   }
 
@@ -862,7 +978,7 @@ class TurbofanEngine3D {
         id: 'GENOUT', label: 'GEN OUTPUT', detail: 'Alternator Power',   unit: 'MW',
         valueFn: t => (28.4 + Math.sin(t * 0.0006) * 0.8).toFixed(1),
         severity: 'normal',   alarm: false,
-        color: C.N,  pos: [0, 0.42, 3.25],
+        color: C.N,  pos: [0, 0.42, 4.30],
       },
     ];
 
@@ -1053,43 +1169,43 @@ class TurbofanEngine3D {
     this._updateSensorHUD();
   }
 
-  /* ─── Camera path ───────────────────────────────── */
-  /* Phase 0→0.22 : wide 3/4 overview of full package (inlet box, enclosure, gen)
-     Phase 0.22→0.45: zoom toward turbine core window — see stage casings
-     Phase 0.45→0.68: close-up compressor → combustor interior
-     Phase 0.68→1.00: pull back to show generator box + exhaust stack */
+  /* ─── Camera path — Solar Titan 350 style ──────── */
+  /* Phase 0→0.20: wide side view of entire package  (inlet→turbine→gen)
+     Phase 0.20→0.42: 3/4 orbit + zoom toward exposed turbine core
+     Phase 0.42→0.65: close-up interior with cutaway  (compressor/combustor)
+     Phase 0.65→1.00: drift right to reveal gearbox + 38 MW alternator */
   _updateCamera() {
     const p = this.scrollProgress;
     let tx, ty, tz, lx, ly, lz;
 
-    if (p < 0.22) {
-      /* Wide overview — whole package visible */
-      const t = p / 0.22;
-      tx = 4.5 - t * 1.6;
-      ty = 2.8 - t * 0.9;
-      tz = 3.5 - t * 2.8;   /* 3.5 → 0.7 */
-      lx = 0; ly = 0.1; lz = 0.5 - t * 0.6;
-    } else if (p < 0.45) {
-      /* Zoom in toward the turbine window in the enclosure */
-      const t = (p - 0.22) / 0.23;
-      tx = 2.9 - t * 1.2;
-      ty = 1.9 - t * 0.8;
-      tz = 0.7 - t * 1.1;   /* 0.7 → -0.4 */
-      lx = 0; ly = 0.05; lz = -0.1 - t * 0.35;
-    } else if (p < 0.68) {
-      /* Close-up on compressor stages → combustor */
-      const t = (p - 0.45) / 0.23;
-      tx = 1.7 - t * 0.15;
-      ty = 1.1 + t * 0.05;
-      tz = -0.4 + t * 1.0;
-      lx = 0; ly = 0; lz = -0.45 + t * 0.85;
+    if (p < 0.20) {
+      /* Full package elevation side-view */
+      const t = p / 0.20;
+      tx = 9.5  - t * 1.2;
+      ty = 4.8  - t * 0.8;
+      tz = 0.0  + t * 1.5;   /* drift toward generator end */
+      lx = 0; ly = 0.60; lz = -0.5 + t * 0.8;
+    } else if (p < 0.42) {
+      /* Zoom to turbine core 3/4 view */
+      const t = (p - 0.20) / 0.22;
+      tx = 8.3  - t * 5.0;   /* 8.3 → 3.3 */
+      ty = 4.0  - t * 2.2;   /* 4.0 → 1.8 */
+      tz = 1.5  - t * 2.5;   /* drift toward compressor side */
+      lx = 0; ly = 0.30 - t * 0.25; lz = 0.3 - t * 0.6;
+    } else if (p < 0.65) {
+      /* Interior cutaway close-up (clip opens during this phase) */
+      const t = (p - 0.42) / 0.23;
+      tx = 3.3  - t * 0.6;
+      ty = 1.8  - t * 0.5;
+      tz = -1.0 + t * 1.2;   /* slide along turbine length */
+      lx = 0; ly = 0.05; lz = -0.3 + t * 0.9;
     } else {
-      /* Pull back wide — generator box + exhaust stack in frame */
-      const t = (p - 0.68) / 0.32;
-      tx = 1.55 + t * 3.0;
-      ty = 1.15 + t * 1.5;
-      tz = 0.6  + t * 3.5;   /* → generator end at z≈4 */
-      lx = 0; ly = 0.15; lz = 0.4 + t * 2.8;
+      /* Reveal gearbox + alternator on the right */
+      const t = (p - 0.65) / 0.35;
+      tx = 2.7  + t * 6.5;   /* → 9.2 */
+      ty = 1.3  + t * 2.0;
+      tz = 0.2  + t * 5.0;   /* → 5.2, over the generator */
+      lx = 0; ly = 0.20; lz = -0.3 + t * 4.9;
     }
 
     const k = 0.065;
@@ -1105,16 +1221,13 @@ class TurbofanEngine3D {
   }
 
   /* ─── Clipping ──────────────────────────────────── */
-  /* Cuts the near side of stage casings open as camera zooms in.
-     d=0.70 (no cut) → d≈-0.05 (half cylinder removed, interior visible) */
+  /* Top-down Y cut reveals the turbine interior like a cutaway diagram.
+     d=0.65 (intact) → d=-0.07 (top half removed, blades visible) */
   _updateClipping() {
     const p = this.scrollProgress;
-    if (p < 0.30) {
-      this.clipPlane.constant = 0.70;
-      return;
-    }
-    const t = Math.min(1, (p - 0.30) / 0.28);   /* 0.30 → 0.58 */
-    this.clipPlane.constant = 0.70 - t * 0.78;   /* 0.70 → -0.08 */
+    if (p < 0.32) { this.clipPlane.constant = 0.65; return; }
+    const t = Math.min(1, (p - 0.32) / 0.26);
+    this.clipPlane.constant = 0.65 - t * 0.74;   /* 0.65 → -0.09 */
   }
 }
 
@@ -1140,11 +1253,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const panelR  = document.getElementById('panel-ai');
 
   const STAGES = [
-    { p: 0.00, l: 'Gas Turbine Package',     h: 'Inlet filter · turbine core · generator' },
-    { p: 0.22, l: 'Turbine Core',            h: 'Exposed stage casings · flanged joints' },
-    { p: 0.45, l: 'Compressor & Combustor',  h: '18-blade fan · LP/HP spool · annular combustor' },
-    { p: 0.68, l: 'Power Turbine',           h: 'HPT + LPT · driving the generator shaft' },
-    { p: 0.85, l: 'Generator Module',        h: 'Alternator enclosure · electrical output' },
+    { p: 0.00, l: 'Solar Titan 350 · 38 MW',   h: 'Inlet silencer · gas turbine · alternator' },
+    { p: 0.20, l: 'Gas Turbine Core',           h: '16-stage axial compressor · PR 24:1' },
+    { p: 0.42, l: 'Cutaway Interior',           h: 'SoLoNOx combustor · HPT · power turbine' },
+    { p: 0.65, l: 'Hot Section · EGT 490°C',   h: '2-stage gas gen turbine · 2-stage power turbine' },
+    { p: 0.85, l: 'Generator · 38.1 MW Output', h: 'Synchronous alternator · exciter · load coupling' },
   ];
 
   if (typeof ScrollTrigger !== 'undefined') {
