@@ -2,6 +2,7 @@
 name = "musa92/jetai-landing-page"
 version = "0.1.0"
 description = "Turbnetic.ai — Gas Turbine Intelligence Platform"
+private = true
 
 [dependencies]
 "wasmer/static-web-server" = "^1"
