@@ -1,0 +1,15 @@
+[package]
+name = "musa92/jetai-landing-page"
+version = "0.1.0"
+description = "Turbnetic.ai — Gas Turbine Intelligence Platform"
+
+[dependencies]
+"wasmer/static-web-server" = "^1"
+
+[fs]
+"/public" = "."   # static site: index.html lives at repo root
+
+[[command]]
+name = "script"
+module = "wasmer/static-web-server:webserver"
+runner = "https://webc.org/runner/wasi"
