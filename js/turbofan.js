@@ -252,6 +252,7 @@ class TurbofanEngine3D {
     this._buildExhaustCollector();
     this._buildGearbox();
     this._buildGeneratorBox();
+    this._buildPowerDriveline();   /* shaft + coupling + oil lines between gearbox and gen */
 
     /* 3/4 view yaw — match the Titan 350 product render angle */
     this.engineGroup.rotation.y = 0.30;
@@ -918,6 +919,104 @@ class TurbofanEngine3D {
     this.generatorLight.position.set(0, CY + 1.0, GZ);
     this.engineGroup.add(this.generatorLight);
     this.termGlow = null;
+  }
+
+  /* ─── Power Driveline: Gearbox ↔ Generator ─────── */
+  /* LP shaft extension + rigid disk coupling + lube oil lines */
+  _buildPowerDriveline() {
+    const imat = this.M.darkMetal;
+    const disc  = this.M.disc;
+
+    /* Geometry values derived from _buildGearbox / _buildGeneratorBox:
+       Gearbox:   center z=2.60, GL=0.85  → input z=2.175, output z=3.025
+       Generator: center z=4.30, GD=2.30  → front face z=3.15
+       Gen rotor: on lpGroup, starts at z = 4.30 - GD*0.44 = 3.288            */
+
+    /* ── LP shaft extension: turbine exit (z≈1.98) → gearbox input (z=2.175) ── */
+    const s1g = new THREE.CylinderGeometry(0.058, 0.058, 0.22, 20);
+    s1g.rotateX(Math.PI / 2);
+    const s1  = new THREE.Mesh(s1g, this.M.steelShaft);
+    s1.position.z = 2.078;   /* midpoint of 1.98 → 2.175 */
+    this.lpGroup.add(s1);
+
+    /* ── Gearbox input flange ring ── */
+    const fi1g = new THREE.TorusGeometry(0.155, 0.019, 8, 28);
+    fi1g.rotateX(Math.PI / 2);
+    const fi1  = new THREE.Mesh(fi1g, disc);
+    fi1.position.z = 2.175;
+    this.engineGroup.add(fi1);
+
+    /* ── Gearbox output flange ring ── */
+    const fo1g = new THREE.TorusGeometry(0.155, 0.019, 8, 28);
+    fo1g.rotateX(Math.PI / 2);
+    const fo1  = new THREE.Mesh(fo1g, disc);
+    fo1.position.z = 3.025;
+    this.engineGroup.add(fo1);
+
+    /* ── Flexible disk coupling between gearbox (3.025) and gen (3.15) ──
+       Three laminated discs: flange plate / flex element / flange plate    */
+    const coupZ = 3.088;
+    [{ r: 0.225, t: 0.014, m: disc },
+     { r: 0.130, t: 0.022, m: imat },
+     { r: 0.225, t: 0.014, m: disc }].forEach(({ r, t, m }, i) => {
+      const cg   = new THREE.CylinderGeometry(r, r, t, 28);
+      cg.rotateX(Math.PI / 2);
+      const cm   = new THREE.Mesh(cg, m);
+      cm.position.z = coupZ + (i - 1) * 0.022;
+      this.engineGroup.add(cm);
+    });
+
+    /* 6 coupling bolts evenly spaced */
+    for (let i = 0; i < 6; i++) {
+      const a   = (i / 6) * Math.PI * 2;
+      const bg  = new THREE.CylinderGeometry(0.007, 0.007, 0.068, 6);
+      const bm  = new THREE.Mesh(bg, disc);
+      bm.position.set(Math.cos(a) * 0.190, Math.sin(a) * 0.190, coupZ);
+      this.engineGroup.add(bm);
+    }
+
+    /* ── Generator input flange ring ── */
+    const fi2g = new THREE.TorusGeometry(0.185, 0.022, 8, 28);
+    fi2g.rotateX(Math.PI / 2);
+    const fi2  = new THREE.Mesh(fi2g, disc);
+    fi2.position.z = 3.15;
+    this.engineGroup.add(fi2);
+
+    /* ── LP coupling shaft: gearbox output (3.025) → gen rotor front (3.288) ── */
+    const s2g  = new THREE.CylinderGeometry(0.052, 0.052, 0.30, 20);
+    s2g.rotateX(Math.PI / 2);
+    const s2   = new THREE.Mesh(s2g, this.M.steelShaft);
+    s2.position.z = 3.163;   /* midpoint 3.025 → 3.288 */
+    this.lpGroup.add(s2);
+
+    /* ── Lube oil supply + return pipes (gearbox body → generator body) ── */
+    const oilSpan = 4.30 - 2.60;        /* 1.70 */
+    const oilCenZ = (2.60 + 4.30) / 2;  /* 3.45 */
+    [{x:  0.52, y: -0.28},
+     {x: -0.52, y: -0.28}].forEach(({ x, y }) => {
+      const pg = new THREE.CylinderGeometry(0.013, 0.013, oilSpan, 8);
+      pg.rotateX(Math.PI / 2);
+      const pm = new THREE.Mesh(pg, imat);
+      pm.position.set(x, y, oilCenZ);
+      this.engineGroup.add(pm);
+
+      /* pipe elbow at each end (small torus quarter-circle) */
+      [-1, 1].forEach(side => {
+        const eg = new THREE.TorusGeometry(0.04, 0.013, 8, 10, Math.PI / 2);
+        const em = new THREE.Mesh(eg, imat);
+        em.position.set(x, y - 0.04 * side, oilCenZ + side * oilSpan / 2);
+        em.rotation.x = side > 0 ? Math.PI : 0;
+        this.engineGroup.add(em);
+      });
+    });
+
+    /* ── Electrical cable tray on top (gen terminal → control cabinet) ── */
+    const trayLen = 4.30 + 1.15 - (-5.10);   /* terminal box end → inlet hopper */
+    const trayCenZ = (4.30 + 1.15 - 5.10) / 2;
+    const trayG = new THREE.BoxGeometry(0.10, 0.028, trayLen);
+    const trayM = new THREE.Mesh(trayG, imat);
+    trayM.position.set(0.55, 0.92, trayCenZ);
+    this.engineGroup.add(trayM);
   }
 
   /* ═══════════════════════════════════════════════════

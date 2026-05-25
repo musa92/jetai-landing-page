@@ -1903,3 +1903,69 @@ input, select, button { font-family: inherit; }
   .footer-bottom { flex-direction: column; gap: 8px; padding: 20px 24px; }
   .info-panel-left, .info-panel-right { display: none; }
 }
+
+/* ══════════════════════════════════════════════
+   DASHBOARD INTERACTIVE STATES
+══════════════════════════════════════════════ */
+
+/* Fleet row — selected by click */
+.fleet-row {
+  transition: background var(--transition), border-left-color var(--transition), transform 0.12s ease;
+}
+.fleet-row-selected {
+  background: rgba(0, 212, 255, 0.07) !important;
+  border-left-color: var(--cyan) !important;
+}
+.fleet-row-selected .fleet-name { color: var(--cyan); }
+.fleet-row:active { transform: scaleX(0.99); }
+
+/* KPI card — lift on hover, press on click */
+.kpi-card {
+  cursor: pointer;
+  transition: background var(--transition), transform 0.15s ease, box-shadow 0.15s ease;
+}
+.kpi-card:hover {
+  background: #0d1930;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Sidebar nav — smooth transitions */
+.dash-nav-item {
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.dash-nav-item:active { transform: scale(0.94); }
+
+/* Alert action button */
+.alert-meta-action {
+  font-weight: 600;
+  transition: color 0.2s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.alert-meta-action:hover { background: rgba(0, 212, 255, 0.08); }
+
+/* Notification buttons */
+.notif-btn {
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.notif-btn:active { transform: scale(0.96); }
+
+/* Alert badge pulse animation */
+@keyframes alert-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.6); }
+  50%       { box-shadow: 0 0 0 6px rgba(255, 107, 0, 0); }
+}
+.dash-alert-badge {
+  transition: color 0.2s ease;
+  border-radius: 6px;
+}
+
+/* RUL arc transition (set via JS) */
+.rul-gauge-svg path[stroke-dasharray] {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dash content fade transition */
+.dash-content {
+  transition: opacity 0.2s ease;
+}

@@ -454,6 +454,145 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
   });
 })();
 
+// ── Dashboard interactivity ───────────────────
+(function initDashboardInteractivity() {
+  /* ── Fleet data per asset ── */
+  const ASSETS = {
+    'GT-07': { egt: 614, rul: 847,  rulMax: 2000, conf: 87, action: 'Inspect in 23d', status: 'Combustion anomaly · 87% conf.', color: '#ff6b00' },
+    'GT-01': { egt: 601, rul: 312,  rulMax: 2000, conf: 91, action: 'Schedule wash',  status: 'Fouling stage 5 · schedule wash', color: '#ef4444' },
+    'GT-04': { egt: 589, rul: 2340, rulMax: 3000, conf: 99, action: 'Normal',         status: 'Normal operations', color: '#22c55e' },
+    'GT-02': { egt: 594, rul: 1920, rulMax: 3000, conf: 98, action: 'Normal',         status: 'Normal operations', color: '#22c55e' },
+  };
+
+  /* ── Fleet row click → update right panel ── */
+  const fleetRows = document.querySelectorAll('.fleet-row');
+  fleetRows.forEach(row => {
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => {
+      fleetRows.forEach(r => r.classList.remove('fleet-row-selected'));
+      row.classList.add('fleet-row-selected');
+
+      /* Determine which asset was clicked from the name text */
+      const nameEl = row.querySelector('.fleet-name');
+      if (!nameEl) return;
+      const assetKey = nameEl.textContent.trim().split(' ')[0];
+      const data = ASSETS[assetKey];
+      if (!data) return;
+
+      /* Update EGT live value */
+      const egtEl = document.getElementById('egt-live');
+      if (egtEl) {
+        egtEl.textContent = data.egt + '°C';
+        egtEl.style.transition = 'color 0.3s';
+        egtEl.style.color = data.color;
+        setTimeout(() => egtEl.style.color = '', 1200);
+      }
+
+      /* Update trend label */
+      const trendLabel = document.querySelector('.trend-label');
+      if (trendLabel) trendLabel.textContent = `EGT · ${assetKey}`;
+
+      /* Update RUL gauge number */
+      const rulText = document.querySelector('.rul-gauge-svg text:first-of-type');
+      if (rulText) rulText.textContent = data.rul.toLocaleString();
+
+      /* Update RUL breakdown rows */
+      const rulRows = document.querySelectorAll('.rul-row .rul-val');
+      if (rulRows[0]) rulRows[0].textContent = `${assetKey} ${row.querySelector('.fleet-type')?.textContent || ''}`;
+      if (rulRows[1]) { rulRows[1].textContent = data.conf + '%'; rulRows[1].style.color = data.color; }
+      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'Normal' ? '#22c55e' : '#ff6b00'; }
+
+      /* Update RUL arc fill — stroke-dashoffset proportional to rul/rulMax */
+      const arc = document.querySelector('.rul-gauge-svg path[stroke-dasharray]');
+      if (arc) {
+        const total     = 169.6;
+        const filled    = (data.rul / data.rulMax) * total;
+        const offset    = total - filled;
+        arc.style.strokeDashoffset = offset;
+        arc.style.transition = 'stroke-dashoffset 0.6s ease';
+      }
+    });
+  });
+
+  /* ── Sidebar nav click → switch active view ── */
+  const VIEWS = ['Fleet Overview', 'Anomalies', 'Analytics', 'Maintenance'];
+  const navItems = document.querySelectorAll('.dash-nav-items .dash-nav-item');
+  navItems.forEach((item, i) => {
+    item.style.cursor = 'pointer';
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('dash-nav-active'));
+      item.classList.add('dash-nav-active');
+      const crumb = document.querySelector('.dash-breadcrumb-active');
+      if (crumb && VIEWS[i]) crumb.textContent = VIEWS[i];
+
+      /* Brief flash on the content area to signal view change */
+      const content = document.querySelector('.dash-content');
+      if (content) {
+        content.style.opacity = '0.6';
+        content.style.transition = 'opacity 0.15s';
+        setTimeout(() => { content.style.opacity = '1'; }, 180);
+      }
+    });
+  });
+
+  /* ── KPI card click → press feedback ── */
+  document.querySelectorAll('.kpi-card').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('mousedown', function () {
+      this.style.transform = 'translateY(-1px) scale(0.975)';
+    });
+    card.addEventListener('mouseup', function () {
+      this.style.transform = '';
+    });
+    card.addEventListener('mouseleave', function () {
+      this.style.transform = '';
+    });
+  });
+
+  /* ── "Create WO →" action ── */
+  const createWO = document.querySelector('.alert-meta-action');
+  if (createWO) {
+    createWO.addEventListener('click', () => {
+      createWO.textContent = '✓ WO #4821 Created';
+      createWO.style.color = '#22c55e';
+      createWO.style.cursor = 'default';
+      /* update alert badge count */
+      const badge = document.querySelector('.dash-alert-badge span');
+      if (badge) badge.textContent = '1 Alert';
+    });
+  }
+
+  /* ── iPhone notification buttons ── */
+  const viewBtn    = document.querySelector('.notif-btn-primary');
+  const dismissBtn = document.querySelector('.notif-btn-ghost');
+  const critCard   = document.querySelector('.notif-card.notif-critical');
+
+  if (viewBtn) {
+    viewBtn.addEventListener('click', () => {
+      viewBtn.textContent = '✓ Opened';
+      viewBtn.style.background = '#22c55e';
+      setTimeout(() => { viewBtn.textContent = 'View Details'; viewBtn.style.background = ''; }, 1800);
+    });
+  }
+
+  if (dismissBtn && critCard) {
+    dismissBtn.addEventListener('click', () => {
+      critCard.style.transition = 'transform 0.28s ease, opacity 0.28s ease';
+      critCard.style.transform  = 'translateX(110%)';
+      critCard.style.opacity    = '0';
+      setTimeout(() => { critCard.style.display = 'none'; }, 300);
+    });
+  }
+
+  /* ── Alert badge pulse on first load ── */
+  const alertBadge = document.querySelector('.dash-alert-badge');
+  if (alertBadge) {
+    setTimeout(() => {
+      alertBadge.style.animation = 'alert-pulse 0.6s ease 2';
+    }, 1200);
+  }
+})();
+
 // ── Flow diagram visibility ───────────────────
 (function initFlowDiagram() {
   const diagram = document.getElementById('flow-diagram');
