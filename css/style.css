@@ -2123,12 +2123,49 @@ input, select, button { font-family: inherit; }
   .nav-hamburger { display: flex; }
   .nav-cta { display: none; }
   .mobile-menu { display: block; }
-  /* fix paddings missed in earlier breakpoint */
+
+  /* Section padding — 120px is 28% of a phone screen, reduce to 64px */
+  #data-flow-section,
+  #problem,
+  #integration,
+  #features,
+  #results { padding: 72px 0; }
+  #dashboard { padding: 72px 0 80px; }
+  #cta { padding: 80px 0; }
+
+  /* Hero — reduce top padding so headline is not pushed too far */
+  .hero-content { padding: 90px 20px 56px; }
+
+  /* Explore scroll section — 400vh forces 4 full screens of scrolling on mobile */
+  #turbofan-explore { height: 180vh; }
+
+  /* Fix paddings missed in earlier breakpoint */
   .cta-inner { padding: 0 20px; }
   .problem-callout { padding: 0 20px; }
   .network-canvas-wrap { height: 320px; margin-top: 32px; }
+
+  /* Touch targets — minimum 44px for all interactive inputs */
+  .form-group input,
+  .form-group select { min-height: 48px; font-size: 1rem; }
+
+  /* Section sub containers */
+  #data-flow-section .section-container,
+  #problem .section-container,
+  #integration .section-container,
+  #features .section-container,
+  #results .section-container,
+  #dashboard .section-container { margin-bottom: 40px; }
 }
 
 @media (max-width: 480px) {
+  /* Even tighter on small phones */
+  #data-flow-section,
+  #problem,
+  #integration,
+  #features,
+  #results { padding: 56px 0; }
+  #dashboard { padding: 56px 0 64px; }
+  #cta { padding: 64px 0; }
+  .hero-content { padding: 80px 20px 48px; }
   .cta-form { padding: 24px 18px; }
 }
