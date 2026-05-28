@@ -455,18 +455,42 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
   const form = document.getElementById('demo-form');
   if (!form) return;
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', function (e) {
     e.preventDefault();
     const btn = form.querySelector('.btn-cta-submit');
-    btn.textContent = 'Submitting...';
+    const originalHTML = btn.innerHTML;
+
+    btn.textContent = 'Sending...';
     btn.style.opacity = '0.7';
     btn.disabled = true;
 
-    setTimeout(() => {
-      btn.textContent = 'Demo Booked — Check Your Email';
+    fetch('https://formspree.io/f/xaqkakev', {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.ok) {
+        btn.textContent = 'Demo Booked — Check Your Email';
+        btn.style.opacity = '1';
+        btn.style.background = '#10b981';
+        form.reset();
+      } else {
+        throw new Error('submission failed');
+      }
+    })
+    .catch(function () {
+      btn.innerHTML = originalHTML;
       btn.style.opacity = '1';
-      btn.style.background = '#10b981';
-    }, 1500);
+      btn.disabled = false;
+      btn.style.background = '#ef4444';
+      btn.textContent = 'Something went wrong — please try again';
+      setTimeout(function () {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '';
+      }, 3000);
+    });
   });
 })();
 
