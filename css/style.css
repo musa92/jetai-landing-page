@@ -33,6 +33,10 @@
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; font-size: 16px; }
+
+/* Lenis overrides */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -191,7 +195,7 @@ input, select, button { font-family: inherit; }
   z-index: 10;
   text-align: center;
   max-width: 860px;
-  padding: 120px 48px 100px;
+  padding: 72px 48px 64px;
 }
 .eyebrow-tag {
   display: inline-flex;
@@ -221,13 +225,13 @@ input, select, button { font-family: inherit; }
   line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--text);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .hero-sub {
   font-size: clamp(1rem, 1.5vw, 1.15rem);
   color: var(--text-2);
   line-height: 1.75;
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 .hero-sub strong { color: var(--text); font-weight: 600; }
 .hero-actions {
@@ -235,7 +239,7 @@ input, select, button { font-family: inherit; }
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-bottom: 64px;
+  margin-bottom: 40px;
   flex-wrap: wrap;
 }
 .btn-primary {
@@ -2133,8 +2137,7 @@ input, select, button { font-family: inherit; }
   #dashboard { padding: 72px 0 80px; }
   #cta { padding: 80px 0; }
 
-  /* Hero — reduce top padding so headline is not pushed too far */
-  .hero-content { padding: 90px 20px 56px; }
+  .hero-content { padding: 64px 20px 48px; }
 
   /* Explore scroll section — 400vh forces 4 full screens of scrolling on mobile */
   #turbofan-explore { height: 180vh; }
@@ -2157,6 +2160,102 @@ input, select, button { font-family: inherit; }
   #dashboard .section-container { margin-bottom: 40px; }
 }
 
+/* ══════════════════════════════════════════════
+   CUSTOM CURSOR
+══════════════════════════════════════════════ */
+@media (hover: hover) and (pointer: fine) {
+  *, *::before, *::after { cursor: none !important; }
+}
+#cursor-dot {
+  position: fixed;
+  top: 0; left: 0;
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  background: var(--cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  will-change: transform;
+  transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
+}
+#cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 32px; height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 1.5px solid rgba(0, 212, 255, 0.45);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  will-change: transform;
+  transition: width 0.3s ease, height 0.3s ease, margin 0.3s ease, border-color 0.3s ease;
+}
+#cursor-dot.cursor-hover {
+  width: 0; height: 0;
+  margin: 0;
+  opacity: 0;
+}
+#cursor-ring.cursor-hover {
+  width: 52px; height: 52px;
+  margin: -26px 0 0 -26px;
+  border-color: rgba(0, 212, 255, 0.75);
+}
+@media (hover: none), (pointer: coarse) {
+  #cursor-dot, #cursor-ring { display: none; }
+}
+
+/* Ensure mobile menu never shows on desktop */
+@media (min-width: 769px) {
+  .nav-hamburger { display: none !important; }
+  .mobile-menu { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════
+   SCROLL UX — progress bar + back to top
+══════════════════════════════════════════════ */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(to right, var(--cyan), var(--purple));
+  z-index: 2000;
+  pointer-events: none;
+  transition: width 0.08s linear;
+}
+
+#back-to-top {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  width: 44px; height: 44px;
+  background: rgba(7, 15, 30, 0.88);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.3s ease, transform 0.3s ease, border-color var(--transition), color var(--transition);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 999;
+}
+#back-to-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+#back-to-top:hover {
+  border-color: var(--border-bright);
+  color: var(--cyan);
+}
+
+@media (max-width: 480px) {
+  #back-to-top { bottom: 20px; right: 16px; }
+}
+
 @media (max-width: 480px) {
   /* Even tighter on small phones */
   #data-flow-section,
@@ -2166,6 +2265,6 @@ input, select, button { font-family: inherit; }
   #results { padding: 56px 0; }
   #dashboard { padding: 56px 0 64px; }
   #cta { padding: 64px 0; }
-  .hero-content { padding: 80px 20px 48px; }
+  .hero-content { padding: 56px 20px 40px; }
   .cta-form { padding: 24px 18px; }
 }

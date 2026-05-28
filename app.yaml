@@ -2,5 +2,3 @@ kind: wasmer.io/App.v0
 name: jetai-landing-page
 owner: musa92
 package: .
-domains:
-  - turbnetic.ai

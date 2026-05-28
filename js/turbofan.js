@@ -95,8 +95,16 @@ class TurbofanEngine3D {
   /* ─── Camera ────────────────────────────────────── */
   _initCamera() {
     const el  = this.canvas.parentElement;
-    const asp = el ? el.clientWidth / el.clientHeight : 16 / 9;
-    this.camera = new THREE.PerspectiveCamera(42, asp, 0.05, 120);
+    const w   = el ? el.clientWidth  : window.innerWidth;
+    const h   = el ? el.clientHeight : window.innerHeight;
+    this._isMobile = w < 768;
+    const asp = w / h;
+    const fov = this._isMobile ? 62 : 42;
+    this.camera = new THREE.PerspectiveCamera(fov, asp, 0.05, 120);
+    if (this._isMobile) {
+      // Pull camera further back so full engine fits portrait screen
+      this._camPos.set(14.0, 6.5, 0.0);
+    }
     this.camera.position.copy(this._camPos);
     this.camera.lookAt(this._camLook);
   }
@@ -105,9 +113,12 @@ class TurbofanEngine3D {
     const el = this.canvas.parentElement;
     if (!el) return;
     const w = el.clientWidth, h = el.clientHeight;
+    this._isMobile = w < 768;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this._isMobile ? 1.5 : 2));
     this.renderer.setSize(w, h);
     if (this.camera) {
       this.camera.aspect = w / h;
+      this.camera.fov    = this._isMobile ? 62 : 42;
       this.camera.updateProjectionMatrix();
     }
   }
@@ -253,6 +264,7 @@ class TurbofanEngine3D {
     this._buildGearbox();
     this._buildGeneratorBox();
     this._buildPowerDriveline();   /* shaft + coupling + oil lines between gearbox and gen */
+    this._buildExternalPlumbing(); /* fuel manifold, bleed air, lube oil along casing */
 
     /* 3/4 view yaw — match the Titan 350 product render angle */
     this.engineGroup.rotation.y = 0.30;
@@ -436,7 +448,7 @@ class TurbofanEngine3D {
       this.engineGroup.add(m);
       /* bolted flanges at each end */
       [-len / 2, len / 2].forEach(dz => {
-        const fg = new THREE.TorusGeometry(Math.max(rF, rR) + 0.018, 0.018, 6, 40);
+        const fg = new THREE.TorusGeometry(Math.max(rF, rR) + 0.008, 0.008, 6, 40);
         fg.rotateX(Math.PI / 2);
         const f  = new THREE.Mesh(fg, this.M.disc);
         f.position.z = z + dz;
@@ -549,7 +561,7 @@ class TurbofanEngine3D {
 
   /* ─── Outlet Guide Vanes (static, after fan) ────── */
   _buildOGV() {
-    const OGV_Z = -0.90;
+    const OGV_Z = -0.72;   /* moved downstream — was -0.90 which overlapped fan */
     const N     = 28;
     const HUB   = 0.105;
     const TIP   = 0.455;
@@ -989,34 +1001,60 @@ class TurbofanEngine3D {
     s2.position.z = 3.163;   /* midpoint 3.025 → 3.288 */
     this.lpGroup.add(s2);
 
-    /* ── Lube oil supply + return pipes (gearbox body → generator body) ── */
+    /* ── Lube oil supply + return pipes (gearbox → generator, outside casings) ── */
     const oilSpan = 4.30 - 2.60;        /* 1.70 */
     const oilCenZ = (2.60 + 4.30) / 2;  /* 3.45 */
-    [{x:  0.52, y: -0.28},
-     {x: -0.52, y: -0.28}].forEach(({ x, y }) => {
+    /* x=±0.82 clears gearbox GR=0.38 and generator GW/2=0.71 with margin */
+    [{x:  0.82, y: -0.18},
+     {x: -0.82, y: -0.18}].forEach(({ x, y }) => {
       const pg = new THREE.CylinderGeometry(0.013, 0.013, oilSpan, 8);
       pg.rotateX(Math.PI / 2);
       const pm = new THREE.Mesh(pg, imat);
       pm.position.set(x, y, oilCenZ);
       this.engineGroup.add(pm);
-
-      /* pipe elbow at each end (small torus quarter-circle) */
-      [-1, 1].forEach(side => {
-        const eg = new THREE.TorusGeometry(0.04, 0.013, 8, 10, Math.PI / 2);
-        const em = new THREE.Mesh(eg, imat);
-        em.position.set(x, y - 0.04 * side, oilCenZ + side * oilSpan / 2);
-        em.rotation.x = side > 0 ? Math.PI : 0;
-        this.engineGroup.add(em);
-      });
     });
 
-    /* ── Electrical cable tray on top (gen terminal → control cabinet) ── */
-    const trayLen = 4.30 + 1.15 - (-5.10);   /* terminal box end → inlet hopper */
-    const trayCenZ = (4.30 + 1.15 - 5.10) / 2;
-    const trayG = new THREE.BoxGeometry(0.10, 0.028, trayLen);
-    const trayM = new THREE.Mesh(trayG, imat);
-    trayM.position.set(0.55, 0.92, trayCenZ);
+    /* ── Electrical cable tray — runs outside exhaust collector (EX=0.75) ── */
+    const trayZ1  = -4.80;   /* near control cabinet */
+    const trayZ2  =  3.15;   /* generator input flange */
+    const trayLen = trayZ2 - trayZ1;
+    const trayG   = new THREE.BoxGeometry(0.08, 0.022, trayLen);
+    const trayM   = new THREE.Mesh(trayG, imat);
+    trayM.position.set(0.88, 0.85, (trayZ1 + trayZ2) / 2);  /* x=0.88 clears exhaust collector */
     this.engineGroup.add(trayM);
+  }
+
+  /* ─── External Plumbing (fuel manifold, bleed, lube) ─── */
+  _buildExternalPlumbing() {
+    const imat = this.M.darkMetal;
+
+    /* Helper: oriented cylinder between two world points */
+    const addPipe = (x1, y1, z1, x2, y2, z2, r = 0.013) => {
+      const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
+      const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      if (len < 0.001) return;
+      const g = new THREE.CylinderGeometry(r, r, len, 8);
+      const m = new THREE.Mesh(g, imat);
+      m.position.set((x1+x2)/2, (y1+y2)/2, (z1+z2)/2);
+      const dir = new THREE.Vector3(dx, dy, dz).normalize();
+      const up  = new THREE.Vector3(0, 1, 0);
+      if (Math.abs(dir.dot(up)) > 0.9999) {
+        m.rotation.x = dir.y < 0 ? Math.PI : 0;
+      } else {
+        m.quaternion.setFromUnitVectors(up, dir);
+      }
+      this.engineGroup.add(m);
+    };
+
+    /* ── Fuel supply lines: two thin axial runs along combustor casing ── */
+    [-0.40, 0.40].forEach(x =>
+      addPipe(x, 0, 0.05, x, 0, 0.60, 0.008)
+    );
+
+    /* ── Lube oil lines: axial along turbine casing ── */
+    [-0.48, 0.48].forEach(x =>
+      addPipe(x, 0, 0.70, x, 0, 1.88, 0.008)
+    );
   }
 
   /* ═══════════════════════════════════════════════════
@@ -1274,36 +1312,37 @@ class TurbofanEngine3D {
      Phase 0.42→0.65: close-up interior with cutaway  (compressor/combustor)
      Phase 0.65→1.00: drift right to reveal gearbox + 38 MW alternator */
   _updateCamera() {
-    const p = this.scrollProgress;
+    const p   = this.scrollProgress;
+    const mob = this._isMobile ? 1.55 : 1.0; // scale-back factor for portrait
     let tx, ty, tz, lx, ly, lz;
 
     if (p < 0.20) {
       /* Full package elevation side-view */
       const t = p / 0.20;
-      tx = 9.5  - t * 1.2;
-      ty = 4.8  - t * 0.8;
-      tz = 0.0  + t * 1.5;   /* drift toward generator end */
+      tx = (9.5  - t * 1.2) * mob;
+      ty = (4.8  - t * 0.8) * mob;
+      tz = 0.0  + t * 1.5;
       lx = 0; ly = 0.60; lz = -0.5 + t * 0.8;
     } else if (p < 0.42) {
       /* Zoom to turbine core 3/4 view */
       const t = (p - 0.20) / 0.22;
-      tx = 8.3  - t * 5.0;   /* 8.3 → 3.3 */
-      ty = 4.0  - t * 2.2;   /* 4.0 → 1.8 */
-      tz = 1.5  - t * 2.5;   /* drift toward compressor side */
+      tx = (8.3  - t * 5.0) * mob;
+      ty = (4.0  - t * 2.2) * mob;
+      tz = 1.5  - t * 2.5;
       lx = 0; ly = 0.30 - t * 0.25; lz = 0.3 - t * 0.6;
     } else if (p < 0.65) {
-      /* Interior cutaway close-up (clip opens during this phase) */
+      /* Interior cutaway close-up */
       const t = (p - 0.42) / 0.23;
-      tx = 3.3  - t * 0.6;
-      ty = 1.8  - t * 0.5;
-      tz = -1.0 + t * 1.2;   /* slide along turbine length */
+      tx = (3.3  - t * 0.6) * mob;
+      ty = (1.8  - t * 0.5) * mob;
+      tz = -1.0 + t * 1.2;
       lx = 0; ly = 0.05; lz = -0.3 + t * 0.9;
     } else {
-      /* Reveal gearbox + alternator on the right */
+      /* Reveal gearbox + alternator */
       const t = (p - 0.65) / 0.35;
-      tx = 2.7  + t * 6.5;   /* → 9.2 */
-      ty = 1.3  + t * 2.0;
-      tz = 0.2  + t * 5.0;   /* → 5.2, over the generator */
+      tx = (2.7  + t * 6.5) * mob;
+      ty = (1.3  + t * 2.0) * mob;
+      tz = 0.2  + t * 5.0;
       lx = 0; ly = 0.20; lz = -0.3 + t * 4.9;
     }
 

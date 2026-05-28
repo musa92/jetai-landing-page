@@ -14,6 +14,12 @@
   <!-- Three.js — 3D turbofan engine -->
   <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
 
+  <!-- Lenis — silky smooth scroll -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
+
+  <!-- SplitType — premium text reveal -->
+  <script src="https://unpkg.com/split-type@0.3.4/umd/index.min.js"></script>
+
   <!-- GSAP CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
@@ -24,6 +30,16 @@
   <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
+
+  <!-- Scroll progress bar -->
+  <div id="scroll-progress"></div>
+
+  <!-- Back to top -->
+  <button id="back-to-top" aria-label="Back to top">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M9 14V4M4 9l5-5 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
   <!-- ═══════════════════════════════════════
        NAVIGATION
@@ -92,9 +108,9 @@
         Electric Jet Engine Intelligence &mdash; GE Frame 5 / 6 / 7 &middot; LM-Series &middot; eVTOL
       </div>
 
-      <h1 class="hero-headline" data-animate="fade-up" data-delay="0.15">
-        Smart Engine Analyzer<br>
-        <span class="gradient-text">For Every Turbine Fleet</span>
+      <h1 class="hero-headline">
+        Stop Turbine Failures<br>
+        <span class="gradient-text">Before They Start</span>
       </h1>
 
       <p class="hero-sub" data-animate="fade-up" data-delay="0.3">
@@ -107,10 +123,6 @@
         <a href="#cta" class="btn-primary">
           <span>Request Demo</span>
           <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-        <a href="#turbofan-explore" class="btn-ghost scroll-to">
-          <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M6 8l2 2 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          See Inside the Engine
         </a>
       </div>
 

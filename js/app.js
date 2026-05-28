@@ -7,6 +7,130 @@
 // ── Register GSAP Plugins ──────────────────────
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
+// ── Lenis smooth scroll ────────────────────────
+var lenis = null;
+(function initLenis() {
+  if (typeof Lenis === 'undefined') return;
+  lenis = new Lenis({
+    duration: 1.2,
+    easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+    smoothTouch: false,
+  });
+  gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+  gsap.ticker.lagSmoothing(0);
+  lenis.on('scroll', ScrollTrigger.update);
+})();
+
+// ── Scroll progress bar + back to top ─────────
+(function initScrollUX() {
+  const bar = document.getElementById('scroll-progress');
+  const btn = document.getElementById('back-to-top');
+
+  window.addEventListener('scroll', function () {
+    const scrolled = window.scrollY;
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    if (bar) bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+    if (btn) btn.classList.toggle('visible', scrolled > 400);
+  }, { passive: true });
+
+  if (btn) btn.addEventListener('click', function () {
+    lenis ? lenis.scrollTo(0) : window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+
+// ── SplitType headline reveals ─────────────────
+(function initTextReveal() {
+  if (typeof SplitType === 'undefined') return;
+
+  // Hero headline — animate whole element (has <br>+<span> inside, can't split)
+  var heroEl = document.querySelector('.hero-headline');
+  if (heroEl) {
+    gsap.from(heroEl, {
+      opacity: 0, y: 32, duration: 0.9, ease: 'power3.out', delay: 0.15,
+    });
+  }
+
+  // Section + CTA headlines — words slide in on scroll
+  document.querySelectorAll('.section-headline, .cta-headline').forEach(function (el) {
+    var split = new SplitType(el, { types: 'words' });
+    gsap.from(split.words, {
+      scrollTrigger: { trigger: el, start: 'top 88%' },
+      opacity: 0, y: 28, stagger: 0.07, duration: 0.65, ease: 'power3.out',
+    });
+  });
+})();
+
+// ── Custom cursor ──────────────────────────────
+(function initCursor() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  var dot  = document.createElement('div');
+  var ring = document.createElement('div');
+  dot.id = 'cursor-dot'; ring.id = 'cursor-ring';
+  document.body.append(dot, ring);
+
+  var mx = -100, my = -100, rx = -100, ry = -100;
+
+  document.addEventListener('mousemove', function (e) {
+    mx = e.clientX; my = e.clientY;
+    dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+  });
+
+  (function tickRing() {
+    rx += (mx - rx) * 0.11;
+    ry += (my - ry) * 0.11;
+    ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
+    requestAnimationFrame(tickRing);
+  })();
+
+  document.querySelectorAll('a, button, [role="button"], input, select, label').forEach(function (el) {
+    el.addEventListener('mouseenter', function () { dot.classList.add('cursor-hover'); ring.classList.add('cursor-hover'); });
+    el.addEventListener('mouseleave', function () { dot.classList.remove('cursor-hover'); ring.classList.remove('cursor-hover'); });
+  });
+
+  document.addEventListener('mouseleave', function () { dot.style.opacity = '0'; ring.style.opacity = '0'; });
+  document.addEventListener('mouseenter', function () { dot.style.opacity = ''; ring.style.opacity = ''; });
+})();
+
+// ── Magnetic buttons ───────────────────────────
+(function initMagnetic() {
+  if (!window.matchMedia('(hover: hover)').matches) return;
+
+  document.querySelectorAll('.btn-nav, .btn-primary, .btn-cta-submit').forEach(function (btn) {
+    btn.addEventListener('mousemove', function (e) {
+      var r = btn.getBoundingClientRect();
+      var x = (e.clientX - r.left - r.width  / 2) * 0.32;
+      var y = (e.clientY - r.top  - r.height / 2) * 0.32;
+      gsap.to(btn, { x: x, y: y, duration: 0.35, ease: 'power2.out' });
+    });
+    btn.addEventListener('mouseleave', function () {
+      gsap.to(btn, { x: 0, y: 0, duration: 0.65, ease: 'elastic.out(1, 0.45)' });
+    });
+  });
+})();
+
+// ── Hero content fade + lift on scroll ────────
+(function initHeroFade() {
+  const hero    = document.querySelector('.hero-content');
+  const hint    = document.querySelector('.hero-scroll-hint');
+  if (!hero) return;
+  let ticking = false;
+
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      const progress = Math.min(window.scrollY / window.innerHeight, 1);
+      const opacity  = Math.max(0, 1 - progress * 2);
+      const lift     = progress * 48;
+      hero.style.opacity   = opacity;
+      hero.style.transform = 'translateY(-' + lift + 'px)';
+      if (hint) hint.style.opacity = Math.max(0, 0.5 - progress * 4);
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
 // ── Nav logo scroll spin ───────────────────────
 (function initLogoSpin() {
   const logo = document.getElementById('nav-logo-spin');
