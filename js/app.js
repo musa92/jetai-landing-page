@@ -4,6 +4,27 @@
 ═══════════════════════════════════════════════ */
 'use strict';
 
+// ── Preloader ─────────────────────────────────
+(function initPreloader() {
+  var loader = document.getElementById('preloader');
+  if (!loader) return;
+  document.body.style.overflow = 'hidden';
+
+  function dismiss() {
+    loader.classList.add('out');
+    document.body.style.overflow = '';
+    setTimeout(function () { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 750);
+  }
+
+  var minWait = new Promise(function (resolve) { setTimeout(resolve, 1500); });
+  var pageReady = new Promise(function (resolve) {
+    if (document.readyState === 'complete') resolve();
+    else window.addEventListener('load', resolve, { once: true });
+  });
+
+  Promise.all([minWait, pageReady]).then(dismiss);
+})();
+
 // ── Register GSAP Plugins ──────────────────────
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
@@ -774,6 +795,27 @@ var lenis = null;
   }, { threshold: 0.2 });
 
   observer.observe(diagram);
+})();
+
+// ── Card tilt on hover ────────────────────────
+(function initCardTilt() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  document.querySelectorAll('.feature-card, .integration-card, .metric-card').forEach(function (card) {
+    card.addEventListener('mouseenter', function () {
+      card.style.transition = 'transform 0.12s ease, box-shadow 0.3s ease';
+    });
+    card.addEventListener('mousemove', function (e) {
+      var r = card.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width  - 0.5;
+      var y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = 'perspective(700px) rotateX(' + (-y * 10) + 'deg) rotateY(' + (x * 10) + 'deg) translateZ(6px)';
+    });
+    card.addEventListener('mouseleave', function () {
+      card.style.transition = 'transform 0.55s cubic-bezier(0.23,1,0.32,1), box-shadow 0.3s ease';
+      card.style.transform  = 'perspective(700px) rotateX(0deg) rotateY(0deg) translateZ(0)';
+    });
+  });
 })();
 
 // ── GSAP ScrollTrigger for section headers ─────
