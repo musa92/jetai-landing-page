@@ -810,6 +810,59 @@ input, select, button { font-family: inherit; }
 .feature-card-large {
   grid-column: span 2;
 }
+.feature-card-full {
+  grid-column: span 3;
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124,58,237,0.06) 100%);
+  border-color: rgba(124,58,237,0.25);
+}
+.feature-card-full:hover {
+  border-color: rgba(124,58,237,0.45);
+}
+.feature-full-left {
+  flex: 1;
+  min-width: 0;
+}
+.feature-full-right {
+  flex-shrink: 0;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.feature-full-stats {
+  display: flex;
+  gap: 0;
+  border: 1px solid rgba(124,58,237,0.2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.feature-full-stat {
+  flex: 1;
+  padding: 16px 18px;
+  border-right: 1px solid rgba(124,58,237,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.feature-full-stat:last-child { border-right: none; }
+.ffs-value {
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #a78bfa;
+}
+.ffs-label {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  line-height: 1.3;
+}
+.feature-icon-purple {
+  background: rgba(124,58,237,0.1);
+  border-color: rgba(124,58,237,0.2);
+}
 .feature-icon {
   width: 56px; height: 56px;
   display: flex;
@@ -1923,6 +1976,9 @@ input, select, button { font-family: inherit; }
   .integration-grid { grid-template-columns: repeat(2, 1fr); }
   .features-grid { grid-template-columns: repeat(2, 1fr); }
   .feature-card-large { grid-column: span 2; }
+  .feature-card-full { grid-column: span 2; flex-direction: column; gap: 28px; }
+  .feature-full-right { width: 100%; }
+  .feature-full-stats { gap: 0; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
   .flow-diagram { gap: 8px; }
   .flow-arrow { min-width: 48px; }
@@ -1947,6 +2003,10 @@ input, select, button { font-family: inherit; }
   .features-grid,
   .metrics-grid { padding: 0 20px; grid-template-columns: 1fr; }
   .feature-card-large { grid-column: span 1; }
+  .feature-card-full { grid-column: span 1; flex-direction: column; gap: 20px; }
+  .feature-full-stats { flex-direction: column; }
+  .feature-full-stat { border-right: none; border-bottom: 1px solid rgba(124,58,237,0.2); }
+  .feature-full-stat:last-child { border-bottom: none; }
   .flow-diagram { flex-direction: column; padding: 0 20px; }
   .flow-arrow { transform: rotate(90deg); }
   .hero-stats { flex-direction: column; }

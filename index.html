@@ -414,18 +414,36 @@
         <p>Envelope analysis and kurtosis trend monitoring on raw vibration time-series. Detects inner/outer race defects and roller element spalling weeks ahead of threshold breach.</p>
       </div>
 
-      <div class="feature-card feature-card-large" data-animate="fade-up" data-delay="0.3">
-        <div class="feature-icon">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <path d="M8 32 L8 16 L16 20 L20 10 L24 22 L32 8 L32 32 Z" fill="#7c3aed" opacity="0.2" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round"/>
-            <circle cx="32" cy="8" r="3" fill="#7c3aed"/>
-          </svg>
+      <div class="feature-card feature-card-full" data-animate="fade-up" data-delay="0.3">
+        <div class="feature-full-left">
+          <div class="feature-icon feature-icon-purple">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <path d="M8 32 L8 16 L16 20 L20 10 L24 22 L32 8 L32 32 Z" fill="#7c3aed" opacity="0.2" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round"/>
+              <circle cx="32" cy="8" r="3" fill="#7c3aed"/>
+            </svg>
+          </div>
+          <h3>Continuous Per-Asset Model Retraining</h3>
+          <p>Every turbine builds its own operational baseline. Models retrain nightly on each plant's history, accounting for fuel quality, ambient conditions, and load profile — creating a dataset moat that strengthens over time.</p>
         </div>
-        <h3>Continuous Per-Asset Model Retraining</h3>
-        <p>Every turbine builds its own operational baseline. Models retrain nightly on each plant's operational history, accounting for fuel quality, ambient conditions, and load profile — creating a proprietary dataset moat that strengthens over time.</p>
-        <div class="feature-spec">
-          <span>AutoML retraining pipeline</span>
-          <span>Federated learning architecture</span>
+        <div class="feature-full-right">
+          <div class="feature-full-stats">
+            <div class="feature-full-stat">
+              <span class="ffs-value">Nightly</span>
+              <span class="ffs-label">Retraining cadence</span>
+            </div>
+            <div class="feature-full-stat">
+              <span class="ffs-value">Per-asset</span>
+              <span class="ffs-label">Isolated model per turbine</span>
+            </div>
+            <div class="feature-full-stat">
+              <span class="ffs-value">Federated</span>
+              <span class="ffs-label">No raw data leaves your plant</span>
+            </div>
+          </div>
+          <div class="feature-spec">
+            <span>AutoML retraining pipeline</span>
+            <span>Federated learning architecture</span>
+          </div>
         </div>
       </div>
 
