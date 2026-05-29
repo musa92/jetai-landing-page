@@ -29,6 +29,7 @@ jobs:
         run: |
           VERSION="0.1.$(date +%Y%m%d%H%M%S)"
           sed -i "s/^version = .*/version = \"$VERSION\"/" wasmer.toml
+          sed -i "s/__VERSION__/$VERSION/g" index.html
           echo "Deploying version $VERSION"
 
       - name: Deploy to Wasmer Edge
