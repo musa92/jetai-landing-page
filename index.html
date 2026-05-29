@@ -388,6 +388,8 @@
         </div>
         <h3>Combustion Instability Detection</h3>
         <p>Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset.</p>
+        <canvas class="feature-viz" id="viz-combustion"></canvas>
+        <div class="viz-meta"><span class="viz-tag viz-tag-warn">OSCILLATION DETECTED</span><span class="viz-hint">ΔP · 200 Hz band</span></div>
       </div>
 
       <div class="feature-card" data-animate="fade-up" data-delay="0.1">
@@ -399,6 +401,8 @@
         </div>
         <h3>Blade Fouling &amp; Degradation</h3>
         <p>Continuous compressor performance monitoring using modified Flett efficiency map methods to detect fouling accumulation and stage stall margin erosion.</p>
+        <canvas class="feature-viz" id="viz-fouling"></canvas>
+        <div class="viz-meta"><span class="viz-tag">η 93.2% ↓</span><span class="viz-hint">Isentropic efficiency · GT-07</span></div>
       </div>
 
       <div class="feature-card" data-animate="fade-up" data-delay="0.2">
@@ -412,6 +416,8 @@
         </div>
         <h3>Bearing Degradation Tracking</h3>
         <p>Envelope analysis and kurtosis trend monitoring on raw vibration time-series. Detects inner/outer race defects and roller element spalling weeks ahead of threshold breach.</p>
+        <canvas class="feature-viz" id="viz-bearing"></canvas>
+        <div class="viz-meta"><span class="viz-tag viz-tag-warn">BPFO: 4.2 g</span><span class="viz-hint">Bearing fault frequency · 84 Hz</span></div>
       </div>
 
       <div class="feature-card feature-card-full" data-animate="fade-up" data-delay="0.3">

@@ -818,6 +818,226 @@ var lenis = null;
   });
 })();
 
+// ── Feature card mini visualizations ──────────
+(function initFeatureViz() {
+  var sin = Math.sin;
+
+  function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+
+  function setup(canvas) {
+    var dpr = window.devicePixelRatio || 1;
+    var W = canvas.offsetWidth || 280;
+    var H = 92;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.height = H + 'px';
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, W: W, H: H };
+  }
+
+  // ── 1. Combustion: scrolling pressure waveform ─
+  function startCombustion(canvas) {
+    var s = setup(canvas), ctx = s.ctx, W = s.W, H = s.H, t = 0, raf;
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      rrect(ctx, 0, 0, W, H, 6); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+      var cy = H / 2, ox = W * 0.55;
+
+      // Normal region
+      ctx.beginPath(); ctx.moveTo(0, cy);
+      for (var x = 0; x <= ox; x += 1.5) {
+        ctx.lineTo(x, cy + sin(x * 0.25 + t) * 1.5 + sin(x * 0.53 + t * 1.4) * 1.2 + sin(x * 0.91 + t * 0.8) * 0.7);
+      }
+      ctx.strokeStyle = 'rgba(0,212,255,0.75)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+      // Instability region (growing amplitude, cyan → orange)
+      ctx.beginPath(); ctx.moveTo(ox, cy);
+      for (var x2 = ox; x2 <= W; x2 += 1.5) {
+        var p = (x2 - ox) / (W - ox);
+        var amp = 3 + p * p * 20 + sin(t * 1.8) * p * 5;
+        ctx.lineTo(x2, cy + sin(x2 * 0.18 + t * 2.5) * amp + sin(x2 * 0.43 + t * 1.3) * amp * 0.3);
+      }
+      var g = ctx.createLinearGradient(ox, 0, W, 0);
+      g.addColorStop(0, 'rgba(0,212,255,0.75)'); g.addColorStop(0.4, 'rgba(255,140,0,0.8)'); g.addColorStop(1, 'rgba(255,60,0,0.9)');
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
+
+      // Onset marker
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(ox, 6); ctx.lineTo(ox, H - 6);
+      ctx.strokeStyle = 'rgba(255,107,0,0.45)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = '500 7.5px "JetBrains Mono",monospace';
+      ctx.fillStyle = 'rgba(255,107,0,0.9)'; ctx.fillText('ONSET', ox + 4, 11);
+
+      ctx.font = '400 7px "JetBrains Mono",monospace'; ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillText('ΔP', 4, H - 5);
+      ctx.textAlign = 'right'; ctx.fillText('t →', W - 4, H - 5); ctx.textAlign = 'left';
+      t += 0.022; raf = requestAnimationFrame(draw);
+    }
+    draw(); return function () { cancelAnimationFrame(raf); };
+  }
+
+  // ── 2. Blade fouling: efficiency degradation curve ─
+  function startFouling(canvas) {
+    var s = setup(canvas), ctx = s.ctx, W = s.W, H = s.H, progress = 0, raf;
+    var PL = 8, PR = 8, PT = 10, PB = 12, gW = W - PL - PR, gH = H - PT - PB;
+    var EMIN = 91, EMAX = 97, HMAX = 9800;
+    function xOf(h) { return PL + (h / HMAX) * gW; }
+    function yOf(e) { return PT + gH - ((e - EMIN) / (EMAX - EMIN)) * gH; }
+
+    var hist = [[0,96.4],[900,96.2],[1800,96.0],[2800,95.7],[3800,95.3],[4800,94.8],[5800,94.2],[6800,93.6],[7200,93.2]];
+    var pred = [[7200,93.2],[8000,92.7],[8800,92.1],[9400,91.7],[9800,91.4]];
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      rrect(ctx, 0, 0, W, H, 6); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 0.5;
+      [92,93,94,95,96].forEach(function (e) {
+        ctx.beginPath(); ctx.moveTo(PL, yOf(e)); ctx.lineTo(W - PR, yOf(e)); ctx.stroke();
+      });
+
+      // Wash threshold
+      var wy = yOf(92);
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(PL, wy); ctx.lineTo(W - PR, wy);
+      ctx.strokeStyle = 'rgba(255,107,0,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = '500 7px "JetBrains Mono",monospace'; ctx.fillStyle = 'rgba(255,107,0,0.75)';
+      ctx.textAlign = 'right'; ctx.fillText('WASH', W - PR - 2, wy - 3); ctx.textAlign = 'left';
+
+      var hp = Math.min(progress / 0.72, 1);
+      var pp = Math.max(0, Math.min((progress - 0.72) / 0.28, 1));
+
+      // Confidence band + prediction line
+      if (pp > 0) {
+        var endH = 7200 + pp * 2600;
+        var vp = pred.filter(function (pt) { return pt[0] <= endH; });
+        if (vp.length >= 2) {
+          ctx.beginPath();
+          ctx.moveTo(xOf(vp[0][0]), yOf(vp[0][1] + 0.32));
+          vp.forEach(function (pt) { ctx.lineTo(xOf(pt[0]), yOf(pt[1] + 0.32)); });
+          for (var i = vp.length - 1; i >= 0; i--) { ctx.lineTo(xOf(vp[i][0]), yOf(vp[i][1] - 0.42)); }
+          ctx.closePath(); ctx.fillStyle = 'rgba(0,212,255,0.07)'; ctx.fill();
+
+          ctx.beginPath(); ctx.moveTo(xOf(vp[0][0]), yOf(vp[0][1]));
+          vp.forEach(function (pt) { ctx.lineTo(xOf(pt[0]), yOf(pt[1])); });
+          ctx.strokeStyle = 'rgba(0,212,255,0.45)'; ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
+        }
+      }
+
+      // Historical line
+      var vh = hist.filter(function (pt) { return pt[0] <= hp * 7200; });
+      if (vh.length >= 2) {
+        ctx.beginPath(); ctx.moveTo(xOf(vh[0][0]), yOf(vh[0][1]));
+        vh.forEach(function (pt) { ctx.lineTo(xOf(pt[0]), yOf(pt[1])); });
+        ctx.strokeStyle = 'rgba(0,212,255,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+        var last = vh[vh.length - 1];
+        ctx.beginPath(); ctx.arc(xOf(last[0]), yOf(last[1]), 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#00d4ff'; ctx.fill();
+      }
+
+      ctx.font = '400 7px "JetBrains Mono",monospace'; ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillText('η%', PL, PT - 2);
+      ctx.textAlign = 'right'; ctx.fillText('hours →', W - PR, H - 2); ctx.textAlign = 'left';
+
+      if (progress < 1) { progress = Math.min(progress + 0.011, 1); raf = requestAnimationFrame(draw); }
+    }
+    draw(); return function () { cancelAnimationFrame(raf); };
+  }
+
+  // ── 3. Bearing: FFT frequency spectrum ────────
+  function startBearing(canvas) {
+    var s = setup(canvas), ctx = s.ctx, W = s.W, H = s.H, t = 0, raf;
+    var BINS = 100, PL = 8, PR = 6, PT = 14, PB = 10;
+    var gW = W - PL - PR, gH = H - PT - PB, bW = gW / BINS;
+
+    // Pre-bake stable spectrum shape
+    var base = [];
+    for (var i = 0; i < BINS; i++) {
+      var f = i / BINS;
+      var a = 0.015 + sin(i * 2.1) * 0.004 + sin(i * 3.7) * 0.003;
+      if (Math.abs(f - 0.10) < 0.02)  a += 0.22 * Math.max(0, 1 - Math.abs(f - 0.10) / 0.015);
+      if (Math.abs(f - 0.20) < 0.015) a += 0.10 * Math.max(0, 1 - Math.abs(f - 0.20) / 0.012);
+      if (Math.abs(f - 0.30) < 0.012) a += 0.06 * Math.max(0, 1 - Math.abs(f - 0.30) / 0.010);
+      if (Math.abs(f - 0.47) < 0.013) a += 0.20 * Math.max(0, 1 - Math.abs(f - 0.47) / 0.010);
+      if (Math.abs(f - 0.57) < 0.013) a += 0.17 * Math.max(0, 1 - Math.abs(f - 0.57) / 0.010);
+      if (Math.abs(f - 0.68) < 0.014) a += 0.24 * Math.max(0, 1 - Math.abs(f - 0.68) / 0.010);
+      base.push(Math.max(0, Math.min(a, 1)));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      rrect(ctx, 0, 0, W, H, 6); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 0.5;
+      [0.25, 0.5, 0.75].forEach(function (frac) {
+        var y = PT + gH * (1 - frac);
+        ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke();
+      });
+
+      var pulse = 1 + 0.15 * sin(t * 2.2);
+      for (var i = 0; i < BINS; i++) {
+        var f = i / BINS;
+        var isBPFO = Math.abs(f - 0.52) < 0.022;
+        var is2x   = Math.abs(f - 0.68) < 0.018;
+        var amp = base[i] + (isBPFO ? 0.68 * pulse * Math.max(0, 1 - Math.abs(f - 0.52) / 0.016) : 0);
+        amp = Math.min(amp, 1);
+        var bh = amp * gH, bx = PL + i * bW, by = PT + gH - bh;
+        var gr = ctx.createLinearGradient(bx, by, bx, PT + gH);
+        if (isBPFO) { gr.addColorStop(0, 'rgba(255,100,0,0.95)'); gr.addColorStop(1, 'rgba(255,100,0,0.12)'); }
+        else if (is2x) { gr.addColorStop(0, 'rgba(255,160,0,0.70)'); gr.addColorStop(1, 'rgba(255,160,0,0.08)'); }
+        else { gr.addColorStop(0, 'rgba(0,212,255,0.75)'); gr.addColorStop(1, 'rgba(0,212,255,0.08)'); }
+        ctx.fillStyle = gr;
+        ctx.fillRect(bx, by, Math.max(bW - 0.8, 0.6), bh);
+      }
+
+      // Labels
+      ctx.textAlign = 'center';
+      ctx.font = '600 7.5px "JetBrains Mono",monospace'; ctx.fillStyle = 'rgba(255,100,0,0.92)';
+      ctx.fillText('BPFO', PL + 0.52 * gW, PT - 3);
+      ctx.font = '500 7px "JetBrains Mono",monospace'; ctx.fillStyle = 'rgba(255,160,0,0.72)';
+      ctx.fillText('2×BPFO', PL + 0.68 * gW, PT - 3);
+      ctx.textAlign = 'left';
+      ctx.font = '400 7px "JetBrains Mono",monospace'; ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillText('g', 0, PT - 2);
+      ctx.textAlign = 'right'; ctx.fillText('Hz →', W - PR, H - 2); ctx.textAlign = 'left';
+
+      t += 0.016; raf = requestAnimationFrame(draw);
+    }
+    draw(); return function () { cancelAnimationFrame(raf); };
+  }
+
+  // ── Start each viz when it scrolls into view ──
+  var stops = {};
+  var starters = { 'viz-combustion': startCombustion, 'viz-fouling': startFouling, 'viz-bearing': startBearing };
+
+  Object.keys(starters).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting && !stops[id]) {
+          stops[id] = starters[id](el);
+          obs.unobserve(el);
+        }
+      });
+    }, { threshold: 0.2 });
+    obs.observe(el);
+  });
+})();
+
 // ── GSAP ScrollTrigger for section headers ─────
 (function initGsapSections() {
   const headlines = document.querySelectorAll('.section-headline');
