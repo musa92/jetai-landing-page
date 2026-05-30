@@ -1436,6 +1436,7 @@ class TurbofanEngine3D {
     };
     this._scanEGT = mk(0xef4444, 0.42);   /* critical — red   */
     this._scanBRG = mk(0xf59e0b, 1.30);   /* warning  — amber */
+    this._scanVIB = mk(0x00d4ff, -0.55);  /* vibration — cyan */
   }
 
   _updateScanBeams() {
@@ -1452,6 +1453,13 @@ class TurbofanEngine3D {
       this._scanBRG.mesh.position.z = this._scanBRG.baseZ + Math.sin(t * 0.0022 + 1.5) * 0.11;
       this._scanBRG.mat.opacity = vis * (0.13 + 0.05 * Math.sin(t * 0.004));
       this._scanBRG.mat.emissiveIntensity = 3.0 + Math.sin(t * 0.0038) * 0.8;
+    }
+    if (this._scanVIB) {
+      const vis = Math.max(0, Math.min(1, (p - 0.28) / 0.08)) *
+                  Math.max(0, Math.min(1, (0.50 - p) / 0.06));
+      this._scanVIB.mesh.position.z = this._scanVIB.baseZ + Math.sin(t * 0.003 + 0.8) * 0.18;
+      this._scanVIB.mat.opacity = vis * (0.12 + 0.05 * Math.sin(t * 0.006));
+      this._scanVIB.mat.emissiveIntensity = 3.2 + Math.sin(t * 0.005) * 0.9;
     }
   }
 
