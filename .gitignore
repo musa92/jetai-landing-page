@@ -1,0 +1,9 @@
+# Local scope / planning docs — not deployed
+scope/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
