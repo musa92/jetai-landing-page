@@ -230,6 +230,12 @@ class TurbofanEngine3D {
         metalness: 0.85,
         roughness: 0.30,
       }),
+      /* HPC fouled blades — color lerps to brown during cutaway */
+      hpcFoul: new THREE.MeshStandardMaterial({
+        color:     0x5a6e82,
+        metalness: 0.88,
+        roughness: 0.25,
+      }),
     };
 
     /* LP spool (fan + LPC + LPT + spinner + plug) */
@@ -271,6 +277,12 @@ class TurbofanEngine3D {
 
     /* sensor markers added after geometry, before scene add */
     this._buildSensorMarkers();
+
+    /* effects */
+    this._buildExhaustParticles();
+    this._buildIntakeVortex();
+    this._buildCombustionParticles();
+    this._buildScanBeams();
 
     this.scene.add(this.engineGroup);
   }
@@ -645,14 +657,17 @@ class TurbofanEngine3D {
 
   /* ─── HPC (6 stages, HP spool) ──────────────────── */
   _buildHPC() {
+    /* Stages 1-3: clean nickel — stages 4-6: hpcFoul (will lerp to brown) */
     [
       { z: -0.34, hubR: 0.106, tipR: 0.240, n: 28, chord: 0.020, pitch: 0.24 },
       { z: -0.23, hubR: 0.108, tipR: 0.225, n: 30, chord: 0.018, pitch: 0.22 },
       { z: -0.12, hubR: 0.110, tipR: 0.210, n: 30, chord: 0.017, pitch: 0.20 },
+    ].forEach(s => this._buildStage(this.hpGroup, this.M.nickelBlade, s));
+    [
       { z:  0.00, hubR: 0.112, tipR: 0.200, n: 32, chord: 0.016, pitch: 0.19 },
       { z:  0.12, hubR: 0.113, tipR: 0.195, n: 32, chord: 0.015, pitch: 0.18 },
       { z:  0.24, hubR: 0.115, tipR: 0.190, n: 34, chord: 0.014, pitch: 0.17 },
-    ].forEach(s => this._buildStage(this.hpGroup, this.M.nickelBlade, s));
+    ].forEach(s => this._buildStage(this.hpGroup, this.M.hpcFoul, s));
 
     /* HPC stator rings */
     [-0.28, -0.17, -0.06, 0.06, 0.18].forEach(z =>
@@ -1191,6 +1206,8 @@ class TurbofanEngine3D {
       s._el    = el;
       s._numEl = el.querySelector('.s-tag-num');
     });
+
+    this._buildHUDLines();
   }
 
   _updateSensorMarkers(dt) {
@@ -1257,6 +1274,249 @@ class TurbofanEngine3D {
   }
 
   /* ═══════════════════════════════════════════════════
+     EFFECT 1 — EXHAUST JET PARTICLES
+  ═══════════════════════════════════════════════════ */
+  _buildExhaustParticles() {
+    const N = 200;
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+    this._exParts = [];
+    for (let i = 0; i < N; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.random() * 0.07;
+      this._exParts.push({
+        x: Math.cos(a) * r, y: Math.sin(a) * r, z: 1.95,
+        vx: (Math.random() - 0.5) * 0.014, vy: (Math.random() - 0.5) * 0.014,
+        vz: 0.055 + Math.random() * 0.095,
+        life: Math.random(), maxLife: 0.5 + Math.random() * 0.5,
+      });
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this._exPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+      size: 0.028, vertexColors: true, transparent: true, opacity: 0.75,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    this.engineGroup.add(this._exPoints);
+  }
+
+  _updateExhaustParticles(dt) {
+    if (!this._exPoints) return;
+    const f = dt / 16;
+    const pos = this._exPoints.geometry.attributes.position;
+    const col = this._exPoints.geometry.attributes.color;
+    this._exParts.forEach((p, i) => {
+      p.life += 0.020 * f;
+      if (p.life >= p.maxLife) {
+        const a = Math.random() * Math.PI * 2, r = Math.random() * 0.07;
+        p.x = Math.cos(a) * r; p.y = Math.sin(a) * r; p.z = 1.95;
+        p.vx = (Math.random() - 0.5) * 0.014; p.vy = (Math.random() - 0.5) * 0.014;
+        p.vz = 0.055 + Math.random() * 0.095;
+        p.life = 0; p.maxLife = 0.5 + Math.random() * 0.5;
+      }
+      p.x += p.vx * f; p.y += p.vy * f; p.z += p.vz * f;
+      const t = p.life / p.maxLife;
+      col.setXYZ(i, 1.0, Math.max(0, 0.55 - t * 0.5), Math.max(0, 0.2 - t * 0.2));
+      pos.setXYZ(i, p.x, p.y, p.z);
+    });
+    pos.needsUpdate = true; col.needsUpdate = true;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     EFFECT 2 — FAN INTAKE VORTEX
+  ═══════════════════════════════════════════════════ */
+  _buildIntakeVortex() {
+    const N = 130;
+    const pos = new Float32Array(N * 3);
+    this._inParts = [];
+    for (let i = 0; i < N; i++) {
+      this._inParts.push({
+        angle: Math.random() * Math.PI * 2,
+        r: 0.14 + Math.random() * 0.36,
+        z: -1.36 + Math.random() * 0.22,
+        omega: 0.035 + Math.random() * 0.025,
+        dr: 0.003 + Math.random() * 0.002,
+        dz: 0.012 + Math.random() * 0.010,
+      });
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this._inPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+      size: 0.016, color: 0x44ccff, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    this.engineGroup.add(this._inPoints);
+  }
+
+  _updateIntakeVortex(dt) {
+    if (!this._inPoints) return;
+    const f = dt / 16;
+    const pos = this._inPoints.geometry.attributes.position;
+    this._inParts.forEach((p, i) => {
+      p.angle += p.omega * f; p.r -= p.dr * f; p.z += p.dz * f;
+      if (p.r < 0.035 || p.z > -0.85) {
+        p.angle = Math.random() * Math.PI * 2;
+        p.r = 0.18 + Math.random() * 0.32;
+        p.z = -1.38 + Math.random() * 0.12;
+      }
+      pos.setXYZ(i, Math.cos(p.angle) * p.r, Math.sin(p.angle) * p.r, p.z);
+    });
+    pos.needsUpdate = true;
+    this._inPoints.material.opacity = Math.max(0, 1 - this.scrollProgress * 5) * 0.52;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     EFFECT 3 — COMBUSTION SPARK PARTICLES
+  ═══════════════════════════════════════════════════ */
+  _buildCombustionParticles() {
+    const N = 110;
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+    this._combParts = [];
+    for (let i = 0; i < N; i++) {
+      const a = Math.random() * Math.PI * 2, r = 0.10 + Math.random() * 0.13;
+      this._combParts.push({
+        x: Math.cos(a) * r, y: Math.sin(a) * r, z: 0.22 + Math.random() * 0.38,
+        vx: (Math.random() - 0.5) * 0.007, vy: (Math.random() - 0.5) * 0.007,
+        vz: 0.010 + Math.random() * 0.016,
+        life: Math.random(), bright: 0.5 + Math.random() * 0.5,
+      });
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this._combPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+      size: 0.020, vertexColors: true, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    this.engineGroup.add(this._combPoints);
+  }
+
+  _updateCombustionParticles(dt) {
+    if (!this._combPoints) return;
+    const f = dt / 16;
+    const pos = this._combPoints.geometry.attributes.position;
+    const col = this._combPoints.geometry.attributes.color;
+    this._combParts.forEach((p, i) => {
+      p.life += 0.022 * f;
+      if (p.life >= 1.0 || p.z > 0.72) {
+        const a = Math.random() * Math.PI * 2, r = 0.10 + Math.random() * 0.13;
+        p.x = Math.cos(a) * r; p.y = Math.sin(a) * r; p.z = 0.22 + Math.random() * 0.08;
+        p.vx = (Math.random() - 0.5) * 0.007; p.vy = (Math.random() - 0.5) * 0.007;
+        p.vz = 0.010 + Math.random() * 0.016; p.life = 0; p.bright = 0.5 + Math.random() * 0.5;
+      }
+      const a = Math.atan2(p.y, p.x) + 0.012 * f;
+      const r = Math.sqrt(p.x * p.x + p.y * p.y);
+      p.x = Math.cos(a) * r + p.vx * f;
+      p.y = Math.sin(a) * r + p.vy * f;
+      p.z += p.vz * f;
+      const flk = p.bright * (0.7 + 0.3 * Math.sin(this.time * 0.014 + i * 0.5));
+      col.setXYZ(i, flk, Math.max(0, flk * (0.4 - p.life * 0.3)), 0);
+      pos.setXYZ(i, p.x, p.y, p.z);
+    });
+    pos.needsUpdate = true; col.needsUpdate = true;
+    this._combPoints.material.opacity =
+      Math.max(0, Math.min(1, (this.scrollProgress - 0.40) / 0.10)) * 0.88;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     EFFECT 4 — ANOMALY SCAN BEAMS
+  ═══════════════════════════════════════════════════ */
+  _buildScanBeams() {
+    const mk = (color, z) => {
+      const geo = new THREE.CylinderGeometry(0.42, 0.42, 0.008, 48, 1, false);
+      geo.rotateX(Math.PI / 2);
+      const mat = new THREE.MeshStandardMaterial({
+        color, emissive: new THREE.Color(color), emissiveIntensity: 4.0,
+        transparent: true, opacity: 0, side: THREE.DoubleSide,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.z = z;
+      this.engineGroup.add(mesh);
+      return { mesh, mat, baseZ: z };
+    };
+    this._scanEGT = mk(0xef4444, 0.42);   /* critical — red   */
+    this._scanBRG = mk(0xf59e0b, 1.30);   /* warning  — amber */
+  }
+
+  _updateScanBeams() {
+    const t = this.time, p = this.scrollProgress;
+    if (this._scanEGT) {
+      const vis = Math.max(0, Math.min(1, (p - 0.44) / 0.08)) *
+                  Math.max(0, Math.min(1, (0.66 - p) / 0.06));
+      this._scanEGT.mesh.position.z = this._scanEGT.baseZ + Math.sin(t * 0.0025) * 0.14;
+      this._scanEGT.mat.opacity = vis * (0.14 + 0.06 * Math.sin(t * 0.005));
+      this._scanEGT.mat.emissiveIntensity = 3.5 + Math.sin(t * 0.004) * 1.0;
+    }
+    if (this._scanBRG) {
+      const vis = Math.max(0, Math.min(1, (p - 0.67) / 0.08));
+      this._scanBRG.mesh.position.z = this._scanBRG.baseZ + Math.sin(t * 0.0022 + 1.5) * 0.11;
+      this._scanBRG.mat.opacity = vis * (0.13 + 0.05 * Math.sin(t * 0.004));
+      this._scanBRG.mat.emissiveIntensity = 3.0 + Math.sin(t * 0.0038) * 0.8;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     EFFECT 5 — HPC FOULING GRADIENT
+  ═══════════════════════════════════════════════════ */
+  _updateFouling() {
+    if (!this.M.hpcFoul) return;
+    const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.40) / 0.18));
+    /* lerp: clean silver 0x5a6e82 → fouled brown 0x6b4a28 */
+    this.M.hpcFoul.color.setRGB(
+      0.353 + vis * 0.067,
+      0.431 - vis * 0.141,
+      0.510 - vis * 0.353
+    );
+    this.M.hpcFoul.roughness = 0.25 + vis * 0.20;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     EFFECT 6 — SENSOR → HUD CONNECTOR LINES (SVG)
+  ═══════════════════════════════════════════════════ */
+  _buildHUDLines() {
+    const vp  = this.canvas.parentElement;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'sensor-hud-lines';
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible;';
+    vp.appendChild(svg);
+    this._hudSVG   = svg;
+    this._hudLines = {};
+    this._sensors.forEach(s => {
+      const ln  = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const hex = '#' + new THREE.Color(s.color).getHexString();
+      ln.setAttribute('stroke', hex);
+      ln.setAttribute('stroke-width', '1');
+      ln.setAttribute('stroke-dasharray', '3 3');
+      ln.setAttribute('opacity', '0');
+      svg.appendChild(ln);
+      this._hudLines[s.id] = ln;
+    });
+  }
+
+  _updateHUDLines() {
+    if (!this._hudSVG || !this._sensors || !this._hudLines) return;
+    const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.40) / 0.12));
+    const W   = this.canvas.clientWidth, H = this.canvas.clientHeight;
+    this._sensors.forEach(s => {
+      const ln = this._hudLines[s.id];
+      if (!ln) return;
+      if (!s._el || s._el.style.display === 'none') { ln.setAttribute('opacity', '0'); return; }
+      s._sphere.getWorldPosition(this._tmpV);
+      this._tmpV.project(this.camera);
+      if (this._tmpV.z >= 1) { ln.setAttribute('opacity', '0'); return; }
+      const sx = (this._tmpV.x *  0.5 + 0.5) * W;
+      const sy = (-this._tmpV.y * 0.5 + 0.5) * H;
+      const ox = this._tmpV.x >= 0 ?  52 : -130;
+      const oy = this._tmpV.y >= 0 ? -46 :    8;
+      ln.setAttribute('x1', sx.toFixed(1));
+      ln.setAttribute('y1', sy.toFixed(1));
+      ln.setAttribute('x2', (sx + ox * 0.5).toFixed(1));
+      ln.setAttribute('y2', (sy + oy * 0.5).toFixed(1));
+      ln.setAttribute('opacity', (vis * 0.55).toFixed(2));
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════
      ANIMATION
   ═══════════════════════════════════════════════════ */
   start() {
@@ -1304,6 +1564,12 @@ class TurbofanEngine3D {
     this._updateClipping();
     this._updateSensorMarkers(dt);
     this._updateSensorHUD();
+    this._updateExhaustParticles(dt);
+    this._updateIntakeVortex(dt);
+    this._updateCombustionParticles(dt);
+    this._updateScanBeams();
+    this._updateFouling();
+    this._updateHUDLines();
   }
 
   /* ─── Camera path — Solar Titan 350 style ──────── */
