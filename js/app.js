@@ -641,30 +641,121 @@ var lenis = null;
 
 // ── Dashboard interactivity ───────────────────
 (function initDashboardInteractivity() {
-  /* ── Fleet data per asset ── */
+  /* ── Fleet + anomaly data per asset ── */
   const ASSETS = {
-    'GT-07': { egt: 614, rul: 847,  rulMax: 2000, conf: 87, action: 'Inspect in 23d', status: 'Combustion anomaly · 87% conf.', color: '#ff6b00' },
-    'GT-01': { egt: 601, rul: 312,  rulMax: 2000, conf: 91, action: 'Schedule wash',  status: 'Fouling stage 5 · schedule wash', color: '#ef4444' },
-    'GT-04': { egt: 589, rul: 2340, rulMax: 3000, conf: 99, action: 'Normal',         status: 'Normal operations', color: '#22c55e' },
-    'GT-02': { egt: 594, rul: 1920, rulMax: 3000, conf: 98, action: 'Normal',         status: 'Normal operations', color: '#22c55e' },
+    'GT-07': {
+      egt: 614, egtDelta: '↑ +14°C', rulMax: 2000, rul: 847, conf: 87,
+      action: 'Inspect in 23d', color: '#ff6b00',
+      alertLevel: 'HIGH', alertPillClass: 'alert-pill-high',
+      alertTitle: 'Combustion Instability Precursor · GT-07',
+      alertSub: 'T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.',
+      alertTime: '~23 days to fault', alertCI: 'CI: 18–31 days',
+      egtLine: 'M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2',
+      egtStroke: '#ff6b00',
+    },
+    'GT-01': {
+      egt: 589, egtDelta: '↑ +6°C', rulMax: 2000, rul: 312, conf: 91,
+      action: 'Schedule wash', color: '#ef4444',
+      alertLevel: 'MED', alertPillClass: 'alert-pill-med',
+      alertTitle: 'HPC Fouling Stage 5 · GT-01',
+      alertSub: 'Isentropic efficiency −2.1% from baseline. Offline compressor wash recommended within 8 days.',
+      alertTime: '~8 days to threshold', alertCI: 'Stage 5 of 6',
+      egtLine: 'M0,40 C20,39 40,38 70,36 C100,34 130,32 160,29 C190,26 220,23 260,20 C280,18 290,17 300,16',
+      egtStroke: '#ef4444',
+    },
+    'GT-04': {
+      egt: 571, egtDelta: '±1°C', rulMax: 3000, rul: 2340, conf: 99,
+      action: 'No action', color: '#22c55e',
+      alertLevel: 'OK', alertPillClass: 'alert-pill-ok',
+      alertTitle: 'No Active Anomalies · GT-04',
+      alertSub: 'All readings nominal. EGT within ±2°C of baseline. Next scheduled inspection Aug 19, 2026.',
+      alertTime: 'No predicted fault', alertCI: 'Healthy',
+      egtLine: 'M0,30 C60,30 120,31 180,30 C220,29 260,30 300,30',
+      egtStroke: '#22c55e',
+    },
+    'GT-02': {
+      egt: 564, egtDelta: '±2°C', rulMax: 3000, rul: 1920, conf: 98,
+      action: 'No action', color: '#22c55e',
+      alertLevel: 'OK', alertPillClass: 'alert-pill-ok',
+      alertTitle: 'No Active Anomalies · GT-02',
+      alertSub: 'Minor LPT efficiency trend (−0.4%) under passive monitoring. No action required at this time.',
+      alertTime: 'No predicted fault', alertCI: 'Monitor only',
+      egtLine: 'M0,32 C60,32 120,33 180,32 C220,31 260,32 300,32',
+      egtStroke: '#22c55e',
+    },
+  };
+
+  /* ── Anomaly detail data ── */
+  const ANOM_DETAILS = {
+    gt07: {
+      pill: 'HIGH', pillClass: 'alert-pill-high',
+      title: 'Combustion Instability Precursor',
+      asset: 'GT-07 · Frame 7 · Plant Alpha',
+      rows: [
+        ['Root cause',     'T4 temp rising above trend. Cross-correlated with ΔP oscillation at 200 Hz band.'],
+        ['Confidence',     '<span style="color:#f59e0b">87% — High</span>'],
+        ['Predicted fault','<span style="color:#ff6b00">~23 days (CI: 18–31d)</span>'],
+        ['Recommended',    'Borescope inspection · hot section'],
+      ],
+    },
+    gt01: {
+      pill: 'MED', pillClass: 'alert-pill-med',
+      title: 'HPC Fouling Stage 5',
+      asset: 'GT-01 · Frame 5 · Plant Alpha',
+      rows: [
+        ['Root cause',     'Isentropic efficiency −2.1% from baseline across stages 4–6. Salt/dust accumulation suspected.'],
+        ['Confidence',     '<span style="color:#f59e0b">91% — High</span>'],
+        ['Predicted fault','<span style="color:#f59e0b">~8 days to degradation threshold</span>'],
+        ['Recommended',    'Offline compressor wash within 8 days'],
+      ],
+    },
+    gt04: {
+      pill: 'LOW', pillClass: 'alert-pill-ok',
+      title: 'Bearing Vib. Slight Uptick',
+      asset: 'GT-04 · LM6000 · Plant Alpha',
+      rows: [
+        ['Root cause',     'BPFO signal +0.3 g above trend at 84 Hz. Early-stage indication, within spec limits.'],
+        ['Confidence',     '<span style="color:#00d4ff">72% — Medium</span>'],
+        ['Predicted fault','No fault expected within 90 days'],
+        ['Recommended',    'Continue monitoring · re-assess in 30 days'],
+      ],
+    },
+    gt02: {
+      pill: 'INFO', pillClass: '',
+      title: 'LPT Efficiency Trend −0.4%',
+      asset: 'GT-02 · Frame 6 · Plant Alpha',
+      rows: [
+        ['Root cause',     'Low-pressure turbine efficiency slightly below trend. Within normal variation range.'],
+        ['Confidence',     '<span style="color:#94a3b8">68% — Low</span>'],
+        ['Predicted fault','No action required'],
+        ['Recommended',    'Passive monitoring only'],
+      ],
+    },
   };
 
   /* ── Fleet row click → update right panel ── */
   const fleetRows = document.querySelectorAll('.fleet-row');
+  let hintDone = false;
   fleetRows.forEach(row => {
     row.style.cursor = 'pointer';
     row.addEventListener('click', () => {
       fleetRows.forEach(r => r.classList.remove('fleet-row-selected'));
       row.classList.add('fleet-row-selected');
 
-      /* Determine which asset was clicked from the name text */
+      /* Dismiss click hint on first use */
+      if (!hintDone) {
+        hintDone = true;
+        const hint = document.querySelector('.dash-click-hint');
+        if (hint) hint.classList.add('hint-done');
+      }
+
       const nameEl = row.querySelector('.fleet-name');
       if (!nameEl) return;
-      const assetKey = nameEl.textContent.trim().split(' ')[0];
+      const assetKey = (row.dataset.turbine || nameEl.dataset.turbine || nameEl.textContent.trim().split(' ')[0]);
       const data = ASSETS[assetKey];
       if (!data) return;
 
-      /* Update EGT live value */
+      /* EGT live value */
       const egtEl = document.getElementById('egt-live');
       if (egtEl) {
         egtEl.textContent = data.egt + '°C';
@@ -673,85 +764,162 @@ var lenis = null;
         setTimeout(() => egtEl.style.color = '', 1200);
       }
 
-      /* Update trend label */
+      /* EGT delta */
+      const deltaEl = document.getElementById('egt-delta');
+      if (deltaEl) { deltaEl.textContent = data.egtDelta; deltaEl.style.color = data.color; }
+
+      /* EGT chart paths */
+      const linePath = document.getElementById('egt-line-path');
+      const fillPath = document.getElementById('egt-fill-path');
+      if (linePath) { linePath.setAttribute('d', data.egtLine); linePath.setAttribute('stroke', data.egtStroke); }
+      if (fillPath) { fillPath.setAttribute('d', data.egtLine + ' L300,56 L0,56 Z'); }
+
+      /* Trend label */
       const trendLabel = document.querySelector('.trend-label');
       if (trendLabel) trendLabel.textContent = `EGT · ${assetKey}`;
 
-      /* Update RUL gauge number */
+      /* Priority alert panel */
+      const pill = document.getElementById('dash-alert-pill');
+      if (pill) {
+        pill.textContent = data.alertLevel;
+        pill.className = 'alert-pill ' + data.alertPillClass;
+      }
+      const alertTitle = document.getElementById('dash-alert-title');
+      if (alertTitle) alertTitle.textContent = data.alertTitle;
+      const alertSub = document.getElementById('dash-alert-sub');
+      if (alertSub) alertSub.textContent = data.alertSub;
+      const alertTime = document.getElementById('dash-alert-time');
+      if (alertTime) alertTime.lastChild.textContent = ' ' + data.alertTime;
+      const alertCI = document.getElementById('dash-alert-ci');
+      if (alertCI) alertCI.textContent = data.alertCI;
+
+      /* RUL gauge */
       const rulText = document.querySelector('.rul-gauge-svg text:first-of-type');
       if (rulText) rulText.textContent = data.rul.toLocaleString();
-
-      /* Update RUL breakdown rows */
       const rulRows = document.querySelectorAll('.rul-row .rul-val');
-      if (rulRows[0]) rulRows[0].textContent = `${assetKey} ${row.querySelector('.fleet-type')?.textContent || ''}`;
+      const typeEl = row.querySelector('.fleet-type');
+      if (rulRows[0]) rulRows[0].textContent = `${assetKey} ${typeEl?.textContent || ''}`;
       if (rulRows[1]) { rulRows[1].textContent = data.conf + '%'; rulRows[1].style.color = data.color; }
-      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'Normal' ? '#22c55e' : '#ff6b00'; }
-
-      /* Update RUL arc fill — stroke-dashoffset proportional to rul/rulMax */
+      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'No action' ? '#22c55e' : '#ff6b00'; }
       const arc = document.querySelector('.rul-gauge-svg path[stroke-dasharray]');
       if (arc) {
-        const total     = 169.6;
-        const filled    = (data.rul / data.rulMax) * total;
-        const offset    = total - filled;
-        arc.style.strokeDashoffset = offset;
+        const filled = (data.rul / data.rulMax) * 169.6;
         arc.style.transition = 'stroke-dashoffset 0.6s ease';
+        arc.style.strokeDashoffset = 169.6 - filled;
       }
     });
   });
 
-  /* ── Sidebar nav click → switch active view ── */
-  const VIEWS = ['Fleet Overview', 'Anomalies', 'Analytics', 'Maintenance'];
-  const navItems = document.querySelectorAll('.dash-nav-items .dash-nav-item');
+  /* ── Sidebar nav → switch panels ── */
+  const PANEL_IDS = ['dash-view-fleet', 'dash-view-anomalies', 'dash-view-analytics', 'dash-view-maintenance'];
+  const VIEW_NAMES = ['Fleet Overview', 'Anomalies', 'Analytics', 'Maintenance'];
+  const navItems   = document.querySelectorAll('.dash-nav-items .dash-nav-item');
+  let analyticsAnimated = false;
+
+  function showPanel(idx) {
+    PANEL_IDS.forEach((id, j) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (j === idx) {
+        el.style.display = '';
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+        el.style.display = 'none';
+      }
+    });
+    /* Animate analytics bars when first shown */
+    if (idx === 2 && !analyticsAnimated) {
+      analyticsAnimated = true;
+      setTimeout(() => {
+        document.querySelectorAll('.ab-fill[data-width]').forEach(bar => {
+          bar.style.width = bar.dataset.width + '%';
+        });
+      }, 80);
+    }
+  }
+
   navItems.forEach((item, i) => {
     item.style.cursor = 'pointer';
     item.addEventListener('click', () => {
-      document.querySelectorAll('.dash-nav-item').forEach(n => n.classList.remove('dash-nav-active'));
+      navItems.forEach(n => n.classList.remove('dash-nav-active'));
       item.classList.add('dash-nav-active');
       const crumb = document.querySelector('.dash-breadcrumb-active');
-      if (crumb && VIEWS[i]) crumb.textContent = VIEWS[i];
+      if (crumb) crumb.textContent = VIEW_NAMES[i] || 'Fleet Overview';
+      showPanel(i);
+    });
+  });
 
-      /* Brief flash on the content area to signal view change */
-      const content = document.querySelector('.dash-content');
-      if (content) {
-        content.style.opacity = '0.6';
-        content.style.transition = 'opacity 0.15s';
-        setTimeout(() => { content.style.opacity = '1'; }, 180);
+  /* Ensure fleet view visible on load */
+  showPanel(0);
+
+  /* ── Anomaly row click → update detail pane ── */
+  document.querySelectorAll('.anom-row').forEach(row => {
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.anom-row').forEach(r => r.classList.remove('anom-selected'));
+      row.classList.add('anom-selected');
+      const key  = row.dataset.anom;
+      const d    = ANOM_DETAILS[key];
+      if (!d) return;
+      const pill = document.getElementById('adp-pill');
+      if (pill) { pill.textContent = d.pill; pill.className = 'alert-pill ' + d.pillClass; }
+      const title = document.getElementById('adp-title');
+      if (title) title.textContent = d.title;
+      const asset = document.getElementById('adp-asset');
+      if (asset) asset.textContent = d.asset;
+      const rowsEl = document.getElementById('adp-rows');
+      if (rowsEl) {
+        rowsEl.innerHTML = d.rows.map(([k, v]) =>
+          `<div class="adp-row"><span class="adp-k">${k}</span><span class="adp-v">${v}</span></div>`
+        ).join('');
       }
     });
   });
+
+  /* ── Anomaly panel "Create WO" ── */
+  const adpWO = document.getElementById('adp-wo-btn');
+  if (adpWO) {
+    adpWO.addEventListener('click', () => {
+      adpWO.textContent = '✓ WO Created';
+      adpWO.style.color = '#22c55e';
+      adpWO.style.cursor = 'default';
+    });
+  }
 
   /* ── KPI card click → press feedback ── */
   document.querySelectorAll('.kpi-card').forEach(card => {
     card.style.cursor = 'pointer';
-    card.addEventListener('mousedown', function () {
-      this.style.transform = 'translateY(-1px) scale(0.975)';
-    });
-    card.addEventListener('mouseup', function () {
-      this.style.transform = '';
-    });
-    card.addEventListener('mouseleave', function () {
-      this.style.transform = '';
-    });
+    card.addEventListener('mousedown', function () { this.style.transform = 'translateY(-1px) scale(0.975)'; });
+    card.addEventListener('mouseup',   function () { this.style.transform = ''; });
+    card.addEventListener('mouseleave',function () { this.style.transform = ''; });
   });
 
-  /* ── "Create WO →" action ── */
+  /* ── "Create WO →" in fleet alert panel ── */
   const createWO = document.querySelector('.alert-meta-action');
   if (createWO) {
     createWO.addEventListener('click', () => {
       createWO.textContent = '✓ WO #4821 Created';
       createWO.style.color = '#22c55e';
       createWO.style.cursor = 'default';
-      /* update alert badge count */
       const badge = document.querySelector('.dash-alert-badge span');
       if (badge) badge.textContent = '1 Alert';
     });
   }
 
+  /* ── Maintenance "Create →" row ── */
+  document.querySelectorAll('.maint-wo-create').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      el.textContent = '✓ WO-1862';
+      el.classList.remove('maint-wo-create');
+      el.style.color = '#22c55e';
+    });
+  });
+
   /* ── iPhone notification buttons ── */
   const viewBtn    = document.querySelector('.notif-btn-primary');
   const dismissBtn = document.querySelector('.notif-btn-ghost');
   const critCard   = document.querySelector('.notif-card.notif-critical');
-
   if (viewBtn) {
     viewBtn.addEventListener('click', () => {
       viewBtn.textContent = '✓ Opened';
@@ -759,7 +927,6 @@ var lenis = null;
       setTimeout(() => { viewBtn.textContent = 'View Details'; viewBtn.style.background = ''; }, 1800);
     });
   }
-
   if (dismissBtn && critCard) {
     dismissBtn.addEventListener('click', () => {
       critCard.style.transition = 'transform 0.28s ease, opacity 0.28s ease';
@@ -772,9 +939,7 @@ var lenis = null;
   /* ── Alert badge pulse on first load ── */
   const alertBadge = document.querySelector('.dash-alert-badge');
   if (alertBadge) {
-    setTimeout(() => {
-      alertBadge.style.animation = 'alert-pulse 0.6s ease 2';
-    }, 1200);
+    setTimeout(() => { alertBadge.style.animation = 'alert-pulse 0.6s ease 2'; }, 1200);
   }
 })();
 

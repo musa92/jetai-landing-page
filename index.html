@@ -509,6 +509,7 @@
       <div class="section-eyebrow">Platform</div>
       <h2 class="section-headline">Operator Intelligence Dashboard</h2>
       <p class="section-sub">Built for plant engineers &mdash; not data scientists. Actionable, prioritized, and explained in plain language.</p>
+      <p class="dash-interact-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Interactive demo — click on turbines, nav icons, and alerts below</p>
     </div>
 
     <!-- ── Premium two-panel layout: browser + phone ── -->
@@ -644,15 +645,16 @@
             </div>
 
             <!-- Main panels row -->
-            <div class="dash-panels-row">
+            <div class="dash-panels-row" id="dash-view-fleet">
               <!-- Left: Anomaly ring + fleet list -->
               <div class="dash-panel-left">
                 <div class="panel-header">
                   <span class="panel-title">Fleet Status</span>
                   <span class="panel-badge panel-badge-live">LIVE</span>
+                  <span class="dash-click-hint"><span class="click-pulse-dot"></span>Click a row to inspect</span>
                 </div>
                 <div class="fleet-list">
-                  <div class="fleet-row fleet-row-active">
+                  <div class="fleet-row fleet-row-active" data-turbine="GT-07">
                     <div class="fleet-indicator ind-warning"></div>
                     <div class="fleet-info">
                       <div class="fleet-name">GT-07 <span class="fleet-type">Frame 7</span></div>
@@ -668,7 +670,7 @@
                       </svg>
                     </div>
                   </div>
-                  <div class="fleet-row fleet-row-critical">
+                  <div class="fleet-row fleet-row-critical" data-turbine="GT-01">
                     <div class="fleet-indicator ind-critical"></div>
                     <div class="fleet-info">
                       <div class="fleet-name">GT-01 <span class="fleet-type">Frame 5</span></div>
@@ -687,7 +689,7 @@
                   <div class="fleet-row">
                     <div class="fleet-indicator ind-ok"></div>
                     <div class="fleet-info">
-                      <div class="fleet-name">GT-04 <span class="fleet-type">LM6000</span></div>
+                      <div class="fleet-name" data-turbine="GT-04">GT-04 <span class="fleet-type">LM6000</span></div>
                       <div class="fleet-status">Normal operations</div>
                     </div>
                     <div class="fleet-rul">
@@ -703,7 +705,7 @@
                   <div class="fleet-row">
                     <div class="fleet-indicator ind-ok"></div>
                     <div class="fleet-info">
-                      <div class="fleet-name">GT-02 <span class="fleet-type">Frame 6</span></div>
+                      <div class="fleet-name" data-turbine="GT-02">GT-02 <span class="fleet-type">Frame 6</span></div>
                       <div class="fleet-status">Normal operations</div>
                     </div>
                     <div class="fleet-rul">
@@ -723,13 +725,13 @@
               <div class="dash-panel-right">
                 <!-- Priority alert -->
                 <div class="priority-alert">
-                  <div class="alert-pill alert-pill-high">HIGH</div>
+                  <div class="alert-pill alert-pill-high" id="dash-alert-pill">HIGH</div>
                   <div class="alert-body">
-                    <div class="alert-title2">Combustion Instability Precursor · GT-07</div>
-                    <div class="alert-sub">T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.</div>
+                    <div class="alert-title2" id="dash-alert-title">Combustion Instability Precursor · GT-07</div>
+                    <div class="alert-sub" id="dash-alert-sub">T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.</div>
                     <div class="alert-meta-row">
-                      <span class="alert-meta"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ~23 days to fault</span>
-                      <span class="alert-meta">CI: 18–31 days</span>
+                      <span class="alert-meta" id="dash-alert-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ~23 days to fault</span>
+                      <span class="alert-meta" id="dash-alert-ci">CI: 18–31 days</span>
                       <span class="alert-meta alert-meta-action">Create WO →</span>
                     </div>
                   </div>
@@ -740,7 +742,7 @@
                   <div class="trend-header">
                     <span class="trend-label">EGT · GT-07</span>
                     <span class="trend-value trend-value-hot" id="egt-live">614°C</span>
-                    <span class="trend-delta">↑ +14°C</span>
+                    <span class="trend-delta" id="egt-delta">↑ +14°C</span>
                   </div>
                   <div class="trend-chart-wrap">
                     <svg viewBox="0 0 300 56" preserveAspectRatio="none" class="trend-svg">
@@ -750,8 +752,8 @@
                           <stop offset="100%" stop-color="#ff6b00" stop-opacity="0"/>
                         </linearGradient>
                       </defs>
-                      <path d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2 L300,56 L0,56 Z" fill="url(#egt-grad2)"/>
-                      <path d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2" fill="none" stroke="#ff6b00" stroke-width="2"/>
+                      <path id="egt-fill-path" d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2 L300,56 L0,56 Z" fill="url(#egt-grad2)"/>
+                      <path id="egt-line-path" d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2" fill="none" stroke="#ff6b00" stroke-width="2"/>
                       <line x1="0" y1="12" x2="300" y2="12" stroke="#ff4500" stroke-width="0.8" stroke-dasharray="6,4" opacity="0.5"/>
                       <text x="4" y="10" font-size="7" fill="#ff4500" opacity="0.7" font-family="monospace">THRESHOLD</text>
                     </svg>
@@ -786,6 +788,149 @@
                 </div>
               </div>
             </div>
+
+            <!-- ══ ANOMALIES VIEW ══ -->
+            <div class="dash-view-panel" id="dash-view-anomalies">
+              <div class="dash-panels-row">
+                <div class="dash-panel-left">
+                  <div class="panel-header">
+                    <span class="panel-title">Active Anomalies</span>
+                    <span class="panel-badge" style="color:#ef4444;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25)">4 FOUND</span>
+                  </div>
+                  <div class="anom-list" id="anom-list">
+                    <div class="anom-row anom-selected" data-anom="gt07">
+                      <span class="anom-sev sev-high">HIGH</span>
+                      <div class="anom-info"><div class="anom-asset">GT-07</div><div class="anom-desc">Combustion instability</div></div>
+                      <span class="anom-conf">87%</span>
+                    </div>
+                    <div class="anom-row" data-anom="gt01">
+                      <span class="anom-sev sev-med">MED</span>
+                      <div class="anom-info"><div class="anom-asset">GT-01</div><div class="anom-desc">HPC fouling stage 5</div></div>
+                      <span class="anom-conf">91%</span>
+                    </div>
+                    <div class="anom-row" data-anom="gt04">
+                      <span class="anom-sev sev-low">LOW</span>
+                      <div class="anom-info"><div class="anom-asset">GT-04</div><div class="anom-desc">Bearing vib. slight uptick</div></div>
+                      <span class="anom-conf">72%</span>
+                    </div>
+                    <div class="anom-row" data-anom="gt02">
+                      <span class="anom-sev sev-info">INFO</span>
+                      <div class="anom-info"><div class="anom-asset">GT-02</div><div class="anom-desc">LPT efficiency −0.4%</div></div>
+                      <span class="anom-conf">68%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="dash-panel-right">
+                  <div class="anom-detail-pane" id="anom-detail">
+                    <div class="adp-header">
+                      <span class="alert-pill alert-pill-high" id="adp-pill">HIGH</span>
+                      <span class="adp-title" id="adp-title">Combustion Instability Precursor</span>
+                    </div>
+                    <div class="adp-asset-tag" id="adp-asset">GT-07 · Frame 7 · Plant Alpha</div>
+                    <div class="adp-rows" id="adp-rows">
+                      <div class="adp-row"><span class="adp-k">Root cause</span><span class="adp-v">T4 temp rising above trend. Cross-correlated with ΔP oscillation at 200 Hz band.</span></div>
+                      <div class="adp-row"><span class="adp-k">Confidence</span><span class="adp-v" style="color:#f59e0b">87% — High</span></div>
+                      <div class="adp-row"><span class="adp-k">Predicted fault</span><span class="adp-v" style="color:#ff6b00">~23 days (CI: 18–31d)</span></div>
+                      <div class="adp-row"><span class="adp-k">Recommended</span><span class="adp-v">Borescope inspection · hot section</span></div>
+                    </div>
+                    <div class="adp-footer">
+                      <span class="adp-action" id="adp-wo-btn">Create WO →</span>
+                      <span class="adp-action" style="color:var(--text-3)">Snooze 24h</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══ ANALYTICS VIEW ══ -->
+            <div class="dash-view-panel" id="dash-view-analytics">
+              <div class="analytics-pane">
+                <div class="analytics-left">
+                  <div class="panel-header" style="padding:0 0 10px">
+                    <span class="panel-title">Fleet Health Score</span>
+                    <span style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-3)">Last 30 days</span>
+                  </div>
+                  <div class="analytics-bars">
+                    <div class="ab-row"><span class="ab-name">GT-04</span><div class="ab-track"><div class="ab-fill ab-ok" data-width="96"></div></div><span class="ab-val">96%</span></div>
+                    <div class="ab-row"><span class="ab-name">GT-02</span><div class="ab-track"><div class="ab-fill ab-ok" data-width="93"></div></div><span class="ab-val">93%</span></div>
+                    <div class="ab-row"><span class="ab-name">GT-07</span><div class="ab-track"><div class="ab-fill ab-warn" data-width="71"></div></div><span class="ab-val" style="color:#f59e0b">71%</span></div>
+                    <div class="ab-row"><span class="ab-name">GT-01</span><div class="ab-track"><div class="ab-fill ab-crit" data-width="44"></div></div><span class="ab-val" style="color:#ef4444">44%</span></div>
+                  </div>
+                </div>
+                <div class="analytics-right">
+                  <div class="am-grid">
+                    <div class="am-card"><div class="am-val">94.1%</div><div class="am-lbl">Fleet Avg Efficiency</div></div>
+                    <div class="am-card"><div class="am-val" style="color:#22c55e">↑ 1.3%</div><div class="am-lbl">vs Last Month</div></div>
+                    <div class="am-card"><div class="am-val">$1.4M</div><div class="am-lbl">Savings YTD</div></div>
+                    <div class="am-card"><div class="am-val" style="color:#f59e0b">2</div><div class="am-lbl">Anomalies Active</div></div>
+                  </div>
+                  <div class="analytics-trend-wrap">
+                    <span class="panel-title">EGT Fleet Trend · 7-Day</span>
+                    <svg viewBox="0 0 220 48" class="analytics-trend-svg" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="at-grad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.18"/>
+                          <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M0,32 C30,30 60,28 90,26 C120,24 150,23 180,21 C200,20 212,19 220,18 L220,48 L0,48 Z" fill="url(#at-grad)"/>
+                      <path d="M0,32 C30,30 60,28 90,26 C120,24 150,23 180,21 C200,20 212,19 220,18" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+                      <path d="M120,23 C140,20 165,16 185,11 C200,7 212,4 220,2" fill="none" stroke="#ff6b00" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.85"/>
+                      <text x="162" y="11" font-size="7" fill="#ff6b00" font-family="monospace" opacity="0.9">GT-07 ↑</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══ MAINTENANCE VIEW ══ -->
+            <div class="dash-view-panel" id="dash-view-maintenance">
+              <div class="maint-pane">
+                <div class="panel-header" style="padding:0 0 10px">
+                  <span class="panel-title">Upcoming Maintenance</span>
+                  <span class="panel-badge" style="color:#7c3aed;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.25)">5 EVENTS</span>
+                </div>
+                <div class="maint-table">
+                  <div class="maint-thead"><span>Asset</span><span>Work Type</span><span>Scheduled</span><span>Status</span><span>WO #</span></div>
+                  <div class="maint-row maint-urgent-row">
+                    <span class="maint-asset">GT-07</span>
+                    <span class="maint-type">Borescope · Hot section</span>
+                    <span class="maint-date">Jun 4, 2026</span>
+                    <span class="maint-tag maint-tag-urgent">Action Required</span>
+                    <span class="maint-wo maint-wo-create">Create →</span>
+                  </div>
+                  <div class="maint-row">
+                    <span class="maint-asset">GT-01</span>
+                    <span class="maint-type">Offline compressor wash</span>
+                    <span class="maint-date">Jun 8, 2026</span>
+                    <span class="maint-tag maint-tag-sched">Scheduled</span>
+                    <span class="maint-wo">WO-1847</span>
+                  </div>
+                  <div class="maint-row">
+                    <span class="maint-asset">GT-01</span>
+                    <span class="maint-type">Major overhaul (C-inspection)</span>
+                    <span class="maint-date">Jun 12, 2026</span>
+                    <span class="maint-tag maint-tag-plan">Planned</span>
+                    <span class="maint-wo">WO-1821</span>
+                  </div>
+                  <div class="maint-row">
+                    <span class="maint-asset">GT-04</span>
+                    <span class="maint-type">Annual borescope inspection</span>
+                    <span class="maint-date">Aug 19, 2026</span>
+                    <span class="maint-tag maint-tag-plan">Planned</span>
+                    <span class="maint-wo">WO-1903</span>
+                  </div>
+                  <div class="maint-row">
+                    <span class="maint-asset">GT-02</span>
+                    <span class="maint-type">Fuel nozzle inspection</span>
+                    <span class="maint-date">Sep 3, 2026</span>
+                    <span class="maint-tag maint-tag-plan">Planned</span>
+                    <span class="maint-wo">WO-1911</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
