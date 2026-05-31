@@ -1672,7 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { p: 0.85, l: 'Generator · 38.1 MW Output', h: 'Synchronous alternator · exciter · load coupling' },
   ];
 
-  if (typeof ScrollTrigger !== 'undefined') {
+  if (typeof ScrollTrigger !== 'undefined' && window.innerWidth >= 769) {
     ScrollTrigger.create({
       trigger:    section,
       start:      'top top',

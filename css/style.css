@@ -2031,6 +2031,30 @@ input, select, button { font-family: inherit; }
   .fleet-sparkline { display: none; }
   .iphone-wrap { display: none; }  /* hide phone on mobile — browser takes full width */
   .browser-urlbar span { font-size: 0.6rem; }
+
+  /* ── Turbofan explore: collapse 400vh scroll track ── */
+  #turbofan-explore { height: auto !important; }
+  .explore-sticky {
+    position: relative !important;
+    height: 65vmax !important;
+    min-height: 340px;
+    max-height: 540px;
+  }
+  .engine-viewport {
+    height: calc(65vmax - 90px) !important;
+    min-height: 260px;
+    max-height: 450px;
+  }
+  .explore-header {
+    position: relative !important;
+    top: auto !important;
+    transform: none !important;
+    left: auto !important;
+    padding: 16px 20px 8px;
+    align-items: flex-start;
+  }
+  .explore-progress-bar { width: 120px; }
+  .info-panel-left, .info-panel-right { display: none !important; }
 }
 
 /* ── 480px: very small phones ── */
@@ -2200,8 +2224,8 @@ input, select, button { font-family: inherit; }
 
   .hero-content { padding: 64px 20px 48px; }
 
-  /* Explore scroll section — 400vh forces 4 full screens of scrolling on mobile */
-  #turbofan-explore { height: 180vh; }
+  /* Tablet: reduce scroll track height */
+  #turbofan-explore { height: 280vh; }
 
   /* Fix paddings missed in earlier breakpoint */
   .cta-inner { padding: 0 20px; }
