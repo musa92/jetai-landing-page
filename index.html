@@ -229,19 +229,273 @@
     </div>
   </section>
 
-    <!-- ═══════════════════════════════════════
-       NETWORK FLOW — canvas visualization
+  <!-- ═══════════════════════════════════════
+       FEATURES SECTION
   ═══════════════════════════════════════ -->
-  <section id="data-flow-section">
-    <div class="section-container">
-      <div class="section-eyebrow">Architecture</div>
-      <h2 class="section-headline">From Raw Sensor Data<br>to Actionable Intelligence</h2>
-      <p class="section-sub">A zero-latency pipeline from plant floor to AI inference &mdash; with no new hardware.</p>
+  <section id="features">
+    <div class="features-sticky">
+    <div class="section-container features-header-row">
+      <div class="features-header-left">
+        <div class="section-eyebrow">Capabilities</div>
+        <h2 class="section-headline">What the Platform Does</h2>
+      </div>
+      <div class="pipeline-strip">
+        <div class="pipe-node">
+          <div class="pipe-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#00d4ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="pipe-node-body"><div class="pipe-node-label">Raw Sensor Data</div><div class="pipe-node-sub">OPC-UA · PI · REST</div></div>
+        </div>
+        <div class="pipe-connector"><span class="pipe-travel"></span></div>
+        <div class="pipe-node">
+          <div class="pipe-icon pipe-icon-purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#a78bfa" stroke-width="1.6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="pipe-node-body"><div class="pipe-node-label">AI Inference</div><div class="pipe-node-sub">&lt;200ms · LSTM · IsoForest</div></div>
+        </div>
+        <div class="pipe-connector"><span class="pipe-travel pipe-travel-2"></span></div>
+        <div class="pipe-node">
+          <div class="pipe-icon pipe-icon-orange"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#ff6b00" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="pipe-node-body"><div class="pipe-node-label">Actionable Alert</div><div class="pipe-node-sub">CMMS · Dashboard · SMS</div></div>
+        </div>
+      </div>
     </div>
-    <div class="network-canvas-wrap">
-      <canvas id="network-canvas"></canvas>
+
+    <!-- Premium tabbed feature showcase -->
+    <div class="features-showcase" id="features-showcase">
+
+      <!-- Tab navigation -->
+      <div class="fshowcase-nav">
+        <button class="fstab active" data-tab="0">
+          <span class="fstab-num">01</span>
+          <span class="fstab-label">Anomaly Detection</span>
+        </button>
+        <button class="fstab" data-tab="1">
+          <span class="fstab-num">02</span>
+          <span class="fstab-label">Remaining Useful Life</span>
+        </button>
+        <button class="fstab" data-tab="2">
+          <span class="fstab-num">03</span>
+          <span class="fstab-label">Combustion Instability</span>
+        </button>
+        <button class="fstab" data-tab="3">
+          <span class="fstab-num">04</span>
+          <span class="fstab-label">Blade Fouling</span>
+        </button>
+        <button class="fstab" data-tab="4">
+          <span class="fstab-num">05</span>
+          <span class="fstab-label">Bearing Degradation</span>
+        </button>
+        <button class="fstab" data-tab="5">
+          <span class="fstab-num">06</span>
+          <span class="fstab-label">Adaptive Retraining</span>
+        </button>
+      </div>
+
+      <!-- Auto-advance progress bar -->
+      <div class="fshowcase-pbar"><div class="fshowcase-pbar-fill" id="fspbar-fill"></div></div>
+
+      <!-- Panels -->
+      <div class="fshowcase-body">
+
+        <!-- Panel 0: Anomaly Detection -->
+        <div class="fspanel active" data-panel="0">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Core Engine &middot; LSTM + Isolation Forest</div>
+            <h3 class="fspanel-title">Multivariate Anomaly Detection</h3>
+            <p class="fspanel-desc">Isolation Forest and LSTM autoencoder models trained on GE Frame 5/6/7 and LM-series patterns. Detects subtle cross-parameter deviations invisible to threshold-based alarms.</p>
+            <ul class="fspanel-bullets">
+              <li>8+ simultaneous sensor streams correlated in latent space</li>
+              <li>Anomaly score updates every 200 ms from raw sensor feeds</li>
+              <li>Zero false positives during validated baseline cruise conditions</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>Frame 5 · 6 · 7</span><span>LM2500 · LM6000</span><span>LSTM Autoencoder</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val">99.2%</span>
+              <span class="fspanel-kpi-lbl">Detection Precision</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">GT-04 &middot; SENSOR HEATMAP &middot; LIVE</span>
+                <span class="fsviz-badge warn">&#9888; ANOMALY SCORE 0.87</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-anomaly"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">EPOCH: 2024-11-18 14:32:07Z</span><span class="fsviz-fmeta">8 PARAMETERS &middot; 120s WINDOW</span></div>
+          </div>
+        </div>
+
+        <!-- Panel 1: RUL -->
+        <div class="fspanel" data-panel="1">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Predictive Engine &middot; Bayesian Models</div>
+            <h3 class="fspanel-title">Predicted Remaining Useful Life</h3>
+            <p class="fspanel-desc">Bayesian degradation models output a RUL estimate with 90% confidence intervals for each asset. Maintenance windows ranked by criticality — never face another surprise forced outage.</p>
+            <ul class="fspanel-bullets">
+              <li>Per-asset baseline auto-calibrated during commissioning week</li>
+              <li>Confidence intervals tighten as more operational data accumulates</li>
+              <li>Integrates with CMMS for automatic work order generation</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>Bayesian RUL</span><span>Monte Carlo CI</span><span>CMMS Integration</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val" style="color:#a78bfa">23 wk</span>
+              <span class="fspanel-kpi-lbl">Avg. Early Warning Lead Time</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">FLEET RUL FORECAST &middot; 3 ASSETS</span>
+                <span class="fsviz-badge alert">1 CRITICAL</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-rul"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">HORIZON: 52 WEEKS</span><span class="fsviz-fmeta">CONFIDENCE: 90% CI</span></div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Combustion -->
+        <div class="fspanel" data-panel="2">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Combustion Analytics &middot; Spectral Analysis</div>
+            <h3 class="fspanel-title">Combustion Instability Detection</h3>
+            <p class="fspanel-desc">Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset — hours before flame-out risk.</p>
+            <ul class="fspanel-bullets">
+              <li>200 Hz band ΔP monitoring with harmonic decomposition</li>
+              <li>Dual-channel combustor inlet and exit pressure correlation</li>
+              <li>Auto load-reduction recommendation at configurable thresholds</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>FFT Spectral</span><span>200 Hz Band</span><span>Lean Blowout</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val" style="color:#ff6b00">&lt;8 hr</span>
+              <span class="fspanel-kpi-lbl">Onset-to-Alarm Lead Time</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">GT-04 &middot; COMBUSTION ΔP &middot; LIVE</span>
+                <span class="fsviz-badge warn">&#9888; OSCILLATION ONSET</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-combustion"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">CHANNEL: CAN-A + CAN-B</span><span class="fsviz-fmeta">ΔP &middot; 0–400 Hz BAND</span></div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Blade Fouling -->
+        <div class="fspanel" data-panel="3">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Performance Map &middot; Flett Method</div>
+            <h3 class="fspanel-title">Blade Fouling &amp; Degradation</h3>
+            <p class="fspanel-desc">Continuous compressor performance monitoring using modified Flett efficiency map methods to detect fouling accumulation and stage stall margin erosion weeks before it becomes critical.</p>
+            <ul class="fspanel-bullets">
+              <li>Real-time operating point tracked against clean baseline map</li>
+              <li>Stall margin erosion quantified as percentage of design margin</li>
+              <li>Wash schedule optimizer cuts annual heat rate loss by up to 3%</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>Compressor Map</span><span>Stall Margin</span><span>Wash Optimizer</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val">3%</span>
+              <span class="fspanel-kpi-lbl">Heat Rate Improvement</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">COMPRESSOR MAP &middot; GT-07</span>
+                <span class="fsviz-badge">&#951; 93.2% &darr; 3.1PP</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-fouling"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">ISENTROPIC EFFICIENCY</span><span class="fsviz-fmeta">OP. HOURS: 7,200 h</span></div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Bearing -->
+        <div class="fspanel" data-panel="4">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Vibration Analytics &middot; Envelope Analysis</div>
+            <h3 class="fspanel-title">Bearing Degradation Tracking</h3>
+            <p class="fspanel-desc">Envelope analysis and kurtosis trend monitoring on raw vibration time-series. Detects inner/outer race defects and roller element spalling weeks ahead of threshold breach.</p>
+            <ul class="fspanel-bullets">
+              <li>BPFO / BPFI / BSF harmonic tracking updated in real time</li>
+              <li>Kurtosis trend isolates defect signal from structural noise floor</li>
+              <li>Spectral waterfall captures defect frequency growth history</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>BPFO / BPFI / BSF</span><span>Kurtosis</span><span>Waterfall FFT</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val" style="color:#ff6b00">6 wk</span>
+              <span class="fspanel-kpi-lbl">Avg. Detection Lead Time</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">BEARING WATERFALL &middot; GT-04 &middot; BRG-3</span>
+                <span class="fsviz-badge warn">BPFO: 4.2 g &uarr;</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-bearing"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">FREQ: 0–200 Hz</span><span class="fsviz-fmeta">KURTOSIS: 8.4 (THRESH: 5.0)</span></div>
+          </div>
+        </div>
+
+        <!-- Panel 5: Retraining -->
+        <div class="fspanel" data-panel="5">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Adaptive Learning &middot; Federated ML</div>
+            <h3 class="fspanel-title">Continuous Per-Asset Retraining</h3>
+            <p class="fspanel-desc">Every turbine builds its own operational baseline. Models retrain nightly on each plant's history, accounting for fuel quality, ambient conditions, and load profile — a dataset moat that strengthens over time.</p>
+            <ul class="fspanel-bullets">
+              <li>Federated architecture — raw sensor data never leaves your plant</li>
+              <li>AutoML selects optimal model architecture per asset class</li>
+              <li>Model drift detection auto-triggers targeted retraining cycles</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>Federated Learning</span><span>AutoML</span><span>Nightly Cadence</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val" style="color:#a78bfa">Nightly</span>
+              <span class="fspanel-kpi-lbl">Per-Asset Retraining Cadence</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">MODEL TRAINING &middot; GT-04 &middot; EPOCH 147</span>
+                <span class="fsviz-badge ok">&#10003; CONVERGED</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-retrain"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">ASSETS: 12 &middot; LAST: 02:14 UTC</span><span class="fsviz-fmeta">ACCURACY: 99.2% (+0.3%)</span></div>
+          </div>
+        </div>
+
+      </div><!-- /.fshowcase-body -->
+    </div><!-- /.features-showcase -->
+    <!-- Scroll hint -->
+    <div class="features-scroll-hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      SCROLL TO EXPLORE
     </div>
+    </div><!-- /.features-sticky -->
   </section>
+
 
   <!-- ═══════════════════════════════════════
        PROBLEM SECTION
@@ -344,123 +598,6 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       FEATURES SECTION
-  ═══════════════════════════════════════ -->
-  <section id="features">
-    <div class="section-container">
-      <div class="section-eyebrow">Capabilities</div>
-      <h2 class="section-headline">What the Platform Does</h2>
-    </div>
-
-    <div class="features-grid">
-
-      <div class="feature-card feature-card-large" data-animate="fade-up">
-        <div class="feature-icon">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <path d="M5 28L13 18L19 24L27 12L35 20" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="35" cy="20" r="3" fill="#00d4ff"/>
-            <circle cx="5" cy="28" r="3" fill="#00d4ff" opacity="0.5"/>
-          </svg>
-        </div>
-        <h3>Multivariate Anomaly Detection</h3>
-        <p>Isolation Forest and LSTM autoencoder models trained on GE Frame 5/6/7 and LM-series operating patterns. Detects subtle cross-parameter deviations invisible to threshold-based alarms.</p>
-        <div class="feature-spec">
-          <span>Frame 5 · Frame 6 · Frame 7</span>
-          <span>LM2500 · LM6000</span>
-        </div>
-      </div>
-
-      <div class="feature-card" data-animate="fade-up" data-delay="0.1">
-        <div class="feature-icon">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <path d="M18 6v24M6 18h24" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-            <path d="M18 6 C22 10 28 14 30 18 C28 22 22 26 18 30" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" fill="none"/>
-            <circle cx="18" cy="18" r="4" fill="#7c3aed" opacity="0.3"/>
-            <circle cx="18" cy="18" r="2" fill="#7c3aed"/>
-          </svg>
-        </div>
-        <h3>Predicted Remaining Useful Life</h3>
-        <p>Bayesian RUL models output a degradation curve with confidence intervals for each asset. Maintenance windows ranked by criticality and operational context.</p>
-      </div>
-
-      <div class="feature-card" data-animate="fade-up" data-delay="0.2">
-        <div class="feature-icon">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <rect x="6" y="6" width="24" height="24" rx="3" stroke="#ff6b00" stroke-width="1.5"/>
-            <path d="M6 14h24M14 6v24" stroke="#ff6b00" stroke-width="1" opacity="0.4"/>
-            <path d="M10 22l4-5 4 3 4-6 4 4" stroke="#ff6b00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h3>Combustion Instability Detection</h3>
-        <p>Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset.</p>
-        <canvas class="feature-viz" id="viz-combustion"></canvas>
-        <div class="viz-meta"><span class="viz-tag viz-tag-warn">OSCILLATION DETECTED</span><span class="viz-hint">ΔP · 200 Hz band</span></div>
-      </div>
-
-      <div class="feature-card" data-animate="fade-up" data-delay="0.1">
-        <div class="feature-icon">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <path d="M18 4 L32 12 L32 24 L18 32 L4 24 L4 12 Z" stroke="#00d4ff" stroke-width="1.5" fill="none"/>
-            <path d="M18 4 L18 32 M4 12 L32 24 M32 12 L4 24" stroke="#00d4ff" stroke-width="0.5" opacity="0.3"/>
-          </svg>
-        </div>
-        <h3>Blade Fouling &amp; Degradation</h3>
-        <p>Continuous compressor performance monitoring using modified Flett efficiency map methods to detect fouling accumulation and stage stall margin erosion.</p>
-        <canvas class="feature-viz" id="viz-fouling"></canvas>
-        <div class="viz-meta"><span class="viz-tag">η 93.2% ↓</span><span class="viz-hint">Isentropic efficiency · GT-07</span></div>
-      </div>
-
-      <div class="feature-card" data-animate="fade-up" data-delay="0.2">
-        <div class="feature-icon">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="10" stroke="#00d4ff" stroke-width="1.5"/>
-            <path d="M18 8 A10 10 0 0 1 28 18" stroke="#ff6b00" stroke-width="2.5" stroke-linecap="round"/>
-            <circle cx="18" cy="18" r="3" fill="#00d4ff" opacity="0.4"/>
-            <circle cx="18" cy="18" r="1.5" fill="#00d4ff"/>
-          </svg>
-        </div>
-        <h3>Bearing Degradation Tracking</h3>
-        <p>Envelope analysis and kurtosis trend monitoring on raw vibration time-series. Detects inner/outer race defects and roller element spalling weeks ahead of threshold breach.</p>
-        <canvas class="feature-viz" id="viz-bearing"></canvas>
-        <div class="viz-meta"><span class="viz-tag viz-tag-warn">BPFO: 4.2 g</span><span class="viz-hint">Bearing fault frequency · 84 Hz</span></div>
-      </div>
-
-      <div class="feature-card feature-card-full" data-animate="fade-up" data-delay="0.3">
-        <div class="feature-full-left">
-          <div class="feature-icon feature-icon-purple">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <path d="M8 32 L8 16 L16 20 L20 10 L24 22 L32 8 L32 32 Z" fill="#7c3aed" opacity="0.2" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round"/>
-              <circle cx="32" cy="8" r="3" fill="#7c3aed"/>
-            </svg>
-          </div>
-          <h3>Continuous Per-Asset Model Retraining</h3>
-          <p>Every turbine builds its own operational baseline. Models retrain nightly on each plant's history, accounting for fuel quality, ambient conditions, and load profile — creating a dataset moat that strengthens over time.</p>
-        </div>
-        <div class="feature-full-right">
-          <div class="feature-full-stats">
-            <div class="feature-full-stat">
-              <span class="ffs-value">Nightly</span>
-              <span class="ffs-label">Retraining cadence</span>
-            </div>
-            <div class="feature-full-stat">
-              <span class="ffs-value">Per-asset</span>
-              <span class="ffs-label">Isolated model per turbine</span>
-            </div>
-            <div class="feature-full-stat">
-              <span class="ffs-value">Federated</span>
-              <span class="ffs-label">No raw data leaves your plant</span>
-            </div>
-          </div>
-          <div class="feature-spec">
-            <span>AutoML retraining pipeline</span>
-            <span>Federated learning architecture</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
 
   <!-- ═══════════════════════════════════════
        RESULTS / METRICS
@@ -1185,6 +1322,7 @@
   </script>
 
   <!-- Scripts -->
+  <script src="js/features-showcase.js?v=__VERSION__"></script>
   <script src="js/app.js?v=__VERSION__"></script>
   <script src="js/turbofan.js?v=__VERSION__"></script>
   <script src="js/dataflow.js?v=__VERSION__"></script>
