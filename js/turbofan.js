@@ -275,8 +275,8 @@ class TurbofanEngine3D {
     /* 3/4 view yaw — match the Titan 350 product render angle */
     this.engineGroup.rotation.y = 0.30;
 
-    /* sensor markers added after geometry, before scene add */
-    this._buildSensorMarkers();
+    /* sensor markers — desktop only (too cluttered on mobile) */
+    if (!this._isMobile) this._buildSensorMarkers();
 
     /* effects */
     this._buildExhaustParticles();

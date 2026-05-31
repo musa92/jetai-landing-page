@@ -3193,3 +3193,132 @@ input, select, button { font-family: inherit; }
   /* Scroll hint hidden on mobile (no scroll-driven) */
   .features-scroll-hint { display: none; }
 }
+
+/* ══════════════════════════════════════════════
+   APPLE-STYLE MOBILE OVERHAUL  ≤768px
+══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Turbofan: clean engine, no clutter ── */
+  #sensor-hud,
+  .s-tag { display: none !important; }
+
+  #turbofan-explore { height: auto !important; }
+  .explore-sticky {
+    position: relative !important;
+    height: auto !important;
+    min-height: unset !important;
+    padding-bottom: 32px;
+  }
+  .explore-header {
+    position: relative !important;
+    top: auto !important; left: auto !important;
+    transform: none !important;
+    padding: 24px 20px 12px;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .engine-viewport {
+    height: 54vmax !important;
+    min-height: 280px !important;
+    max-height: 420px !important;
+    overflow: hidden;
+  }
+  .info-panel-left,
+  .info-panel-right { display: none !important; }
+
+  /* ── Features: Apple stacked-card style ── */
+  #features { padding: 56px 0 80px !important; }
+
+  /* Header: just the eyebrow + headline, no pipeline */
+  .features-header-row {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0;
+  }
+  .pipeline-strip { display: none !important; }
+
+  /* Hide tab nav + progress bar — replaced by natural scroll */
+  .fshowcase-nav,
+  .fshowcase-pbar,
+  .features-scroll-hint { display: none !important; }
+
+  /* Unstick, let all panels flow naturally */
+  .features-sticky {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .fshowcase-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  /* Show ALL panels stacked (not just .active) */
+  .fspanel,
+  .fspanel.active {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 32px 20px !important;
+    gap: 24px !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    background: var(--bg) !important;
+    animation: none !important;
+  }
+  /* Subtle left accent per panel */
+  .fspanel { border-top: 1px solid var(--border) !important; }
+  .fspanel[data-panel="0"] { border-top: none !important; }
+
+  /* Tab number as eyebrow prefix */
+  .fspanel::before {
+    content: attr(data-panel);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    color: var(--text-3);
+    display: block;
+    margin-bottom: -16px;
+  }
+  /* Format content  number as 01, 02 etc */
+  .fspanel[data-panel="0"]::before { content: '01'; }
+  .fspanel[data-panel="1"]::before { content: '02'; }
+  .fspanel[data-panel="2"]::before { content: '03'; }
+  .fspanel[data-panel="3"]::before { content: '04'; }
+  .fspanel[data-panel="4"]::before { content: '05'; }
+  .fspanel[data-panel="5"]::before { content: '06'; }
+  .fspanel[data-panel="6"]::before { content: '07'; }
+
+  /* Text side: full width */
+  .fspanel-text { width: 100% !important; }
+  .fspanel-title { font-size: 1.25rem !important; }
+  .fspanel-desc  { font-size: 0.84rem !important; line-height: 1.65; }
+  .fspanel-kpi-val { font-size: 1.6rem !important; }
+
+  /* Canvas: below text, readable height */
+  .fspanel-viz-wrap { width: 100% !important; }
+  .fsviz-chrome { border-radius: 8px; overflow: hidden; }
+  .fsviz { height: 200px !important; }
+  .fsviz-bar { padding: 8px 10px; }
+  .fsviz-chip { font-size: 0.58rem; }
+  .fsviz-badge { font-size: 0.56rem; }
+}
+
+/* ── 480px: very small phones ── */
+@media (max-width: 480px) {
+  .fsviz { height: 170px !important; }
+  .fspanel { padding: 28px 16px !important; }
+  .fspanel-title { font-size: 1.1rem !important; }
+  .engine-viewport {
+    height: 62vmax !important;
+    max-height: 360px !important;
+  }
+}
