@@ -3112,3 +3112,60 @@ input, select, button { font-family: inherit; }
 @media (max-width: 600px) {
   .pipeline-strip { display: none; }
 }
+
+/* ══════════════════════════════════════════════
+   MOBILE FEATURES SHOWCASE FIX
+══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Disable sticky/pin — content flows normally */
+  #features { padding: 60px 0 80px; }
+  .features-sticky {
+    position: static !important;
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+    padding: 0;
+  }
+
+  /* Tab nav: horizontal scroll, no wrap */
+  .fshowcase-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 20px 8px;
+    gap: 8px;
+  }
+  .fshowcase-nav::-webkit-scrollbar { display: none; }
+  .fstab { flex-shrink: 0; padding: 8px 14px; }
+  .fstab-label { font-size: 0.72rem; }
+
+  /* Progress bar full width */
+  .fshowcase-pbar { margin: 12px 20px 20px; }
+
+  /* Panel: single column, no height constraint */
+  .fspanel {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 20px 16px !important;
+    gap: 24px !important;
+  }
+
+  /* Canvas: shorter on mobile so it fits in viewport */
+  .fsviz { height: 190px !important; }
+
+  /* KPI stays readable */
+  .fspanel-kpi-val { font-size: 1.5rem !important; }
+  .fspanel-title { font-size: 1.1rem !important; }
+  .fspanel-desc { font-size: 0.82rem !important; }
+
+  /* Pipeline strip: hide on very small screens */
+  .pipeline-strip { display: none; }
+  .features-header-row { flex-direction: column; }
+  #features .section-container { padding: 0 20px; margin-bottom: 28px; }
+
+  /* Scroll hint hidden on mobile (no scroll-driven) */
+  .features-scroll-hint { display: none; }
+}

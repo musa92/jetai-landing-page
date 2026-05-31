@@ -286,6 +286,10 @@
           <span class="fstab-num">06</span>
           <span class="fstab-label">Adaptive Retraining</span>
         </button>
+        <button class="fstab" data-tab="6">
+          <span class="fstab-num">07</span>
+          <span class="fstab-label">Edge Device</span>
+        </button>
       </div>
 
       <!-- Auto-advance progress bar -->
@@ -483,6 +487,40 @@
               <canvas class="fsviz" id="fsviz-retrain"></canvas>
             </div>
             <div class="fsviz-footer"><span class="fsviz-ftag">ASSETS: 12 &middot; LAST: 02:14 UTC</span><span class="fsviz-fmeta">ACCURACY: 99.2% (+0.3%)</span></div>
+          </div>
+        </div>
+
+
+        <!-- Panel 6: Edge Device -->
+        <div class="fspanel" data-panel="6">
+          <div class="fspanel-text">
+            <div class="fspanel-eyebrow">Plugin-Based Hardware &middot; Zero Cloud Dependency</div>
+            <h3 class="fspanel-title">Edge AI Device</h3>
+            <p class="fspanel-desc">A ruggedized DIN-rail edge module ships pre-loaded with your turbine's trained model. Runs full LSTM inference on-device — no internet required. Snaps into existing control cabinet wiring in under 30 minutes.</p>
+            <ul class="fspanel-bullets">
+              <li>Plugin architecture — swappable model cards per asset class</li>
+              <li>Operates fully air-gapped; syncs model updates over secure OTA</li>
+              <li>Hardened for &minus;40°C to 85°C, IP67, Class I Div 2 rated</li>
+              <li>Local alert relay: 4&times;DI / 4&times;DO + Modbus RTU output</li>
+            </ul>
+            <div class="fspanel-tags">
+              <span>DIN-Rail Mount</span><span>Air-Gapped</span><span>OTA Updates</span><span>Modbus RTU</span>
+            </div>
+            <div class="fspanel-kpi">
+              <span class="fspanel-kpi-val" style="color:#4ade80">&lt;30 min</span>
+              <span class="fspanel-kpi-lbl">Field Installation Time</span>
+            </div>
+          </div>
+          <div class="fspanel-viz-wrap">
+            <div class="fsviz-chrome">
+              <div class="fsviz-bar">
+                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
+                <span class="fsviz-chip">EDGE NODE &middot; GT-04 &middot; CABINET A</span>
+                <span class="fsviz-badge ok">&#10003; ONLINE &middot; MODEL v2.3</span>
+              </div>
+              <canvas class="fsviz" id="fsviz-edge"></canvas>
+            </div>
+            <div class="fsviz-footer"><span class="fsviz-ftag">UPTIME: 2,847 h &middot; LAST SYNC: 04:12 UTC</span><span class="fsviz-fmeta">INFERENCES: 1.2M</span></div>
           </div>
         </div>
 

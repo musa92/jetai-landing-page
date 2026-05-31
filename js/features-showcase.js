@@ -406,7 +406,8 @@
   var showcase = document.getElementById('features-showcase');
   if(!section||!sticky||!showcase)return;
 
-  var N=6, lastTab=0, pb=document.getElementById('fspbar-fill');
+  if(window.innerWidth<769)return; // tabs work via click on mobile
+  var N=7, lastTab=0, pb=document.getElementById('fspbar-fill');
 
   // Start first viz immediately
   window.addEventListener('load', function(){
@@ -417,7 +418,7 @@
   ScrollTrigger.create({
     trigger : section,
     start   : 'top top',
-    end     : '+=' + (N * 100) + '%',
+    end     : '+=' + ((N-1) * 120) + '%',
     pin     : sticky,
     scrub   : 1.4,
     snap    : {
@@ -450,4 +451,149 @@
     onLeave    : function(){ delete showcase.dataset.sd; },
     onLeaveBack: function(){ delete showcase.dataset.sd; lastTab = 0; }
   });
+})();
+
+// ── Patch: Edge Device viz + N=7 ─────────────────────────────────────────
+(function(){
+  // Edge device animated architecture diagram
+  function vEdge(cv){
+    var dpr=window.devicePixelRatio||1,W=cv.offsetWidth||580,H=cv.offsetHeight||280;
+    cv.width=W*dpr|0; cv.height=H*dpr|0;
+    var ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+    var t=0,raf,PI=Math.PI,sin=Math.sin;
+    function L(a,b,t){return a+(b-a)*t;}
+    function K(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+
+    // Layout
+    var PAD=24, sensorX=PAD+40, edgeX=W/2-30, cloudX=W-PAD-60;
+    var sensors=[
+      {y:H*0.18,lbl:'EGT',col:'#00d4ff'},
+      {y:H*0.34,lbl:'CDP',col:'#00d4ff'},
+      {y:H*0.50,lbl:'VIB',col:'#ff6b00'},
+      {y:H*0.66,lbl:'FF', col:'#00d4ff'},
+      {y:H*0.82,lbl:'ΔP', col:'#ff6b00'}
+    ];
+    // Packets: each sensor has a packet traveling toward edge box
+    var packets=sensors.map(function(s,i){return{sensor:i,prog:Math.random(),active:true};});
+    // Output packets: edge → cloud
+    var outPkts=[{prog:0.2},{prog:0.7}];
+
+    function drawBox(x,y,w,h,col,label,sub){
+      ctx.save();
+      ctx.fillStyle='rgba(7,15,30,0.9)';
+      ctx.strokeStyle=col;
+      ctx.lineWidth=1.2;
+      ctx.beginPath();
+      ctx.roundRect?ctx.roundRect(x,y,w,h,6):ctx.rect(x,y,w,h);
+      ctx.fill(); ctx.stroke();
+      ctx.font='600 9px "JetBrains Mono",monospace';
+      ctx.fillStyle=col; ctx.textAlign='center';
+      ctx.fillText(label,x+w/2,y+h/2-2);
+      if(sub){ctx.font='400 7.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText(sub,x+w/2,y+h/2+9);}
+      ctx.restore();
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle='#080c10';ctx.fillRect(0,0,W,H);
+
+      // ── Sensor column ──
+      sensors.forEach(function(s,i){
+        drawBox(sensorX-14,s.y-11,36,22,'rgba(0,212,255,0.55)',s.lbl,'');
+        // Pulse ring
+        var pr=8+3*sin(t*2+i*1.1);
+        ctx.beginPath();ctx.arc(sensorX,s.y,pr,0,PI*2);
+        ctx.strokeStyle='rgba(0,212,255,0.12)';ctx.lineWidth=1;ctx.stroke();
+      });
+      ctx.font='500 8px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.22)';ctx.textAlign='center';
+      ctx.fillText('SENSORS',sensorX,H*0.93);
+
+      // ── Edge box ──
+      var ebW=76,ebH=H*0.7,ebX=edgeX,ebY=(H-ebH)/2;
+      ctx.fillStyle='rgba(7,15,30,0.95)';
+      ctx.strokeStyle='rgba(124,58,237,0.7)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.roundRect?ctx.roundRect(ebX,ebY,ebW,ebH,10):ctx.rect(ebX,ebY,ebW,ebH);
+      ctx.fill();ctx.stroke();
+      // Top glow
+      var eg=ctx.createLinearGradient(ebX,ebY,ebX,ebY+30);
+      eg.addColorStop(0,'rgba(124,58,237,0.2)');eg.addColorStop(1,'transparent');
+      ctx.fillStyle=eg;ctx.beginPath();ctx.roundRect?ctx.roundRect(ebX,ebY,ebW,30,{tl:10,tr:10,bl:0,br:0}):ctx.rect(ebX,ebY,ebW,30);ctx.fill();
+      // Label
+      ctx.font='600 8px "JetBrains Mono",monospace';ctx.fillStyle='#a78bfa';ctx.textAlign='center';
+      ctx.fillText('EDGE AI',ebX+ebW/2,ebY+13);
+      ctx.font='400 7px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.25)';
+      ctx.fillText('NODE',ebX+ebW/2,ebY+23);
+      // CPU animation
+      var cpuY=ebY+40,cpuS=22;
+      ctx.strokeStyle='rgba(124,58,237,0.35)';ctx.lineWidth=0.8;
+      for(var gx=0;gx<3;gx++)for(var gy=0;gy<3;gy++){
+        ctx.beginPath();ctx.rect(ebX+12+gx*9,cpuY+gy*9,7,7);ctx.stroke();
+        var act=sin(t*4+gx*1.3+gy*0.9)>0.3;
+        ctx.fillStyle=act?'rgba(124,58,237,0.5)':'rgba(124,58,237,0.06)';ctx.fill();
+      }
+      ctx.font='500 7px "JetBrains Mono",monospace';ctx.fillStyle='rgba(124,58,237,0.6)';ctx.textAlign='center';
+      ctx.fillText('LSTM v2.3',ebX+ebW/2,cpuY+36);
+      // Inference counter
+      var inf=1200000+Math.round(t*180);
+      ctx.font='400 6.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.2)';
+      ctx.fillText(inf.toLocaleString(),ebX+ebW/2,cpuY+47);
+      ctx.fillText('inferences',ebX+ebW/2,cpuY+56);
+      // Status LED
+      var led=sin(t*3)>0?'#4ade80':'#22c55e';
+      ctx.beginPath();ctx.arc(ebX+ebW/2,ebY+ebH-16,4,0,PI*2);ctx.fillStyle=led;ctx.fill();
+      ctx.beginPath();ctx.arc(ebX+ebW/2,ebY+ebH-16,7,0,PI*2);ctx.strokeStyle='rgba(74,222,128,0.3)';ctx.lineWidth=1;ctx.stroke();
+      ctx.font='400 6.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(74,222,128,0.7)';ctx.fillText('ONLINE',ebX+ebW/2,ebY+ebH-6);
+      ctx.font='500 8px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.22)';
+      ctx.fillText('EDGE NODE',ebX+ebW/2,H*0.93);
+
+      // ── Cloud / CMMS column ──
+      var cW2=52,cH=32;
+      [{y:H*0.22,lbl:'CLOUD',col:'rgba(0,212,255,0.55)'},{y:H*0.45,lbl:'CMMS',col:'rgba(255,107,0,0.65)'},{y:H*0.68,lbl:'ALERT',col:'rgba(255,68,68,0.65)'}]
+      .forEach(function(n){drawBox(cloudX-cW2/2,n.y-cH/2,cW2,cH,n.col,n.lbl,'');});
+      ctx.font='500 8px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.22)';ctx.textAlign='center';
+      ctx.fillText('OUTPUTS',cloudX,H*0.93);
+
+      // ── Connection lines: sensors → edge ──
+      sensors.forEach(function(s){
+        ctx.beginPath();ctx.moveTo(sensorX+23,s.y);ctx.lineTo(ebX,s.y+(ebY+ebH/2-s.y)*0.15);
+        ctx.strokeStyle='rgba(0,212,255,0.12)';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
+      });
+      // ── Connection lines: edge → outputs ──
+      [{y:H*0.22},{y:H*0.45},{y:H*0.68}].forEach(function(o){
+        ctx.beginPath();ctx.moveTo(ebX+ebW,ebY+ebH/2);ctx.lineTo(cloudX-cW2/2,o.y);
+        ctx.strokeStyle='rgba(124,58,237,0.15)';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
+      });
+
+      // ── Sensor → edge packets ──
+      packets.forEach(function(pk,i){
+        pk.prog+=0.006;if(pk.prog>1)pk.prog=0;
+        var s=sensors[i];
+        var px=L(sensorX+23,ebX,pk.prog);
+        var py=L(s.y,ebY+ebH*0.3+i*ebH*0.1,pk.prog);
+        ctx.beginPath();ctx.arc(px,py,2.5,0,PI*2);
+        ctx.fillStyle=s.col;ctx.globalAlpha=K(1-Math.abs(pk.prog-0.5)*1.5,0,1);ctx.fill();ctx.globalAlpha=1;
+      });
+      // ── Edge → output packets ──
+      outPkts.forEach(function(pk,i){
+        pk.prog+=0.004;if(pk.prog>1)pk.prog=0;
+        var targets=[{y:H*0.22},{y:H*0.45},{y:H*0.68}];
+        var tgt=targets[i%targets.length];
+        var px=L(ebX+ebW,cloudX-cW2/2,pk.prog);
+        var py=L(ebY+ebH/2,tgt.y,pk.prog);
+        ctx.beginPath();ctx.arc(px,py,2.5,0,PI*2);
+        ctx.fillStyle='#a78bfa';ctx.globalAlpha=K(1-Math.abs(pk.prog-0.5)*1.5,0,1);ctx.fill();ctx.globalAlpha=1;
+      });
+
+      t+=0.018;raf=requestAnimationFrame(draw);
+    }
+    draw();return function(){cancelAnimationFrame(raf);};
+  }
+
+  // Register into global VFN map
+  if(window._fsVFN) window._fsVFN['fsviz-edge']=vEdge;
+
+  // Update N in ScrollTrigger to 7
+  // (ScrollTrigger is recreated on page load so we patch via data attribute)
+  var sec=document.getElementById('features');
+  if(sec) sec.dataset.tabCount='7';
 })();
