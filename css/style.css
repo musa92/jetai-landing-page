@@ -115,6 +115,7 @@ input, select, button { font-family: inherit; }
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 .logo-text {
   font-family: var(--font-head);
