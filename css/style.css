@@ -2807,12 +2807,9 @@ input, select, button { font-family: inherit; }
 ══════════════════════════════════════════════ */
 #features {
   padding: 0;
-  min-height: 640vh;
   position: relative;
 }
 .features-sticky {
-  position: sticky;
-  top: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -2872,7 +2869,7 @@ input, select, button { font-family: inherit; }
 
 /* Responsive: disable sticky on mobile, revert to normal scroll */
 @media (max-width: 768px) {
-  #features { min-height: unset; padding: 80px 0; }
+  #features { padding: 80px 0; }
   .features-sticky { position: static; height: auto; padding: 0; }
   #features .section-container { padding: 0 20px; }
 }

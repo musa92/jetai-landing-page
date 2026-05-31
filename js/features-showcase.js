@@ -353,6 +353,7 @@
   // ── Tab logic ────────────────────────────────────────────────────────────
   var INT=5800,cur=0,N=6,pb=document.getElementById('fspbar-fill'),pbS=null,pbR=null;
   var VFN={'fsviz-anomaly':vAnomaly,'fsviz-rul':vRUL,'fsviz-combustion':vCombustion,'fsviz-fouling':vFouling,'fsviz-bearing':vBearing,'fsviz-retrain':vRetrain};
+  window._fsStops=stops; window._fsVFN=VFN;
 
   var _busy=false;
   function sw(i,dir){
@@ -395,33 +396,58 @@
   }
 })();
 
-// ── Scroll-driven tab switching ──────────────────────────────────────────
+// ── GSAP ScrollTrigger snap — replaces manual scroll math ───────────────
 (function(){
-  var section=document.getElementById('features');
-  var showcase=document.getElementById('features-showcase');
-  if(!section||!showcase)return;
-  var N=6,pb=document.getElementById('fspbar-fill'),lastTab=-1,ticking=false;
+  if(typeof gsap==='undefined'||typeof ScrollTrigger==='undefined')return;
+  gsap.registerPlugin(ScrollTrigger);
 
-  function update(){
-    ticking=false;
-    var top=-section.getBoundingClientRect().top;
-    var total=section.offsetHeight-window.innerHeight;
-    if(top<0||top>total+100){
-      if(showcase.dataset.sd){delete showcase.dataset.sd;}
-      return;
-    }
-    showcase.dataset.sd='1';
-    var tp=Math.min(Math.max(top/total,0),0.9999)*N;
-    var newTab=Math.floor(tp);
-    var within=tp-newTab;
-    if(pb)pb.style.width=(within*100)+'%';
-    if(newTab!==lastTab&&showcase._sw){
-      showcase._sw(newTab,newTab>lastTab?'fwd':'back');
-      lastTab=newTab;
-    }
-  }
+  var section  = document.getElementById('features');
+  var sticky   = section && section.querySelector('.features-sticky');
+  var showcase = document.getElementById('features-showcase');
+  if(!section||!sticky||!showcase)return;
 
-  window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(update);}},{passive:true});
-  // Init lastTab to current
-  document.querySelectorAll('.fstab').forEach(function(t,i){if(t.classList.contains('active'))lastTab=i;});
+  var N=6, lastTab=0, pb=document.getElementById('fspbar-fill');
+
+  // Start first viz immediately
+  window.addEventListener('load', function(){
+    var cv=document.getElementById('fsviz-anomaly');
+    // (IntersectionObserver in main IIFE handles this; ScrollTrigger fires onUpdate shortly after)
+  });
+
+  ScrollTrigger.create({
+    trigger : section,
+    start   : 'top top',
+    end     : '+=' + (N * 100) + '%',
+    pin     : sticky,
+    scrub   : 1.4,
+    snap    : {
+      snapTo   : 1 / (N - 1),
+      duration : { min: 0.28, max: 0.58 },
+      ease     : 'power2.inOut',
+      delay    : 0.06
+    },
+    onUpdate: function(self){
+      showcase.dataset.sd = '1';
+      var raw    = self.progress * (N - 1);
+      var newTab = Math.min(Math.round(raw), N - 1);
+      var within = raw - Math.floor(raw);
+      if(pb) pb.style.width = (within * 100) + '%';
+      if(newTab !== lastTab && showcase._sw){
+        showcase._sw(newTab, newTab > lastTab ? 'fwd' : 'back');
+        lastTab = newTab;
+        // Start viz for newly active tab
+        var panel  = document.querySelectorAll('.fspanel')[newTab];
+        var stops  = window._fsStops || {};
+        var VFN    = window._fsVFN   || {};
+        if(panel){
+          var cv = panel.querySelector('.fsviz');
+          if(cv && cv.id && !stops[cv.id] && VFN[cv.id]){
+            stops[cv.id] = VFN[cv.id](cv);
+          }
+        }
+      }
+    },
+    onLeave    : function(){ delete showcase.dataset.sd; },
+    onLeaveBack: function(){ delete showcase.dataset.sd; lastTab = 0; }
+  });
 })();
