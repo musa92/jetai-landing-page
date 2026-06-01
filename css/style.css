@@ -3207,25 +3207,21 @@ input, select, button { font-family: inherit; }
   .explore-sticky {
     position: sticky !important;
     top: 0 !important;
-    height: 58vmax !important;
-    min-height: 300px !important;
-    max-height: 480px !important;
+    height: 100svh !important;
+    height: 100vh !important;
     overflow: hidden !important;
     padding-bottom: 0;
   }
   .explore-header {
     position: absolute !important;
-    top: 16px !important;
+    top: 20px !important;
     left: 20px !important;
     transform: none !important;
     padding: 0;
     align-items: flex-start;
-    text-align: left;
   }
   .engine-viewport {
-    height: calc(58vmax - 60px) !important;
-    min-height: 250px !important;
-    max-height: 420px !important;
+    height: calc(100vh - 80px) !important;
     overflow: hidden;
   }
   .info-panel-left,
