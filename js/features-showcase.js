@@ -597,3 +597,29 @@
   var sec=document.getElementById('features');
   if(sec) sec.dataset.tabCount='7';
 })();
+
+// Mobile: each canvas starts when it scrolls into view (panels all visible, never triggered by tabs)
+(function(){
+  if (window.innerWidth >= 769) return;
+  function tryInit() {
+    var VFN = window._fsVFN, stops = window._fsStops;
+    if (!VFN || !stops) { setTimeout(tryInit, 200); return; }
+    document.querySelectorAll('.fsviz[id]').forEach(function(cv) {
+      if (!VFN[cv.id]) return;
+      new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting && !stops[cv.id]) {
+            // Force layout so offsetWidth is real before setup()
+            cv.style.display = 'block';
+            stops[cv.id] = VFN[cv.id](cv);
+          }
+        });
+      }, { threshold: 0.25 }).observe(cv);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInit);
+  } else {
+    tryInit();
+  }
+})();
