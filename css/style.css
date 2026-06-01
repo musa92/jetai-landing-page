@@ -3203,7 +3203,7 @@ input, select, button { font-family: inherit; }
   #sensor-hud,
   .s-tag { display: none !important; }
 
-  #turbofan-explore { height: auto !important; }
+  #turbofan-explore { height: 280vh !important; }
   .explore-sticky {
     position: relative !important;
     height: auto !important;

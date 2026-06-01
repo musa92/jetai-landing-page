@@ -1672,14 +1672,15 @@ document.addEventListener('DOMContentLoaded', () => {
     { p: 0.85, l: 'Generator · 38.1 MW Output', h: 'Synchronous alternator · exciter · load coupling' },
   ];
 
-  if (typeof ScrollTrigger !== 'undefined' && window.innerWidth >= 769) {
+  if (typeof ScrollTrigger !== 'undefined') {
+    const isMob = window.innerWidth < 769;
     ScrollTrigger.create({
       trigger:    section,
       start:      'top top',
       end:        'bottom bottom',
-      pin:        '.explore-sticky',
-      pinSpacing: false,
-      scrub:      1.5,
+      pin:        isMob ? false : '.explore-sticky',
+      pinSpacing: !isMob,
+      scrub:      isMob ? 2.5 : 1.5,
       onUpdate(self) {
         const p = self.progress;
         if (_engine3d) _engine3d.scrollProgress = p;
