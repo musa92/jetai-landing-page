@@ -3326,3 +3326,11 @@ input, select, button { font-family: inherit; }
     max-height: 360px !important;
   }
 }
+
+/* SplitType wraps .gradient-text words in .word spans — re-apply gradient clip */
+.gradient-text .word {
+  background: linear-gradient(135deg, var(--cyan) 0%, #60a5fa 50%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
