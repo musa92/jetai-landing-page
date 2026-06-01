@@ -1026,6 +1026,7 @@ var lenis = null;
   // ── Word-by-word headline reveals with blur ──
   if (typeof SplitType !== 'undefined') {
     document.querySelectorAll('.section-headline, .hero-headline').forEach(function(el) {
+      if (el.closest('.features-sticky')) return; // skip — pinned container clips blur animation
       // Skip if already inside a GSAP timeline
       var split = new SplitType(el, { types: 'words', tagName: 'span' });
       gsap.fromTo(split.words,

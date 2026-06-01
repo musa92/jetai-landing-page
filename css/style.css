@@ -2435,7 +2435,7 @@ input, select, button { font-family: inherit; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 .fspanel::before {
   content: '';
