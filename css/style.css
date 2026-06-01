@@ -2435,7 +2435,22 @@ input, select, button { font-family: inherit; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   position: relative;
-  overflow: visible;
+  overflow: clip;
+}
+/* Ghost panel number — Apple-style large background digit */
+.fspanel::after {
+  content: attr(data-panel-num);
+  position: absolute;
+  top: -20px;
+  right: 28px;
+  font-family: var(--font-head);
+  font-size: 9rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.018);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.05em;
 }
 .fspanel::before {
   content: '';
@@ -2845,15 +2860,16 @@ input, select, button { font-family: inherit; }
 #features .section-container { padding: 0 48px; margin-bottom: 36px; }
 
 /* Directional panel slide animations */
-@keyframes fs-slide-in-fwd  { from { opacity:0; transform:translateX(48px);  } to { opacity:1; transform:none; } }
-@keyframes fs-slide-in-back { from { opacity:0; transform:translateX(-48px); } to { opacity:1; transform:none; } }
-@keyframes fs-slide-out-fwd  { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-40px); } }
-@keyframes fs-slide-out-back { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(40px);  } }
+/* Apple domino card-rise animations */
+@keyframes fs-rise-in   { from { opacity:0; transform:translateY(56px) scale(0.975); } to { opacity:1; transform:none; } }
+@keyframes fs-drop-in   { from { opacity:0; transform:translateY(-40px) scale(0.975); } to { opacity:1; transform:none; } }
+@keyframes fs-rise-out  { from { opacity:1; transform:none; } to { opacity:0; transform:translateY(-32px) scale(0.96); } }
+@keyframes fs-drop-out  { from { opacity:1; transform:none; } to { opacity:0; transform:translateY(32px) scale(0.96); } }
 
-.fspanel.fs-exit-fwd  { display:grid !important; animation:fs-slide-out-fwd  0.28s ease forwards; pointer-events:none; }
-.fspanel.fs-exit-back { display:grid !important; animation:fs-slide-out-back 0.28s ease forwards; pointer-events:none; }
-.fspanel.active.fs-enter-fwd  { animation:fs-slide-in-fwd  0.38s cubic-bezier(0.23,1,0.32,1) both; }
-.fspanel.active.fs-enter-back { animation:fs-slide-in-back 0.38s cubic-bezier(0.23,1,0.32,1) both; }
+.fspanel.fs-exit-fwd  { display:grid !important; animation:fs-rise-out 0.32s cubic-bezier(0.4,0,1,1) forwards; pointer-events:none; }
+.fspanel.fs-exit-back { display:grid !important; animation:fs-drop-out 0.32s cubic-bezier(0.4,0,1,1) forwards; pointer-events:none; }
+.fspanel.active.fs-enter-fwd  { animation:fs-rise-in  0.52s cubic-bezier(0.16,1,0.3,1) both; }
+.fspanel.active.fs-enter-back { animation:fs-drop-in  0.52s cubic-bezier(0.16,1,0.3,1) both; }
 
 /* Sliding tab indicator pill */
 .fstab { position: relative; }
@@ -3330,3 +3346,12 @@ input, select, button { font-family: inherit; }
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* GSAP pin spacer must not block cursor/pointer events */
+.gsap-marker-start,
+.gsap-marker-end,
+[id*="pin-spacer"],
+.pin-spacer { pointer-events: none !important; cursor: none !important; }
+
+/* Ensure custom cursor tracks inside pinned sections */
+#features .features-sticky * { cursor: none; }
