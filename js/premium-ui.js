@@ -1,0 +1,89 @@
+/* ═══════════════════════════════════════════════════
+   Premium UI layer
+   · vanilla-tilt 3D card tilt + glare (desktop only)
+   · GSAP magnetic buttons
+   · cursor-tracked spotlight on large panels
+═══════════════════════════════════════════════════ */
+'use strict';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const isDesktop = window.matchMedia('(min-width: 900px) and (hover: hover)').matches;
+  const reduced   = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!isDesktop || reduced) return;
+
+  /* ── 1 · 3D tilt + glare on cards ───────────────── */
+  if (typeof VanillaTilt !== 'undefined') {
+    const tiltTargets = document.querySelectorAll(
+      '.metric-card, .problem-stat, .integration-card, .agent-step, .edge-node'
+    );
+    VanillaTilt.init(tiltTargets, {
+      max: 5,
+      speed: 600,
+      scale: 1.015,
+      perspective: 900,
+      glare: true,
+      'max-glare': 0.12,
+      gyroscope: false,
+    });
+
+    /* pager mock gets a slightly deeper, slower tilt — hero object */
+    const pager = document.querySelector('.pager-mock');
+    if (pager) {
+      VanillaTilt.init(pager, {
+        max: 7, speed: 900, scale: 1.02, perspective: 1100,
+        glare: true, 'max-glare': 0.18, gyroscope: false,
+      });
+    }
+  }
+
+  /* ── 2 · Magnetic buttons (GSAP) ────────────────── */
+  if (typeof gsap !== 'undefined') {
+    document.querySelectorAll('.btn-primary, .btn-nav, .btn-cta-submit').forEach(btn => {
+      const strength = 0.32;            /* how far the button follows, 0–1 */
+      const radius   = 90;              /* px capture distance beyond bounds */
+
+      const xTo = gsap.quickTo(btn, 'x', { duration: 0.45, ease: 'power3.out' });
+      const yTo = gsap.quickTo(btn, 'y', { duration: 0.45, ease: 'power3.out' });
+
+      btn.addEventListener('mousemove', e => {
+        const r  = btn.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width  / 2);
+        const dy = e.clientY - (r.top  + r.height / 2);
+        xTo(dx * strength);
+        yTo(dy * strength);
+      });
+      btn.addEventListener('mouseleave', () => {
+        gsap.to(btn, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' });
+      });
+
+      /* label drifts slightly more than the shell — depth */
+      const label = btn.querySelector('span');
+      if (label) {
+        const lxTo = gsap.quickTo(label, 'x', { duration: 0.45, ease: 'power3.out' });
+        const lyTo = gsap.quickTo(label, 'y', { duration: 0.45, ease: 'power3.out' });
+        btn.addEventListener('mousemove', e => {
+          const r  = btn.getBoundingClientRect();
+          lxTo((e.clientX - (r.left + r.width  / 2)) * 0.14);
+          lyTo((e.clientY - (r.top  + r.height / 2)) * 0.14);
+        });
+        btn.addEventListener('mouseleave', () => {
+          gsap.to(label, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' });
+        });
+      }
+    });
+  }
+
+  /* ── 3 · Cursor spotlight on large panels ───────── */
+  /* Radial highlight tracks the cursor via CSS vars — the
+     Linear/Stripe "lit from your hand" card effect. */
+  document.querySelectorAll(
+    '.feature-panel, .browser-chrome, .ai-loop-cycle, .info-panel, .pager-mock'
+  ).forEach(panel => {
+    panel.classList.add('spotlight');
+    panel.addEventListener('mousemove', e => {
+      const r = panel.getBoundingClientRect();
+      panel.style.setProperty('--spot-x', ((e.clientX - r.left) / r.width  * 100) + '%');
+      panel.style.setProperty('--spot-y', ((e.clientY - r.top)  / r.height * 100) + '%');
+    });
+  });
+});

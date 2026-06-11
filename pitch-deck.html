@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Turbnetic.ai — Series A Pitch Deck 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<style>
+/* ═══════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════ */
+:root {
+  --c: #00d4ff;
+  --o: #ff6b00;
+  --bg: #03080e;
+  --bg2: #070f1d;
+  --s1: rgba(255,255,255,0.04);
+  --s2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --bc: rgba(0,212,255,0.2);
+  --bo: rgba(255,107,0,0.22);
+  --text: #dde6f2;
+  --mid: #8499b4;
+  --dim: #3d5269;
+  --fh: 'Space Grotesk', sans-serif;
+  --fb: 'Inter', sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+}
+
+.reveal {
+  font-family: var(--fb);
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.reveal .slides {
+  text-align: left;
+}
+
+/* dot grid background */
+.reveal .slides section {
+  padding: 48px 64px;
+  background-image:
+    radial-gradient(circle, rgba(0,212,255,0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: 0 0;
+  overflow: hidden;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* override defaults */
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  font-family: var(--fh);
+  color: var(--text);
+  text-transform: none;
+  font-style: normal;
+  text-shadow: none;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.reveal h1 { font-size: clamp(36px, 4.2vw, 62px); font-weight: 700; line-height: 1.06; }
+.reveal h2 { font-size: clamp(26px, 3vw, 44px); font-weight: 700; line-height: 1.1; }
+.reveal h3 { font-size: clamp(16px, 1.6vw, 22px); font-weight: 600; line-height: 1.25; }
+.reveal h4 { font-size: 13px; font-weight: 600; }
+.reveal p  { font-family: var(--fb); font-size: clamp(12px, 1.1vw, 15px); color: var(--mid); line-height: 1.7; margin: 0; }
+.reveal a  { color: var(--c); text-decoration: none; }
+.reveal strong { color: var(--text); font-weight: 600; }
+
+.grad {
+  color: var(--c);
+  -webkit-text-fill-color: var(--c);
+  background: none;
+}
+
+/* ── label ── */
+.lbl {
+  font-family: var(--fm);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.lbl::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: var(--c);
+  flex-shrink: 0;
+}
+.lbl.o { color: var(--o); }
+.lbl.o::before { background: var(--o); }
+
+/* ── stat ── */
+.stat {
+  font-family: var(--fh);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--c);
+}
+.stat.o { color: var(--o); }
+.stat.w { color: var(--text); }
+.s72 { font-size: clamp(40px, 5vw, 72px); }
+.s52 { font-size: clamp(30px, 3.8vw, 52px); }
+.s40 { font-size: clamp(24px, 2.8vw, 40px); }
+.s28 { font-size: clamp(18px, 2vw, 28px); }
+.stat-sub { font-size: 11px; color: var(--mid); margin-top: 5px; line-height: 1.4; font-family: var(--fb); }
+
+/* ── card ── */
+.card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  position: relative;
+}
+.card.cc { border-color: var(--bc); background: rgba(0,212,255,0.03); }
+.card.co { border-color: var(--bo); background: rgba(255,107,0,0.03); }
+.card-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  border-radius: 10px 10px 0 0;
+}
+.card-bar.c { background: linear-gradient(90deg, var(--c), transparent 70%); }
+.card-bar.o { background: linear-gradient(90deg, var(--o), transparent 70%); }
+
+/* ── layout ── */
+.row { display: flex; align-items: flex-start; gap: 36px; width: 100%; }
+.col { flex: 1; min-width: 0; }
+.col-l { flex: 1.5; min-width: 0; }
+.col-s { flex: 0.65; min-width: 0; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.w100 { width: 100%; }
+.mt8  { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.mt20 { margin-top: 20px; }
+.mt24 { margin-top: 24px; }
+
+/* ── check list ── */
+.cl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.cl li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: clamp(11px, 0.95vw, 13.5px);
+  color: var(--mid);
+  line-height: 1.55;
+}
+.cl li .dot-c {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--c);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.cl li .dot-o {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--o);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* ── divider ── */
+.div { height: 1px; background: var(--border); width: 100%; margin: 14px 0; }
+
+/* ── pill ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--fm);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: 40px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  color: var(--mid);
+}
+.pill.c { border-color: var(--bc); color: var(--c); }
+.pill.o { border-color: var(--bo); color: var(--o); }
+
+/* ── slide footer ── */
+.sf {
+  position: absolute;
+  bottom: 16px; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 64px;
+  font-family: var(--fm);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.12em;
+  z-index: 10;
+}
+
+/* ── table ── */
+.ct { width: 100%; border-collapse: collapse; }
+.ct thead th {
+  font-family: var(--fm);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mid);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ct tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--mid);
+  font-size: 12px;
+  vertical-align: middle;
+}
+.ct tbody tr.us { background: rgba(0,212,255,0.04); }
+.ct tbody tr.us td:first-child { color: var(--c); font-weight: 600; }
+.ct tbody tr.us td { color: var(--text); }
+.chk { color: var(--c); font-weight: 600; font-size: 11px; }
+.xm  { color: #d95a5a; opacity: 0.7; font-size: 11px; }
+.pt  { color: var(--o); font-size: 11px; }
+
+/* ── roadmap ── */
+.rm { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; width: 100%; }
+.rm-phase { display: flex; flex-direction: column; gap: 12px; }
+.rm-top { display: flex; align-items: center; gap: 0; }
+.rm-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--mid);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.rm-num.active { border-color: var(--c); color: var(--c); }
+.rm-num.next { border-color: var(--o); color: var(--o); }
+.rm-lbl { font-family: var(--fm); font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mid); margin-left: 10px; }
+.rm-lbl.active { color: var(--c); }
+.rm-lbl.next { color: var(--o); }
+.rm-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  flex: 1;
+}
+.rm-card h4 { font-size: 13px; margin-bottom: 6px; }
+.rm-card p  { font-size: 11px; }
+
+/* ── progress bars ── */
+.pbar { display: flex; align-items: center; gap: 12px; }
+.pbar-lbl { font-size: 11.5px; color: var(--mid); width: 160px; flex-shrink: 0; text-align: right; }
+.pbar-track { flex: 1; height: 3px; background: var(--s2); border-radius: 99px; overflow: hidden; }
+.pbar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--c), rgba(0,212,255,0.45)); }
+.pbar-fill.o { background: linear-gradient(90deg, var(--o), rgba(255,107,0,0.4)); }
+.pbar-val { font-family: var(--fm); font-size: 11px; color: var(--c); width: 48px; text-align: right; flex-shrink: 0; }
+.pbar-val.o { color: var(--o); }
+
+/* ── fund bars ── */
+.fb { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--s1); border: 1px solid var(--border); border-radius: 8px; }
+.fb-pct { font-family: var(--fh); font-size: 18px; font-weight: 700; color: var(--c); width: 48px; flex-shrink: 0; }
+.fb-pct.o { color: var(--o); }
+.fb-desc { flex: 1; }
+.fb-desc h4 { font-size: 12.5px; margin-bottom: 3px; }
+.fb-desc p  { font-size: 11px; }
+.fb-bar-wrap { width: 80px; flex-shrink: 0; }
+.fb-track { height: 3px; background: var(--s2); border-radius: 99px; overflow: hidden; }
+.fb-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--c), rgba(0,212,255,0.4)); }
+.fb-bar.o { background: linear-gradient(90deg, var(--o), rgba(255,107,0,0.4)); }
+.fb-amt { font-family: var(--fm); font-size: 10px; color: var(--c); width: 38px; text-align: right; flex-shrink: 0; }
+.fb-amt.o { color: var(--o); }
+
+/* ── glow ── */
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── agent flow diagram ── */
+.agent-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+.af-node {
+  flex: 1;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  text-align: center;
+  position: relative;
+}
+.af-node.active-c { border-color: var(--bc); background: rgba(0,212,255,0.04); }
+.af-node.active-o { border-color: var(--bo); background: rgba(255,107,0,0.04); }
+.af-node h4 { font-size: 12px; margin-bottom: 6px; }
+.af-node p  { font-size: 10.5px; }
+.af-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--bc);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fm); font-size: 9px; color: var(--c);
+  margin: 0 auto 10px;
+}
+.af-arr {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  color: var(--dim);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── pulse animation ── */
+@keyframes pulse { 0%,100%{opacity:.7;transform:scale(1)} 50%{opacity:.4;transform:scale(1.05)} }
+.pulse { animation: pulse 3s ease-in-out infinite; }
+
+/* ── Reveal overrides ── */
+.reveal .controls { bottom: 20px; right: 20px; }
+.reveal .controls .controls-arrow { color: var(--dim); }
+.reveal .controls .controls-arrow:hover { color: var(--c); }
+.reveal .progress { background: rgba(0,212,255,0.1); }
+.reveal .progress span { background: var(--c); }
+.reveal .slide-number {
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--dim);
+  background: none;
+  bottom: 16px;
+  right: 70px;
+}
+
+/* ── PDF button ── */
+#pdf-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  background: rgba(8,15,28,0.92);
+  border: 1px solid var(--bc);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: var(--fm);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, border-color 0.2s;
+  backdrop-filter: blur(12px);
+}
+#pdf-btn:hover { background: rgba(0,212,255,0.08); border-color: var(--c); }
+#pdf-btn svg { flex-shrink: 0; }
+
+/* ── PRINT / PDF ── */
+@media print {
+  /* Force ALL backgrounds and colors to print — this is the key fix */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #03080e !important;
+    background-color: #03080e !important;
+  }
+
+  #pdf-btn { display: none !important; }
+  .reveal .controls { display: none !important; }
+  .reveal .progress { display: none !important; }
+  .reveal .slide-number { display: none !important; }
+
+  .reveal {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #03080e !important;
+  }
+  .reveal .slides {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    transform: none !important;
+    left: 0 !important;
+    top: 0 !important;
+    background: #03080e !important;
+  }
+  .reveal .slides section {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: 100vh !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    background-color: #03080e !important;
+  }
+  .reveal .slide-background { display: none !important; }
+  .glow { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Download Button -->
+<div id="dl-btns" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;gap:8px">
+  <button onclick="downloadImages()" style="background:rgba(8,15,28,0.92);border:1px solid rgba(0,212,255,0.2);border-radius:6px;padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#00d4ff;cursor:pointer;display:flex;align-items:center;gap:8px;backdrop-filter:blur(12px)">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 3v13M7 11l5 5 5-5M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Save Images (ZIP)
+  </button>
+</div>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ══════════════════════════════════════════════
+     SLIDE COUNT UPDATE: 19 slides total
+══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     01 · COVER
+══════════════════════════════════════════════ -->
+<!-- 01 COVER -->
+<section>
+  <div class="glow" style="width:480px;height:480px;background:rgba(0,212,255,0.06);top:-80px;right:-80px;"></div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:40px">
+    <svg width="42" height="42" viewBox="0 0 28 28" fill="none" class="pulse">
+      <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="0.8" opacity="0.35"/>
+      <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.9" transform="rotate(0 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(51.4 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.4" transform="rotate(102.8 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.3" transform="rotate(154.2 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.5" transform="rotate(205.7 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.72" transform="rotate(257.1 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(308.5 14 14)"/>
+      <circle cx="14" cy="14" r="4.8" fill="#03080e"/><circle cx="14" cy="14" r="4.8" stroke="#00d4ff" stroke-width="0.7"/>
+      <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+    </svg>
+    <span style="font-family:var(--fh);font-size:22px;font-weight:700;letter-spacing:-0.015em">Turbnetic<span style="color:var(--c)">.ai</span></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:10px 18px;background:rgba(255,107,0,0.06);border:1px solid rgba(255,107,0,0.25);border-radius:8px;max-width:fit-content">
+    <div style="width:1px;height:32px;background:var(--o);flex-shrink:0"></div>
+    <div>
+      <div style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.22em;text-transform:uppercase;margin-bottom:4px">Seeking Lead Investor</div>
+      <div style="font-family:var(--fh);font-size:13px;font-weight:600;color:var(--text)">We need more than capital — we need <span style="color:var(--o)">a16z</span>'s expertise in industrial AI, American Dynamism, and defense technology to build this right.</div>
+    </div>
+  </div>
+  <div class="lbl">Series A · Confidential · 2026</div>
+  <h1 style="max-width:780px;margin-bottom:18px">Turn 2,000 Pages of Maintenance<br>Manuals Into <span class="grad">One Precise Action</span></h1>
+  <p style="max-width:560px;font-size:15px;line-height:1.7;margin-bottom:32px">An AI platform that monitors gas turbine fleets in real time, detects failures weeks before they happen, and tells every mechanic — regardless of experience — exactly what to do next.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px">
+    <span class="pill c">Predictive Maintenance</span>
+    <span class="pill">Fleet Intelligence Dashboard</span>
+    <span class="pill o">Maintenance Agent AI</span>
+    <span class="pill">Legacy Digitization</span>
+    <span class="pill">DoD · Grid · Future</span>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-end">
+    <div><div class="stat s52">$50B</div><div class="stat-sub">Annual turbine downtime cost<br>that Turbnetic.ai targets</div></div>
+    <div style="width:1px;height:48px;background:var(--border);flex-shrink:0"></div>
+    <div><div class="stat s52 o">Series A</div><div class="stat-sub">Raise (amount TBD with lead investor)</div></div>
+    <div style="width:1px;height:48px;background:var(--border);flex-shrink:0"></div>
+    <div><div class="stat s52">$64.3B</div><div class="stat-sub">Predictive maintenance TAM 2031<br>Allied Market Research</div></div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL — NOT FOR DISTRIBUTION</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>01 / 20</span></div>
+</section>
+
+<!-- 02 THE PROBLEM -->
+<section>
+  <div class="glow" style="width:400px;height:400px;background:rgba(255,107,0,0.05);bottom:-60px;right:-60px;"></div>
+  <div class="lbl o">Two Compounding Problems</div>
+  <h2 style="margin-bottom:20px">Turbines Fail Predictably.<br>Mechanics Don't Know <span class="grad">What to Do.</span></h2>
+  <div class="row">
+    <div class="col">
+      <div class="card co" style="height:100%">
+        <div class="card-bar o"></div>
+        <div class="stat s40 o" style="margin-bottom:6px">Problem 1</div>
+        <h3 style="margin-bottom:12px;color:var(--text)">Failures Are Predicted Too Late</h3>
+        <ul class="cl">
+          <li><span class="dot-o"></span>50,000+ utility-scale gas turbines generate 23% of global electricity — running mostly on reactive maintenance</li>
+          <li><span class="dot-o"></span>68% of critical failures show sensor warning signatures 2+ weeks before breakdown — yet nobody catches them</li>
+          <li><span class="dot-o"></span>Average post-failure cost: $50K–$2.4M per incident in parts, labor, and lost generation</li>
+          <li><span class="dot-o"></span>3–5% annual heat rate degradation from undetected fouling = $1–2M lost per turbine per year</li>
+          <li><span class="dot-o"></span>75% of the global installed base predates 2005 — zero AI integration</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card cc" style="height:100%">
+        <div class="card-bar c"></div>
+        <div class="stat s40" style="margin-bottom:6px">Problem 2</div>
+        <h3 style="margin-bottom:12px;color:var(--text)">The Knowledge Is Locked Away</h3>
+        <ul class="cl">
+          <li><span class="dot-c"></span>GE Frame 7 maintenance manual: <strong>2,000+ pages</strong>. A new hire cannot be expected to navigate it under pressure</li>
+          <li><span class="dot-c"></span>Experienced turbine engineers are retiring faster than they can be replaced — institutional knowledge disappears</li>
+          <li><span class="dot-c"></span>When an alert fires today, the mechanic gets a fault code — not a cause, not a next step, not a procedure</li>
+          <li><span class="dot-c"></span>Wrong diagnoses, delayed repairs, escalated failures — entirely dependent on a shrinking pool of senior staff</li>
+          <li><span class="dot-c"></span>New hires take 2–4 years to develop independent judgment on turbine anomalies</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card mt16 w100" style="padding:12px 20px">
+    <p style="max-width:none;font-size:13px;color:var(--text)"><strong style="color:var(--c)">The core insight:</strong> The sensor data to predict every failure already exists in historians. The procedure to respond correctly already exists in manuals. Nobody has built the intelligence layer that connects both — in real time, in plain language, to the person holding the wrench.</p>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>02 / 20</span></div>
+</section>
+
+<!-- 03 WHY NOW — AI + ELECTRICITY CLOSED LOOP -->
+<section>
+  <div class="lbl">Why Now</div>
+  <h2 style="margin-bottom:8px">AI Is Creating the Largest<br><span class="grad">Electricity Demand Surge in History</span></h2>
+  <p style="max-width:680px;margin-bottom:20px">Four forces are converging in 2026 that make this the exact right moment to build Turbnetic.ai — and the AI electricity crisis is the most urgent of them all.</p>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card co" style="grid-column:1/3">
+      <div class="card-bar o"></div>
+      <div style="display:flex;gap:36px;align-items:center">
+        <div style="flex-shrink:0;text-align:center;min-width:180px">
+          <div class="stat s52 o">The Closed Loop</div>
+        </div>
+        <div style="width:1px;height:60px;background:var(--border);flex-shrink:0"></div>
+        <div style="flex:1">
+          <p style="font-size:13px;color:var(--text);max-width:none">AI data centers will consume over <strong style="color:var(--o)">1,000 TWh of electricity per year by 2026</strong> — equivalent to Japan's entire national consumption (IEA, 2024). Goldman Sachs projects a <strong style="color:var(--o)">160% increase</strong> in US data center power demand by 2030. Gas turbines are the only dispatchable technology that can ramp fast enough to follow AI load. <strong style="color:var(--text)">AI creates the electricity demand. AI solves the reliability of the turbines that meet it. Turbnetic.ai closes the loop.</strong></p>
+        </div>
+        <div style="width:1px;height:60px;background:var(--border);flex-shrink:0"></div>
+        <div style="flex-shrink:0;text-align:center">
+          <div style="font-family:var(--fm);font-size:10px;color:var(--mid);margin-bottom:8px;letter-spacing:0.12em">THE LOOP</div>
+          <div style="font-size:11.5px;color:var(--text);line-height:1.8">AI infrastructure<br><span style="color:var(--o)">&#8595;</span> needs electricity<br>Gas turbines supply it<br><span style="color:var(--o)">&#8595;</span> must never fail<br><span style="color:var(--c)">Turbnetic.ai ensures it</span><br><span style="color:var(--c)">&#8595;</span> enables more AI</div>
+        </div>
+      </div>
+    </div>
+    <div class="card cc">
+      <div class="card-bar c"></div>
+      <h4 style="color:var(--c);margin-bottom:8px">LLM Agents Are Now Production-Grade</h4>
+      <p>AI agent frameworks can now ingest a 2,000-page maintenance manual and reliably generate correct mechanic directives. This capability crossed the production threshold in 2025 — not before.</p>
+    </div>
+    <div class="card co">
+      <div class="card-bar o"></div>
+      <h4 style="color:var(--o);margin-bottom:8px">Expert Workforce Is Retiring</h4>
+      <p>40% of experienced gas turbine operations staff will retire by 2030 (GE Power, 2024). The knowledge cliff is not hypothetical — it is arriving now. AI must fill the gap.</p>
+    </div>
+    <div class="card cc">
+      <div class="card-bar c"></div>
+      <h4 style="color:var(--c);margin-bottom:8px">Industrial IoT Is Finally Mainstream</h4>
+      <p>OPC-UA adoption crossed 70% of new industrial control deployments (OPC Foundation, 2025). The connectivity barrier that blocked industrial AI in 2015 is now the default.</p>
+    </div>
+    <div class="card co">
+      <div class="card-bar o"></div>
+      <h4 style="color:var(--o);margin-bottom:8px">Energy Transition Demands Reliability</h4>
+      <p>Renewables at 35–40% grid mix force gas turbines into fast-cycling backup roles — accelerating thermal degradation. Operators can no longer afford to run reactively. $320B US grid investment required through 2035 (NERC).</p>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>03 / 20</span></div>
+</section>
+
+<!-- 04 SOLUTION OVERVIEW -->
+<section>
+  <div class="lbl">The Solution</div>
+  <h2 style="margin-bottom:8px">One Platform.<br><span class="grad">Three Layers of Intelligence.</span></h2>
+  <p style="margin-bottom:20px;max-width:600px">Turbnetic.ai connects to existing sensors and closes both gaps simultaneously — early anomaly detection and precise maintenance guidance — in a single platform any operator can use from day one.</p>
+  <div class="g3">
+    <div class="card cc">
+      <div class="card-bar c"></div>
+      <div class="lbl" style="margin-bottom:10px;font-size:9px">Layer 01</div>
+      <h3 style="color:var(--c);margin-bottom:10px">Predictive Anomaly Detection</h3>
+      <p style="margin-bottom:14px">Continuously monitors 200–800 sensor channels per turbine. AI model surfaces failure precursors 2–5 weeks before breakdown — not after it.</p>
+      <ul class="cl">
+        <li><span class="dot-c"></span>Blade degradation and fouling progression</li>
+        <li><span class="dot-c"></span>Combustion instability and thermoacoustic events</li>
+        <li><span class="dot-c"></span>Bearing wear, rotor imbalance, compressor surge</li>
+        <li><span class="dot-c"></span>Vibration signature deviation tracking</li>
+      </ul>
+      <div style="margin-top:14px;display:flex;gap:18px"><div><div class="stat s28">23 wk</div><div class="stat-sub">Avg. detection lead</div></div><div><div class="stat s28">99.2%</div><div class="stat-sub">Precision target</div></div></div>
+    </div>
+    <div class="card co">
+      <div class="card-bar o"></div>
+      <div class="lbl o" style="margin-bottom:10px;font-size:9px">Layer 02</div>
+      <h3 style="color:var(--o);margin-bottom:10px">Maintenance Intelligence Agent</h3>
+      <p style="margin-bottom:14px">Anomaly detected → AI agents cross-reference the full maintenance manual → step-by-step directive sent to mechanic's dashboard and pager. No lookup required.</p>
+      <ul class="cl">
+        <li><span class="dot-o"></span>Natural language: "Inspect leading edge, Stage 3"</li>
+        <li><span class="dot-o"></span>Exact manual section + procedure steps</li>
+        <li><span class="dot-o"></span>Safety interlocks and escalation thresholds</li>
+        <li><span class="dot-o"></span>New hire responds as well as a 20-year veteran</li>
+      </ul>
+      <div style="margin-top:14px"><div class="stat s28">Day 1</div><div class="stat-sub">New hire effective from first shift</div></div>
+    </div>
+    <div class="card cc">
+      <div class="card-bar c"></div>
+      <div class="lbl" style="margin-bottom:10px;font-size:9px">Layer 03</div>
+      <h3 style="color:var(--c);margin-bottom:10px">Fleet Intelligence Dashboard</h3>
+      <p style="margin-bottom:14px">Every turbine visible at a glance. Health scores, risk-ranked alerts, maintenance task board, and performance KPIs — one operator managing an entire facility.</p>
+      <ul class="cl">
+        <li><span class="dot-c"></span>Real-time fleet health scorecards</li>
+        <li><span class="dot-c"></span>Heat rate, output, and efficiency KPIs</li>
+        <li><span class="dot-c"></span>Maintenance task assignment and tracking</li>
+        <li><span class="dot-c"></span>Mechanic pager app — offline capable</li>
+      </ul>
+      <div style="margin-top:14px"><div class="stat s28">50+</div><div class="stat-sub">Turbines managed by one operator</div></div>
+    </div>
+  </div>
+  <div class="card mt14 w100" style="padding:11px 18px">
+    <p style="max-width:none;font-size:12.5px;color:var(--text)"><strong style="color:var(--c)">Compound moat:</strong> Every fleet-hour improves detection accuracy for all customers. Every manual ingested sharpens directive quality. The platform compounds with data in a way no point solution can replicate.</p>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>04 / 20</span></div>
+</section>
+
+<!-- 05 MAINTENANCE AGENT DEEP-DIVE -->
+<section>
+  <div class="glow" style="width:350px;height:350px;background:rgba(255,107,0,0.055);top:0;right:0;"></div>
+  <div class="lbl o">Product Deep-Dive · Layer 02</div>
+  <h2 style="margin-bottom:6px">The 2,000-Page Manual<br><span class="grad">Becomes One Precise Action</span></h2>
+  <p style="margin-bottom:18px;max-width:640px">The most valuable thing Turbnetic.ai does is not detecting an anomaly — it is telling the mechanic exactly what to do about it in the next 15 minutes.</p>
+  <div class="agent-flow" style="margin-bottom:16px">
+    <div class="af-node active-c"><div class="af-num">01</div><h4 style="color:var(--c)">Sensor Signal</h4><p>Stage 3 discharge temp trending 8°C above baseline. Bearing #2 vibration increasing 0.3 mm/s/day over 6 hours.</p></div>
+    <div class="af-arr">&#8594;</div>
+    <div class="af-node active-c"><div class="af-num">02</div><h4 style="color:var(--c)">AI Anomaly Model</h4><p>Pattern matches early blade fouling, Stage 3. Confidence 94.2%. Estimated lead time to degraded performance: 11–14 days.</p></div>
+    <div class="af-arr">&#8594;</div>
+    <div class="af-node active-o"><div class="af-num">03</div><h4 style="color:var(--o)">Agent Orchestration</h4><p>Cross-references GE Frame 7 manual §12.4.2, §7.1, Appendix C. Generates step-by-step response. Identifies safety interlocks.</p></div>
+    <div class="af-arr">&#8594;</div>
+    <div class="af-node active-o"><div class="af-num">04</div><h4 style="color:var(--o)">Mechanic Receives</h4><p><em style="font-style:normal;color:var(--text)">"Stage 3 fouling — inspect compressor leading edge. Measure tip clearance at 3 points per §12.4.2. If &gt;0.032 in, schedule offline wash within 72 hrs."</em></p></div>
+    <div class="af-arr">&#8594;</div>
+    <div class="af-node"><div class="af-num" style="border-color:var(--border)">05</div><h4>Continuous Loop</h4><p>Mechanic confirms action. Feedback retrains the model. Next detection for this failure mode improves fleet-wide.</p></div>
+  </div>
+  <div class="g2">
+    <div class="card co">
+      <div class="card-bar o"></div>
+      <h4 style="color:var(--o);margin-bottom:10px">What Gets Sent to the Mechanic</h4>
+      <ul class="cl">
+        <li><span class="dot-o"></span><strong>Blade degradation</strong> — affected stage, measurement procedure, acceptance criteria, escalation threshold</li>
+        <li><span class="dot-o"></span><strong>Combustion instability</strong> — fuel system checks, liner inspection steps, tuning adjustment reference</li>
+        <li><span class="dot-o"></span><strong>Vibration anomaly</strong> — bearing inspection procedure, balance check, clearance measurements</li>
+        <li><span class="dot-o"></span><strong>Compressor fouling</strong> — offline/online wash decision logic, wash procedure, post-wash verification</li>
+      </ul>
+    </div>
+    <div class="card cc">
+      <div class="card-bar c"></div>
+      <h4 style="color:var(--c);margin-bottom:12px">Operational Impact</h4>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><div class="stat s28">Day 1</div><div class="stat-sub">New hire responds correctly to any alert from their first shift — no experience required</div></div>
+        <div class="div" style="margin:2px 0"></div>
+        <div><div class="stat s28 o">1 operator</div><div class="stat-sub">Can manage and dispatch maintenance across a 50+ turbine facility confidently</div></div>
+        <div class="div" style="margin:2px 0"></div>
+        <div><div class="stat s28">Zero lookup</div><div class="stat-sub">No manual search required — the system knows the procedure and delivers it instantly</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>05 / 20</span></div>
+</section>
+
+<!-- 06 FLEET DASHBOARD + PAGER -->
+<section>
+  <div class="lbl">Product Deep-Dive · Layers 01 + 03</div>
+  <h2 style="margin-bottom:8px">Every Facility.<br><span class="grad">Fully in Control.</span></h2>
+  <p style="max-width:640px;margin-bottom:20px">A shared operating picture of the entire turbine fleet — all in one system, accessible from the control room or the field.</p>
+  <div class="row">
+    <div class="col-l">
+      <div class="card cc" style="margin-bottom:14px">
+        <div class="card-bar c"></div>
+        <h4 style="color:var(--c);margin-bottom:12px">Fleet Intelligence Dashboard — What Operators See</h4>
+        <div class="g2" style="gap:10px">
+          <div style="background:var(--s2);border-radius:8px;padding:14px 16px"><div class="stat s28" style="margin-bottom:4px">Fleet Health</div><p style="font-size:11px">All turbines as live health cards — green, amber, red. Click any unit for full sensor history, alert timeline, and pending tasks. Sorted by urgency.</p></div>
+          <div style="background:var(--s2);border-radius:8px;padding:14px 16px"><div class="stat s28 o" style="margin-bottom:4px">Alert Queue</div><p style="font-size:11px">Risk-ranked alerts with severity, estimated time to impact, and cost-of-inaction. Each alert links to the agent-generated maintenance directive.</p></div>
+          <div style="background:var(--s2);border-radius:8px;padding:14px 16px"><div class="stat s28" style="margin-bottom:4px">Performance KPIs</div><p style="font-size:11px">Real-time heat rate, output vs capacity, fuel efficiency, deviation from design curve. Compressor wash schedule optimization overlaid on degradation trajectory.</p></div>
+          <div style="background:var(--s2);border-radius:8px;padding:14px 16px"><div class="stat s28 o" style="margin-bottom:4px">Maintenance Board</div><p style="font-size:11px">Kanban task board — assign directives to mechanics, track open/in-progress/completed. Auto-generated from agent recommendations.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-s">
+      <div class="card co" style="margin-bottom:14px">
+        <div class="card-bar o"></div>
+        <h4 style="color:var(--o);margin-bottom:12px">Mechanic Pager App</h4>
+        <ul class="cl">
+          <li><span class="dot-o"></span>Push notification the instant an anomaly crosses threshold</li>
+          <li><span class="dot-o"></span>Full agent-generated directive: what, where, how, in order</li>
+          <li><span class="dot-o"></span>Offline capable — works inside plants with poor connectivity</li>
+          <li><span class="dot-o"></span>Confirm completion, log measurements, escalate if needed</li>
+          <li><span class="dot-o"></span>Status syncs back to dashboard — manager sees live progress</li>
+        </ul>
+      </div>
+      <div class="card cc">
+        <div class="card-bar c"></div>
+        <h4 style="color:var(--c);margin-bottom:8px">The New-Hire Effect</h4>
+        <p style="font-size:12px;color:var(--text)">A technician on their first month receives the exact same directive quality as a 20-year veteran would generate from memory. Institutional knowledge lives in the platform — not in one person's head that can retire.</p>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>06 / 20</span></div>
+</section>
+
+<!-- 07 LEGACY DIGITIZATION -->
+<section>
+  <div class="glow" style="width:380px;height:380px;background:rgba(255,107,0,0.05);top:-40px;right:-40px;"></div>
+  <div class="lbl o">Phase 2 — Legacy Digitization</div>
+  <h2 style="margin-bottom:8px">30,000 Old Turbines.<br><span class="grad">No Path to Intelligence — Until Now.</span></h2>
+  <p style="max-width:680px;margin-bottom:18px">The majority of the global fleet runs on legacy Mark IV/V controls from the 1990s that cannot interface with modern AI. The OEM upgrade path is prohibitively expensive and locks customers into a closed ecosystem. Turbnetic.ai builds a fully open alternative.</p>
+  <div class="row" style="align-items:flex-start">
+    <div class="col">
+      <div class="g2" style="margin-bottom:14px">
+        <div class="card co"><div class="card-bar o"></div><h4 style="color:var(--o);margin-bottom:8px">GE Mark VIe Upgrade</h4><div class="stat s40 o" style="margin-bottom:6px">$1.5–3M</div><div class="stat-sub" style="margin-bottom:10px">Per turbine unit cost</div><ul class="cl" style="gap:6px"><li><span class="dot-o"></span>Proprietary hardware — GE ecosystem only</li><li><span class="dot-o"></span>No third-party sensor or protocol support</li><li><span class="dot-o"></span>Annual service contract: $180–350K/yr</li><li><span class="dot-o"></span>Zero customization</li></ul></div>
+        <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:8px">Turbnetic Custom Rack</h4><div class="stat s40" style="margin-bottom:6px">$200–450K</div><div class="stat-sub" style="margin-bottom:10px">Per turbine — full stack</div><ul class="cl" style="gap:6px"><li><span class="dot-c"></span>Open protocol: OPC-UA, Modbus, PROFINET, DNP3</li><li><span class="dot-c"></span>Best-in-class controllers — customer owns architecture</li><li><span class="dot-c"></span>AI edge compute native — Turbnetic.ai built in</li><li><span class="dot-c"></span>Modular: add sensors and protocols over time</li></ul></div>
+      </div>
+      <div class="card" style="padding:12px 18px"><p style="font-size:12.5px;color:var(--text);max-width:none"><strong style="color:var(--c)">The combined architecture:</strong> Turbnetic.ai designs and supplies the full control rack — custom I/O modules, PLC controllers, HMI layer, historian, and AI edge compute — as a single integrated system. Customer owns it permanently. Every project converts a legacy turbine into a recurring SaaS contract.</p></div>
+    </div>
+    <div class="col-s">
+      <div class="card cc"><div class="card-bar c"></div><div class="lbl" style="font-size:9px;margin-bottom:12px">Market Size</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div><div class="stat s40">30,000+</div><div class="stat-sub">Legacy turbines needing modernization (IHS Markit)</div></div>
+          <div class="div" style="margin:4px 0"></div>
+          <div><div class="stat s40 o">$8–15B</div><div class="stat-sub">Controls upgrade TAM — power generation (Wood Mackenzie 2025)</div></div>
+          <div class="div" style="margin:4px 0"></div>
+          <div><div class="stat s40">$200–300M</div><div class="stat-sub">Projected ARR at 3–5% penetration — projects + recurring SaaS</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>07 / 20</span></div>
+</section>
+
+<!-- 08 HOW IT WORKS -->
+<section>
+  <div class="lbl">Platform Architecture</div>
+  <h2 style="margin-bottom:18px">Sensor to Decision<br><span class="grad">in Under 200 Milliseconds</span></h2>
+  <div style="display:flex;align-items:stretch;gap:6px;width:100%;margin-bottom:16px">
+    <div style="flex:1;background:var(--s1);border:1px solid var(--bc);border-radius:8px;padding:14px 12px;text-align:center"><div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.15em;margin-bottom:8px">INGEST</div><h4 style="font-size:12px;margin-bottom:6px">Sensor Layer</h4><p style="font-size:10.5px">OPC-UA · PI System · Modbus · PROFINET · DNP3 · ARINC 429. Any historian. Zero hardware changes for modern turbines.</p></div>
+    <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+    <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:14px 12px;text-align:center"><div style="font-family:var(--fm);font-size:9px;color:var(--mid);letter-spacing:0.15em;margin-bottom:8px">PROCESS</div><h4 style="font-size:12px;margin-bottom:6px">Stream Engine</h4><p style="font-size:10.5px">Real-time normalization, outlier rejection, feature extraction, and health index derivation. &lt;200ms end-to-end.</p></div>
+    <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+    <div style="flex:1.2;background:var(--s1);border:1px solid var(--bc);border-radius:8px;padding:14px 12px;text-align:center"><div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.15em;margin-bottom:8px">DETECT</div><h4 style="font-size:12px;margin-bottom:6px">AI Anomaly Engine</h4><p style="font-size:10.5px">Continuously-retrained ensemble model on millions of fleet-hours. Scores every operating second. Improves with every confirmed event across the entire fleet.</p></div>
+    <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+    <div style="flex:1.2;background:var(--s1);border:1px solid var(--bo);border-radius:8px;padding:14px 12px;text-align:center"><div style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.15em;margin-bottom:8px">ORCHESTRATE</div><h4 style="font-size:12px;margin-bottom:6px">Maintenance Agent</h4><p style="font-size:10.5px">AI agents cross-reference full maintenance manual corpus and generate a specific, step-by-step mechanic directive.</p></div>
+    <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+    <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:14px 12px;text-align:center"><div style="font-family:var(--fm);font-size:9px;color:var(--mid);letter-spacing:0.15em;margin-bottom:8px">DELIVER</div><h4 style="font-size:12px;margin-bottom:6px">Dashboard + Pager</h4><p style="font-size:10.5px">Fleet dashboard for operators. Push directive to field mechanic app instantly. Offline-capable. Escalation built in.</p></div>
+    <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+    <div style="flex:1;background:var(--s1);border:1px solid var(--bc);border-radius:8px;padding:14px 12px;text-align:center"><div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.15em;margin-bottom:8px">LEARN</div><h4 style="font-size:12px;margin-bottom:6px">Fleet Flywheel</h4><p style="font-size:10.5px">Mechanic confirmation feeds back. Every event improves detection for every customer on the platform.</p></div>
+  </div>
+  <div class="g3">
+    <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:8px">Cloud SaaS</h4><p>For modern turbines with connectivity. Live in 4 hours. Connects to PI System, OSIsoft, Honeywell Uniformance, AspenTech IP21.</p></div>
+    <div class="card co"><div class="card-bar o"></div><h4 style="color:var(--o);margin-bottom:8px">Edge Deployment</h4><p>For remote or air-gapped environments. Full inference on-device with no cloud round-trip. Ruggedized compute. Encrypted model sync when connectivity available.</p></div>
+    <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:8px">Digitization Bundle</h4><p>For legacy turbines: custom rack hardware plus AI software as one integrated system. Customer owns the architecture and the intelligence layer, permanently.</p></div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>08 / 20</span></div>
+</section>
+
+<!-- 10 EDGE MODEL OPTIMIZATION -->
+<section>
+  <div class="glow" style="width:420px;height:420px;background:rgba(0,212,255,0.06);top:-60px;right:-60px;"></div>
+  <div class="lbl">Technical Moat — Edge Intelligence</div>
+  <h2 style="margin-bottom:8px">We Build a Pipeline That Builds<br><span class="grad">Super-Efficient Models for Edge Hardware</span></h2>
+  <p style="max-width:680px;margin-bottom:20px">The cloud anomaly model is large, accurate, and continuously improving. But edge devices — remote turbines, DoD platforms, offshore installations — cannot depend on cloud connectivity. We solve this by building a model compression and optimization pipeline that automatically distills the full cloud model into a tiny, edge-deployable version without sacrificing detection accuracy.</p>
+
+  <div class="row" style="margin-bottom:14px;align-items:flex-start">
+    <div class="col-l">
+      <!-- Pipeline flow -->
+      <div style="display:flex;align-items:stretch;gap:6px;width:100%;margin-bottom:14px">
+        <div style="flex:1.2;background:var(--s1);border:1px solid var(--bc);border-radius:8px;padding:14px 12px;text-align:center">
+          <div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.15em;margin-bottom:8px">CLOUD</div>
+          <h4 style="font-size:12px;margin-bottom:6px;color:var(--c)">Teacher Model</h4>
+          <p style="font-size:10.5px">Large ensemble model trained on millions of fleet-hours. Full accuracy. Continuously updated. Runs on cloud infrastructure.</p>
+          <div style="margin-top:8px;font-family:var(--fm);font-size:9px;color:var(--mid)">~500MB · GPU · Cloud</div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+        <div style="flex:1.4;background:rgba(255,107,0,0.04);border:1px solid var(--bo);border-radius:8px;padding:14px 12px;text-align:center">
+          <div style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.15em;margin-bottom:8px">OPTIMIZATION PIPELINE</div>
+          <h4 style="font-size:12px;margin-bottom:8px;color:var(--o)">Model Compression Engine</h4>
+          <div style="display:flex;flex-direction:column;gap:5px;text-align:left">
+            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--mid)"><span style="width:5px;height:5px;border-radius:50%;background:var(--o);flex-shrink:0"></span>Knowledge distillation — teacher transfers understanding to student</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--mid)"><span style="width:5px;height:5px;border-radius:50%;background:var(--o);flex-shrink:0"></span>Quantization — 32-bit weights compressed to 8-bit or 4-bit</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--mid)"><span style="width:5px;height:5px;border-radius:50%;background:var(--o);flex-shrink:0"></span>Pruning — remove redundant neurons without accuracy loss</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--mid)"><span style="width:5px;height:5px;border-radius:50%;background:var(--c);flex-shrink:0"></span>Hardware-aware NAS — architecture tuned to target chip</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 4px;color:var(--dim);font-size:14px">&#8594;</div>
+        <div style="flex:1.2;background:rgba(0,212,255,0.04);border:1px solid var(--bc);border-radius:8px;padding:14px 12px;text-align:center">
+          <div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.15em;margin-bottom:8px">EDGE</div>
+          <h4 style="font-size:12px;margin-bottom:6px;color:var(--c)">Student Model</h4>
+          <p style="font-size:10.5px">Tiny, hardware-optimized model. Runs on a $50 compute module. No cloud. No connectivity required. Same anomaly detection quality.</p>
+          <div style="margin-top:8px;font-family:var(--fm);font-size:9px;color:var(--mid)">&lt;8MB · CPU/MCU · Offline</div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card cc">
+          <div class="card-bar c"></div>
+          <h4 style="color:var(--c);margin-bottom:10px">What This Enables</h4>
+          <ul class="cl">
+            <li><span class="dot-c"></span>Full anomaly detection on a ruggedized $5K edge device — no cloud dependency, no subscription to a connectivity provider</li>
+            <li><span class="dot-c"></span>DoD air-gapped deployment — model runs entirely on-platform, MIL-STD hardware, zero data leaves the vehicle</li>
+            <li><span class="dot-c"></span>Remote turbines with no internet — offshore platforms, pipeline compressor stations, desert installations</li>
+            <li><span class="dot-c"></span>Model updates delivered via encrypted sync whenever connectivity is briefly available</li>
+          </ul>
+        </div>
+        <div class="card co">
+          <div class="card-bar o"></div>
+          <h4 style="color:var(--o);margin-bottom:10px">Why This Is Hard to Replicate</h4>
+          <ul class="cl">
+            <li><span class="dot-o"></span>The compression pipeline requires the full teacher model to distill from — you cannot build it without first building the large model and training it on real fleet data</li>
+            <li><span class="dot-o"></span>Each edge model must be validated against the same anomaly taxonomy as the cloud model — requires the same labeled failure dataset</li>
+            <li><span class="dot-o"></span>Hardware-aware optimization is target-specific — every chip family requires its own tuned architecture</li>
+            <li><span class="dot-o"></span>Accuracy parity at edge scale is an unsolved research problem for most industrial domains</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-s">
+      <div class="card cc">
+        <div class="card-bar c"></div>
+        <div class="lbl" style="font-size:9px;margin-bottom:12px">Edge Model Targets</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div><div class="stat s40">&lt;8MB</div><div class="stat-sub">Target model size for full edge deployment — fits in standard MCU flash</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s40 o">&lt;50ms</div><div class="stat-sub">Inference latency on edge hardware — real-time anomaly scoring</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s40">&lt;5W</div><div class="stat-sub">Power draw — enables battery or low-voltage DC operation in field installations</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s40 o">60×</div><div class="stat-sub">Model size reduction vs. cloud model with target &lt;2% accuracy degradation</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>09 / 20</span></div>
+</section>
+
+<!-- 11 MARKET OPPORTUNITY -->
+<section>
+  <div class="lbl">Market Opportunity</div>
+  <h2 style="margin-bottom:8px">Four Markets. One AI Core.<br><span class="grad">Turbines Power the AI Economy.</span></h2>
+  <p style="margin-bottom:18px;max-width:680px">AI data centers are the fastest-growing electricity load in history — and every watt runs through a turbine somewhere. Turbnetic.ai sits at the intersection of industrial AI, energy reliability, defense, and the grid intelligence required to keep all of it running.</p>
+  <div class="g4" style="margin-bottom:14px">
+    <div class="card cc"><div class="card-bar c"></div><div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.15em;margin-bottom:8px">MARKET I · NOW</div><h4 style="margin-bottom:8px">Predictive Maintenance SaaS</h4><div class="stat s40" style="margin-bottom:4px">$64.3B</div><div class="stat-sub" style="margin-bottom:8px">Global TAM by 2031 · CAGR 22.6%<br>Allied Market Research</div><p style="font-size:11px">Fastest-growing segment of industrial AI. Power generation, oil &amp; gas, and manufacturing combined.</p></div>
+    <div class="card co"><div class="card-bar o"></div><div style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.15em;margin-bottom:8px">MARKET II · 2027</div><h4 style="margin-bottom:8px">Legacy Digitization</h4><div class="stat s40 o" style="margin-bottom:4px">$8–15B</div><div class="stat-sub" style="margin-bottom:8px">Power gen controls upgrade TAM<br>Wood Mackenzie, 2025</div><p style="font-size:11px">30,000+ turbines to modernize. At 3–5% penetration: $200–300M ARR. No dominant independent player.</p></div>
+    <div class="card cc"><div class="card-bar c"></div><div style="font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.15em;margin-bottom:8px">MARKET III · 2028</div><h4 style="margin-bottom:8px">DoD / Defense Aviation</h4><div class="stat s40" style="margin-bottom:4px">$22B</div><div class="stat-sub" style="margin-bottom:8px">US DoD aviation MRO per year<br>Propulsion health subset: $3.2B</div><p style="font-size:11px">40% of DoD mishaps trace to propulsion failure. 10,400+ unmanned platforms. SBIR/OTA path.</p></div>
+    <div class="card co"><div class="card-bar o"></div><div style="font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.15em;margin-bottom:8px">MARKET IV · 2029</div><h4 style="margin-bottom:8px">Grid &amp; Electricity Demand AI</h4><div class="stat s40 o" style="margin-bottom:4px">$7.8B</div><div class="stat-sub" style="margin-bottom:8px">Load forecasting AI by 2030<br>CAGR 14.9% · Mordor Intelligence</div><p style="font-size:11px">AI demands 1,000 TWh+/yr by 2026. Gas turbines supply it. Turbnetic.ai's health data creates the only real-time dispatch optimization edge.</p></div>
+  </div>
+  <div class="card w100" style="padding:13px 22px">
+    <div style="display:flex;gap:44px;align-items:center">
+      <div style="text-align:center;flex-shrink:0"><div class="stat s52">$94B+</div><div class="stat-sub">Combined TAM</div></div>
+      <div style="width:1px;height:44px;background:var(--border);flex-shrink:0"></div>
+      <div style="text-align:center;flex-shrink:0"><div class="stat s52 o">$480M</div><div class="stat-sub">ARR at 2–3% penetration</div></div>
+      <div style="width:1px;height:44px;background:var(--border);flex-shrink:0"></div>
+      <div style="flex:1"><p style="max-width:none;font-size:12.5px;color:var(--text)">No dominant independent AI platform exists across all four dimensions. GE and Siemens are closed, expensive, and slow. The window to establish the category-defining data moat is open now.</p></div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>10 / 20</span></div>
+</section>
+
+<!-- 11 COMPETITIVE LANDSCAPE -->
+<section>
+  <div class="lbl">Competitive Landscape</div>
+  <h2 style="margin-bottom:18px">No Incumbent Delivers<br><span class="grad">Detection + Guidance + Open Architecture</span></h2>
+  <table class="ct" style="margin-bottom:16px">
+    <thead>
+      <tr><th style="width:18%">Vendor</th><th>Early Warning &gt;2 wk</th><th>Mechanic Step-by-Step AI</th><th>Open Architecture</th><th>Legacy Digitization</th><th>DoD Path</th><th>Annual Cost</th></tr>
+    </thead>
+    <tbody>
+      <tr class="us"><td>Turbnetic.ai</td><td><span class="chk">23 weeks</span></td><td><span class="chk">Full agent AI</span></td><td><span class="chk">Fully open</span></td><td><span class="chk">Custom racks</span></td><td><span class="chk">Roadmap</span></td><td>$80–300K</td></tr>
+      <tr><td>GE APM / Predix</td><td><span class="pt">Rule-based, days</span></td><td><span class="xm">No</span></td><td><span class="xm">GE-only</span></td><td><span class="pt">GE engines only</span></td><td><span class="pt">Limited</span></td><td>$500K–2M+</td></tr>
+      <tr><td>Siemens MindSphere</td><td><span class="pt">Days</span></td><td><span class="xm">No</span></td><td><span class="pt">Partial</span></td><td><span class="xm">No</span></td><td><span class="xm">No</span></td><td>$300K–1.5M</td></tr>
+      <tr><td>SparkCognition</td><td><span class="pt">1–3 days</span></td><td><span class="xm">No</span></td><td><span class="chk">Open</span></td><td><span class="xm">No</span></td><td><span class="pt">Some</span></td><td>$200–600K</td></tr>
+      <tr><td>C3.ai Energy</td><td><span class="pt">Variable</span></td><td><span class="xm">No</span></td><td><span class="chk">Open</span></td><td><span class="xm">No</span></td><td><span class="pt">Some</span></td><td>$1M+</td></tr>
+      <tr><td>Legacy CMMS</td><td><span class="xm">Reactive only</span></td><td><span class="xm">No</span></td><td><span class="chk">Open</span></td><td><span class="xm">No</span></td><td><span class="xm">No</span></td><td>$20–80K</td></tr>
+    </tbody>
+  </table>
+  <div class="g2">
+    <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:8px">The Unmatchable Differentiator</h4><p style="font-size:12.5px;color:var(--text);max-width:none">No competitor offers maintenance agent AI — the step-by-step mechanic directive generated from the maintenance manual. This capability does not exist in the market today. Combined with 23-week early detection and open custom architecture, Turbnetic.ai has no direct competitor across all dimensions.</p></div>
+    <div class="card co"><div class="card-bar o"></div><h4 style="color:var(--o);margin-bottom:8px">The OEM Lock-In Opportunity</h4><p style="font-size:12.5px;color:var(--text);max-width:none">GE and Siemens have built large installed bases of dissatisfied customers who are locked into proprietary ecosystems at $500K–2M+/year. Every one of those customers is a prospect for Turbnetic.ai's open, customizable platform at 70% lower cost.</p></div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>11 / 20</span></div>
+</section>
+
+<!-- 12 CUSTOMER VALIDATION -->
+<section>
+  <div class="lbl">Early Validation</div>
+  <h2 style="margin-bottom:8px">12 Potential Customer<br><span class="grad">Conversations Conducted</span></h2>
+  <p style="max-width:660px;margin-bottom:22px">Before writing a line of code, we went to the people who operate these turbines every day. Twelve conversations with gas turbine fleet operators — utilities, independent power producers, and industrial plant operators — confirmed the severity and universality of both core problems.</p>
+  <div class="row" style="margin-bottom:16px">
+    <div class="col">
+      <div class="card cc" style="height:100%">
+        <div class="card-bar c"></div>
+        <h4 style="color:var(--c);margin-bottom:14px">What We Validated</h4>
+        <ul class="cl">
+          <li><span class="dot-c"></span><strong>The 2,000-page manual problem is universal</strong> — every operator we spoke with confirmed that maintenance guidance is the single largest operational bottleneck when an alert fires</li>
+          <li><span class="dot-c"></span><strong>New hire ramp time is a critical pain point</strong> — facilities are struggling to staff up as experienced engineers retire; getting new hires productive faster is a top priority</li>
+          <li><span class="dot-c"></span><strong>Legacy controls modernization appetite is high</strong> — multiple operators are actively evaluating upgrades but walking away from OEM quotes on price alone</li>
+          <li><span class="dot-c"></span><strong>Existing alert systems create noise, not guidance</strong> — operators described current tools as "alarm systems that tell you something is wrong, not what to do about it"</li>
+          <li><span class="dot-c"></span><strong>Fleet visibility is fragmented</strong> — most operators are managing turbines across multiple dashboards, historians, and spreadsheets simultaneously</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-s">
+      <div class="card co" style="margin-bottom:14px">
+        <div class="card-bar o"></div>
+        <h4 style="color:var(--o);margin-bottom:12px">Who We Spoke With</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><div class="stat s28">12</div><div class="stat-sub">Potential customer conversations completed</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div style="font-size:12px;color:var(--mid)">Spanning:</div>
+          <ul class="cl" style="gap:6px">
+            <li><span class="dot-o"></span>Utility-scale gas turbine operators</li>
+            <li><span class="dot-o"></span>Independent power producers (IPPs)</li>
+            <li><span class="dot-o"></span>Industrial plant turbine operators</li>
+            <li><span class="dot-o"></span>Plant engineers and maintenance managers</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card cc">
+        <div class="card-bar c"></div>
+        <p style="font-size:12px;color:var(--text);max-width:none">Detailed customer discovery notes and operator profiles are available to qualified investors in the data room.</p>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>12 / 20</span></div>
+</section>
+
+<!-- 13 GO-TO-MARKET -->
+<section>
+  <div class="lbl">Go-to-Market</div>
+  <h2 style="margin-bottom:8px">Land Pilots Fast.<br><span class="grad">Expand Across the Fleet.</span></h2>
+  <p style="max-width:660px;margin-bottom:20px">Enterprise gas turbine software sells through relationships, demonstrated ROI, and trust. Our GTM strategy prioritizes fast pilot deployment and measurable value delivery — creating a reference customer base that accelerates subsequent sales.</p>
+  <div class="row" style="align-items:flex-start">
+    <div class="col-l">
+      <div class="g2" style="margin-bottom:14px">
+        <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:8px">Phase 1 · Pilots (0–12 months)</h4><ul class="cl"><li><span class="dot-c"></span>Target: Mid-size IPPs and utilities with 5–20 turbine fleets — small enough to decide fast, large enough to matter</li><li><span class="dot-c"></span>Offer a paid 90-day pilot: connect to existing historian, deliver first anomaly detections, demonstrate agent directives in production</li><li><span class="dot-c"></span>Goal: 5–10 paid pilot contracts, 3 converted to annual SaaS</li></ul></div>
+        <div class="card co"><div class="card-bar o"></div><h4 style="color:var(--o);margin-bottom:8px">Phase 2 · Scale (12–24 months)</h4><ul class="cl"><li><span class="dot-o"></span>Reference customers unlock warm introductions across the IPP and utility sector — the industry is relationship-dense</li><li><span class="dot-o"></span>Introduce digitization bundle to customers running legacy controls — land hardware project, lock in perpetual SaaS</li><li><span class="dot-o"></span>Goal: 20–40 commercial contracts + first 5 digitization projects</li></ul></div>
+        <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:8px">Channel Partners</h4><ul class="cl"><li><span class="dot-c"></span><strong>EPC firms:</strong> Bechtel, Fluor, Black &amp; Veatch — embedded in every major plant construction and upgrade project</li><li><span class="dot-c"></span><strong>OEM service networks:</strong> Independent turbine service shops who compete with GE/Siemens maintenance contracts</li><li><span class="dot-c"></span><strong>Asset managers:</strong> PE-backed power generation portfolios seeking platform-wide efficiency gains</li></ul></div>
+        <div class="card co"><div class="card-bar o"></div><h4 style="color:var(--o);margin-bottom:8px">Industry Access Points</h4><ul class="cl"><li><span class="dot-o"></span>Turbomachinery &amp; Pump Symposia (TAMU) — the defining annual conference for gas turbine engineers</li><li><span class="dot-o"></span>POWER-GEN International — primary utility and IPP trade show</li><li><span class="dot-o"></span>AGA Operations Conference — natural gas infrastructure operators</li><li><span class="dot-o"></span>Industry advisors from GE, Siemens, and major utility operators providing direct introductions</li></ul></div>
+      </div>
+    </div>
+    <div class="col-s">
+      <div class="card cc">
+        <div class="card-bar c"></div>
+        <h4 style="color:var(--c);margin-bottom:12px">Land &amp; Expand Motion</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:var(--s2);border-radius:6px;padding:10px 12px"><div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.12em;margin-bottom:4px">ENTRY</div><div class="stat s28" style="font-size:16px">Predictive Maintenance</div><div class="stat-sub">$45–80K/turbine/yr · Low friction entry</div></div>
+          <div style="text-align:center;color:var(--dim);font-size:12px">&#8595; expand</div>
+          <div style="background:var(--s2);border-radius:6px;padding:10px 12px"><div style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.12em;margin-bottom:4px">EXPAND</div><div class="stat s28 o" style="font-size:16px">+ Agent AI + Performance</div><div class="stat-sub">$120–200K/turbine/yr · Full value</div></div>
+          <div style="text-align:center;color:var(--dim);font-size:12px">&#8595; convert</div>
+          <div style="background:var(--s2);border-radius:6px;padding:10px 12px"><div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.12em;margin-bottom:4px">LOCK-IN</div><div class="stat s28" style="font-size:16px">Digitization Project</div><div class="stat-sub">$200–450K hardware + perpetual SaaS</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>13 / 20</span></div>
+</section>
+
+<!-- 14 ROI CASE STUDY -->
+<section>
+  <div class="lbl">ROI Case Study — Illustrative</div>
+  <h2 style="margin-bottom:8px">What Turbnetic.ai<br><span class="grad">Looks Like on One Customer's P&amp;L</span></h2>
+  <p style="max-width:660px;margin-bottom:18px">A 600 MW combined cycle power plant with 3 gas turbines running on a typical reactive maintenance schedule. Numbers based on industry benchmarks and operator interviews.</p>
+  <div class="row" style="align-items:flex-start">
+    <div class="col">
+      <div class="card co" style="margin-bottom:14px">
+        <div class="card-bar o"></div>
+        <h4 style="color:var(--o);margin-bottom:12px">Current State — Without Turbnetic.ai</h4>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="pbar"><div class="pbar-lbl">Unplanned failures (1–2/yr)</div><div class="pbar-track"><div class="pbar-fill o" style="width:40%"></div></div><div class="pbar-val o">$800K</div></div>
+          <div class="pbar"><div class="pbar-lbl">Heat rate degradation (3.5%)</div><div class="pbar-track"><div class="pbar-fill o" style="width:70%"></div></div><div class="pbar-val o">$1.4M</div></div>
+          <div class="pbar"><div class="pbar-lbl">Suboptimal wash timing</div><div class="pbar-track"><div class="pbar-fill o" style="width:20%"></div></div><div class="pbar-val o">$200K</div></div>
+          <div class="pbar"><div class="pbar-lbl">Misdiagnosis &amp; rework</div><div class="pbar-track"><div class="pbar-fill o" style="width:15%"></div></div><div class="pbar-val o">$150K</div></div>
+          <div class="div" style="margin:6px 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600;color:var(--text)">Total annual avoidable cost</span><div class="stat s28 o">$2.55M</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card cc" style="margin-bottom:14px">
+        <div class="card-bar c"></div>
+        <h4 style="color:var(--c);margin-bottom:12px">With Turbnetic.ai</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><div class="stat s28" style="font-size:22px">$150K / yr</div><div class="stat-sub">Platform cost — 3 turbines at $50K/yr average</div></div>
+          <div class="div" style="margin:4px 0"></div>
+          <div><div class="stat s28" style="font-size:22px">$2.2M+ saved</div><div class="stat-sub">Failures prevented + heat rate recovery + wash optimization + faster diagnosis</div></div>
+          <div class="div" style="margin:4px 0"></div>
+          <div style="background:rgba(0,212,255,0.06);border:1px solid var(--bc);border-radius:8px;padding:12px 16px;text-align:center">
+            <div class="stat s52" style="font-size:44px">14×</div>
+            <div class="stat-sub" style="font-size:13px;margin-top:6px">Return on investment in Year 1<br>$150K cost vs $2.2M+ prevented loss</div>
+          </div>
+          <div class="div" style="margin:4px 0"></div>
+          <div><div class="stat s28 o" style="font-size:18px">$11M+</div><div class="stat-sub">Cumulative value over 5 years vs $750K total platform spend</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-s">
+      <div class="card" style="margin-bottom:14px">
+        <h4 style="margin-bottom:10px">Beyond the Numbers</h4>
+        <ul class="cl">
+          <li><span class="dot-c"></span>No unplanned outages means reliable capacity commitment to grid and offtake agreements</li>
+          <li><span class="dot-c"></span>New hires productive from day one — reduces reliance on expensive contract engineers during incidents</li>
+          <li><span class="dot-c"></span>Documented maintenance history increases asset resale value and lender confidence</li>
+          <li><span class="dot-c"></span>Heat rate improvements flow directly to operating margin — $1.4M/yr at current gas prices</li>
+        </ul>
+      </div>
+      <div class="card cc"><div class="card-bar c"></div><p style="font-size:11.5px;color:var(--text);max-width:none">Numbers based on industry benchmark data and operator interviews. Actual results vary by turbine type, fleet age, and operating profile.</p></div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>14 / 20</span></div>
+</section>
+
+<!-- 15 TEAM -->
+<section>
+  <div class="lbl">The Team</div>
+  <h2 style="margin-bottom:8px">Built by People Who<br><span class="grad">Know Both Sides of the Problem</span></h2>
+  <p style="max-width:660px;margin-bottom:24px">At pre-product stage, investors are betting on the founding team. Turbnetic.ai is built at the intersection of gas turbine operations expertise and modern AI engineering — the exact combination this problem demands.</p>
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card cc">
+      <div class="card-bar c"></div>
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div style="width:52px;height:52px;border-radius:50%;border:1px solid var(--bc);background:rgba(0,212,255,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#00d4ff" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h3 style="margin-bottom:4px">Musa Agayev</h3>
+          <div style="font-family:var(--fm);font-size:9px;color:var(--c);letter-spacing:0.14em;margin-bottom:10px">FOUNDER &amp; CEO</div>
+          <p style="font-size:12.5px;color:var(--text);max-width:none">Vision behind Turbnetic.ai — identifying the gap between existing anomaly detection tools and the maintenance guidance layer that operators actually need. Driving product strategy, customer discovery, and company formation.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-style:dashed;border-color:var(--dim)">
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--dim);background:var(--s1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#3d5269" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#3d5269" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h3 style="margin-bottom:4px;color:var(--mid)">CTO — Hiring</h3>
+          <div style="font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.14em;margin-bottom:10px">CHIEF TECHNOLOGY OFFICER</div>
+          <p style="font-size:12.5px;max-width:none">Deep ML/AI engineering background with experience in time-series anomaly detection, LLM agent orchestration, and industrial IoT data pipelines. Active search underway.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-style:dashed;border-color:var(--dim)">
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--dim);background:var(--s1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#3d5269" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#3d5269" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h3 style="margin-bottom:4px;color:var(--mid)">Head of Applications — Hiring</h3>
+          <div style="font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.14em;margin-bottom:10px">GAS TURBINE DOMAIN EXPERT</div>
+          <p style="font-size:12.5px;max-width:none">10+ years hands-on gas turbine operations and maintenance. GE Frame 7 / LM6000 experience essential. Will own the maintenance manual corpus, anomaly taxonomy, and customer onboarding.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-style:dashed;border-color:var(--dim)">
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--dim);background:var(--s1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#3d5269" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#3d5269" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h3 style="margin-bottom:4px;color:var(--mid)">Industry Advisors — Recruiting</h3>
+          <div style="font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.14em;margin-bottom:10px">ADVISORY BOARD</div>
+          <p style="font-size:12.5px;max-width:none">Targeting 2–3 advisors from senior GE Power / Siemens Energy alumni, utility operations leadership, and DoD propulsion programs. Provides customer introductions and technical credibility.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card cc w100" style="padding:11px 18px">
+    <p style="max-width:none;font-size:12.5px;color:var(--text)"><strong style="color:var(--c)">Why this team wins:</strong> The founding insight — connecting anomaly detection to maintenance manual intelligence — requires someone who has lived the operational pain firsthand. Series A funding enables hiring the technical and domain depth to build it.</p>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>15 / 20</span></div>
+</section>
+
+<!-- 16 FINANCIAL PROJECTIONS -->
+<section>
+  <div class="lbl">Financial Projections</div>
+  <h2 style="margin-bottom:8px">Path from First Pilot<br><span class="grad">to $42M ARR</span></h2>
+  <p style="max-width:620px;margin-bottom:20px">Conservative projections based on industry SaaS benchmarks and digitization project economics. Three distinct revenue streams compound ARR growth non-linearly from Year 2 onward.</p>
+  <div class="row" style="align-items:flex-start;margin-bottom:16px">
+    <div class="col">
+      <table class="ct">
+        <thead><tr><th></th><th>Year 1 · 2027</th><th>Year 2 · 2028</th><th>Year 3 · 2029</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--text);font-weight:600">SaaS Customers</td><td>3–5 pilots</td><td>20–30</td><td>60–80</td></tr>
+          <tr><td style="color:var(--text);font-weight:600">Digitization Projects</td><td>0–1</td><td>3–5</td><td>12–20</td></tr>
+          <tr><td style="color:var(--text);font-weight:600">DoD Contracts</td><td>—</td><td>SBIR Phase I</td><td>Phase II + OTA</td></tr>
+          <tr class="us"><td>ARR (SaaS)</td><td>$300K–$750K</td><td>$3M–$6M</td><td>$15M–$28M</td></tr>
+          <tr class="us"><td>Digitization Revenue</td><td>$0–$500K</td><td>$1M–$3M</td><td>$6M–$14M</td></tr>
+          <tr class="us"><td>Total ARR</td><td>$300K–$1.25M</td><td>$4M–$9M</td><td style="color:var(--c);font-weight:700">$21M–$42M</td></tr>
+          <tr><td style="color:var(--text);font-weight:600">Monthly Burn</td><td>$380–420K</td><td>$550–700K</td><td>Approaching breakeven</td></tr>
+          <tr><td style="color:var(--text);font-weight:600">Headcount</td><td>8–12</td><td>18–25</td><td>35–50</td></tr>
+          <tr><td style="color:var(--text);font-weight:600">Gross Margin</td><td>65–70%</td><td>72–76%</td><td>76–82%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-s">
+      <div class="card cc" style="margin-bottom:14px">
+        <div class="card-bar c"></div>
+        <h4 style="color:var(--c);margin-bottom:12px">Key Assumptions</h4>
+        <ul class="cl" style="gap:8px">
+          <li><span class="dot-c"></span>ACV $45–80K per turbine entry-level; $120–200K fully expanded</li>
+          <li><span class="dot-c"></span>Net Revenue Retention target &gt;125% via module expansion</li>
+          <li><span class="dot-c"></span>Digitization project ACV $250–500K; 100% SaaS conversion contractually</li>
+          <li><span class="dot-c"></span>12-month average sales cycle for enterprise; 90-day pilot to annual conversion</li>
+          <li><span class="dot-c"></span>Series B raise at $10M+ ARR, ~$25M at 2.5–3× ARR multiple</li>
+        </ul>
+      </div>
+      <div class="card co"><div class="card-bar o"></div><p style="font-size:11.5px;color:var(--text);max-width:none">These projections are forward-looking estimates. Actual results will depend on product development timelines, sales cycle length, and market conditions. Full model available in data room.</p></div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>16 / 20</span></div>
+</section>
+
+<!-- 17 ROADMAP -->
+<section>
+  <div class="lbl">Product Roadmap</div>
+  <h2 style="margin-bottom:8px">Four Phases.<br><span class="grad">Building from the Model Out.</span></h2>
+  <p style="margin-bottom:20px;max-width:640px">We start with the hardest part — the AI model and maintenance intelligence layer. Each phase builds on proven data, accuracy, and deployments. DoD and grid are deliberate long-term plays enabled by what comes first.</p>
+  <div class="rm" style="margin-bottom:16px">
+    <div class="rm-phase">
+      <div class="rm-top"><div class="rm-num active">01</div><div class="rm-lbl active">2026 — Building Now</div></div>
+      <div class="rm-card" style="border-color:var(--bc);background:rgba(0,212,255,0.03)"><h4 style="color:var(--c)">AI Core + Maintenance Agent</h4><p>Model training, anomaly detection engine, maintenance manual ingestion pipeline, agent orchestration, fleet dashboard MVP, pager app. First commercial pilots with power utility customers.</p></div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-top"><div class="rm-num next">02</div><div class="rm-lbl next">2027 — Digitization</div></div>
+      <div class="rm-card" style="border-color:var(--bo);background:rgba(255,107,0,0.03)"><h4 style="color:var(--o)">Legacy Turbine Modernization</h4><p>Custom control rack design and manufacturing. IEC certification. First digitization pilots with legacy GE Frame 5/6/7 operators. Hardware + SaaS bundle go-to-market launches.</p></div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-top"><div class="rm-num">03</div><div class="rm-lbl">2028 — Defense</div></div>
+      <div class="rm-card"><h4>DoD + Edge Device</h4><p>SBIR Phase I/II for jet engine anomaly detection on unmanned platforms. Ruggedized MIL-SPEC edge compute device. Air-gapped operation. AFRL Propulsion Directorate engagement. Taxpayer savings at scale.</p></div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-top"><div class="rm-num">04</div><div class="rm-lbl">2029+ — Grid &amp; Utilities</div></div>
+      <div class="rm-card"><h4>Electric Grid Intelligence</h4><p>Demand forecasting, dispatch optimization, renewable compensation, and ancillary services. Full-stack power generation intelligence platform. Closes the AI electricity loop at grid scale.</p></div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:6px">Why Start Here</h4><p>The AI model and maintenance agent are the core moat. Every fleet-hour ingested makes detection better. Every manual ingested sharpens directives. This compounds and cannot be replicated without the same data.</p></div>
+    <div class="card co"><div class="card-bar o"></div><h4 style="color:var(--o);margin-bottom:6px">Why DoD Is Phase 3</h4><p>Military-grade detection requires proven commercial accuracy first. DoD procurement is 18–36 months. We use Phases 1–2 to build the model depth, fleet data history, and FedRAMP posture DoD requires.</p></div>
+    <div class="card cc"><div class="card-bar c"></div><h4 style="color:var(--c);margin-bottom:6px">Why Grid Is Last</h4><p>Grid demand forecasting edge requires real turbine health data at scale. Our structural advantage — knowing the exact health and capacity of each asset — only exists after Phase 1 fleet deployments create the dataset.</p></div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>17 / 20</span></div>
+</section>
+
+<!-- 18 DOD -->
+<section>
+  <div class="row" style="align-items:flex-start">
+    <div class="col-l">
+      <div class="lbl">Phase 3 — Department of Defense</div>
+      <h2 style="margin-bottom:14px">Unmanned Jet Engine<br><span class="grad">Anomaly Detection</span></h2>
+      <p style="margin-bottom:20px">Once the commercial model accumulates sufficient fleet-hours and proven accuracy, Turbnetic.ai enters the DoD propulsion health monitoring market — the highest-margin, lowest-churn segment in industrial AI.</p>
+      <ul class="cl" style="margin-bottom:18px">
+        <li><span class="dot-c"></span>Adapt commercial turbofan model to military engine profiles — F110, TF33, T700, J85 class engines</li>
+        <li><span class="dot-c"></span>Real-time anomaly scoring for UCAV and ISR drones via MIL-STD-1553 and ARINC 429 data bus integration</li>
+        <li><span class="dot-c"></span>Detect hot-section degradation, compressor stall precursors, and fuel system anomalies mid-mission</li>
+        <li class="o"><span class="dot-o"></span>Procurement path: SBIR Phase I &#8594; Phase II &#8594; OTA (Other Transaction Authority) &#8594; LRIP contract</li>
+        <li class="o"><span class="dot-o"></span>Target: AFRL Propulsion Directorate (Wright-Patterson AFB), NAVAIR PMA-209</li>
+        <li class="o"><span class="dot-o"></span>Edge device: MIL-SPEC ruggedized, no cloud dependency, air-gapped operation</li>
+        <li><span class="dot-c"></span>Compact edge unit replaces $500K traditional HUMS at under $5,000 — 100× cost reduction, direct taxpayer savings</li>
+      </ul>
+      <div class="card cc" style="padding:12px 18px"><p style="max-width:none;font-size:12.5px;color:var(--text)"><strong style="color:var(--c)">Taxpayer ROI:</strong> DoD spends $22B/yr on aviation MRO. A 5% shift to predictive maintenance saves $1.1B annually. At scale, Turbnetic.ai deployment across DoD unmanned platforms represents billions in documented taxpayer savings per year.</p></div>
+    </div>
+    <div class="col-s">
+      <div class="card cc"><div class="card-bar c"></div><div class="lbl" style="font-size:9px;margin-bottom:12px">DoD Market · FY2025</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div><div class="stat s40">$22B</div><div class="stat-sub">US DoD aviation MRO annual spend (OUSD Comptroller)</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s40 o">$3.2B</div><div class="stat-sub">Propulsion health monitoring addressable subset</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s40">10,400+</div><div class="stat-sub">DoD unmanned air vehicles in inventory (USAF, USN, USA)</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s40 o">40%</div><div class="stat-sub">Class A DoD aircraft mishaps from propulsion failure (AFSEC 2024)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>18 / 20</span></div>
+</section>
+
+<!-- 19 THE ASK -->
+<section>
+  <div class="lbl">Series A — Investment Round</div>
+  <h2 style="margin-bottom:12px">Raising a <span class="grad">Series A</span></h2>
+  <div class="card co w100" style="padding:13px 20px;margin-bottom:18px">
+    <div style="display:flex;gap:20px;align-items:center">
+      <div style="flex-shrink:0">
+        <div style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.18em;margin-bottom:6px">TARGET LEAD INVESTOR</div>
+        <div style="font-family:var(--fh);font-size:20px;font-weight:700;color:var(--text)">Andreessen Horowitz <span style="color:var(--o)">(a16z)</span></div>
+      </div>
+      <div style="width:1px;height:40px;background:var(--border);flex-shrink:0"></div>
+      <p style="max-width:none;font-size:12.5px;color:var(--text)">We are not just seeking capital — we need a partner with deep expertise in <strong>industrial AI, defense technology, and energy infrastructure</strong>. a16z's American Dynamism practice is uniquely positioned to accelerate Turbnetic.ai's path from commercial power to DoD platforms. The network, the mission alignment, and the domain knowledge make a16z the ideal lead for this round.</p>
+    </div>
+  </div>
+  <div class="row" style="align-items:flex-start">
+    <div class="col-l">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="fb"><div class="fb-pct">35%</div><div class="fb-desc"><h4>AI Model + Maintenance Agent Development</h4><p>Anomaly detection engine, manual ingestion pipeline, agent orchestration, fleet dashboard MVP, pager app</p></div><div class="fb-bar-wrap"><div class="fb-track"><div class="fb-bar" style="width:35%"></div></div></div></div>
+        <div class="fb"><div class="fb-pct o">25%</div><div class="fb-desc"><h4>Legacy Digitization Hardware Architecture</h4><p>Custom rack engineering, IEC 61511/62443 certification, tooling, first manufacturing run</p></div><div class="fb-bar-wrap"><div class="fb-track"><div class="fb-bar o" style="width:25%"></div></div></div></div>
+        <div class="fb"><div class="fb-pct">20%</div><div class="fb-desc"><h4>Commercial Sales &amp; First Pilots</h4><p>Enterprise sales team, channel partnerships, 5–10 commercial utility pilot deployments</p></div><div class="fb-bar-wrap"><div class="fb-track"><div class="fb-bar" style="width:20%"></div></div></div></div>
+        <div class="fb"><div class="fb-pct o">12%</div><div class="fb-desc"><h4>DoD Procurement Preparation</h4><p>SBIR Phase I application, FedRAMP pathway, IL-4 security architecture, AFRL engagement</p></div><div class="fb-bar-wrap"><div class="fb-track"><div class="fb-bar o" style="width:12%"></div></div></div></div>
+        <div class="fb"><div class="fb-pct">8%</div><div class="fb-desc"><h4>Infrastructure, Security &amp; Team</h4><p>Platform infrastructure, SOC 2 Type II, key engineering hires</p></div><div class="fb-bar-wrap"><div class="fb-track"><div class="fb-bar" style="width:8%"></div></div></div></div>
+      </div>
+    </div>
+    <div class="col-s">
+      <div class="card cc" style="margin-bottom:14px"><div class="card-bar c"></div><div class="lbl" style="font-size:9px;margin-bottom:12px">18-Month Milestones</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><div class="stat s28">Platform live</div><div class="stat-sub">Anomaly engine + agent + dashboard in first commercial pilots</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s28 o">5–10 pilots</div><div class="stat-sub">Paid contracts with gas turbine fleet operators</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s28">SBIR filed</div><div class="stat-sub">DoD Phase I application submitted — AFRL propulsion track</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s28 o">$10M ARR</div><div class="stat-sub">Series B qualifying ARR milestone</div></div>
+          <div class="div" style="margin:2px 0"></div>
+          <div><div class="stat s28">18 mo.</div><div class="stat-sub">Runway to Series B — funded path to profitability</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>19 / 20</span></div>
+</section>
+
+<!-- 20 CTA -->
+<section style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+  <div class="glow" style="width:600px;height:600px;background:rgba(0,212,255,0.05);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;justify-content:center">
+    <svg width="52" height="52" viewBox="0 0 28 28" fill="none" class="pulse">
+      <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="0.8" opacity="0.35"/>
+      <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.9" transform="rotate(0 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(51.4 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.4" transform="rotate(102.8 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.3" transform="rotate(154.2 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.5" transform="rotate(205.7 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.72" transform="rotate(257.1 14 14)"/>
+      <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(308.5 14 14)"/>
+      <circle cx="14" cy="14" r="4.8" fill="#03080e"/><circle cx="14" cy="14" r="4.8" stroke="#00d4ff" stroke-width="0.7"/>
+      <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+    </svg>
+    <span style="font-family:var(--fh);font-size:28px;font-weight:700;letter-spacing:-0.02em">Turbnetic<span style="color:var(--c)">.ai</span></span>
+  </div>
+  <div class="lbl" style="justify-content:center">Let's Build This Together</div>
+  <h2 style="margin-bottom:14px;max-width:680px">The Engine That Learns<br><span class="grad">While Others Burn</span></h2>
+  <p style="text-align:center;max-width:500px;margin:0 auto 20px;font-size:15px;line-height:1.72">From commercial power plants to Department of Defense unmanned platforms — Turbnetic.ai is the intelligence layer that makes every gas turbine smarter, every mechanic more effective, and every facility easier to run.</p>
+  <div style="background:rgba(255,107,0,0.06);border:1px solid var(--bo);border-radius:8px;padding:12px 28px;margin-bottom:18px;max-width:560px;text-align:center">
+    <span style="font-family:var(--fm);font-size:9px;color:var(--o);letter-spacing:0.18em;display:block;margin-bottom:6px">SEEKING LEAD INVESTOR</span>
+    <span style="font-family:var(--fh);font-size:16px;font-weight:600;color:var(--text)">We need more than capital — we need <span style="color:var(--o)">a16z's expertise</span> in industrial AI,<br>American Dynamism, and defense technology to build this right.</span>
+  </div>
+  <a href="mailto:musa@turbnetic.ai" style="display:inline-block;margin-bottom:16px;padding:12px 36px;border:1px solid var(--bc);border-radius:6px;font-family:var(--fh);font-size:15px;color:var(--c);text-decoration:none;background:rgba(0,212,255,0.04)">musa@turbnetic.ai</a>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:28px">
+    <span class="pill c">turbnetic.ai</span>
+    <span class="pill o">Series A · a16z</span>
+    <span class="pill">Confidential · 2026</span>
+  </div>
+  <div style="display:flex;gap:44px;justify-content:center;align-items:flex-end">
+    <div style="text-align:center"><div class="stat s40">$94B+</div><div class="stat-sub">Combined TAM</div></div>
+    <div style="width:1px;height:40px;background:var(--border)"></div>
+    <div style="text-align:center"><div class="stat s40 o">14×</div><div class="stat-sub">Year 1 customer ROI</div></div>
+    <div style="width:1px;height:40px;background:var(--border)"></div>
+    <div style="text-align:center"><div class="stat s40">12</div><div class="stat-sub">Customer conversations<br>confirm the problem</div></div>
+    <div style="width:1px;height:40px;background:var(--border)"></div>
+    <div style="text-align:center"><div class="stat s40 o">Day 1</div><div class="stat-sub">New hire operates<br>like a veteran</div></div>
+  </div>
+  <div class="sf"><span>STRICTLY CONFIDENTIAL — NOT FOR DISTRIBUTION</span><span style="font-family:var(--fh);font-weight:600">TURBNETIC.AI</span><span>20 / 20</span></div>
+</section>
+
+</div><!-- /.slides -->
+</div><!-- /.reveal -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1440,
+    height: 900,
+    margin: 0,
+    minScale: 0.2,
+    maxScale: 2.0,
+    controls: true,
+    progress: true,
+    slideNumber: true,
+    hash: true,
+    history: true,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'none',
+    keyboard: true,
+    overview: true,
+    center: false,
+    touch: true,
+    loop: false,
+    rtl: false,
+    fragments: false,
+    pdfMaxPagesPerSlide: 1,
+    pdfSeparateFragments: false,
+  });
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function downloadImages() {
+    const total    = Reveal.getTotalSlides();
+    const origIdx  = Reveal.getIndices();
+    const revealEl = document.querySelector('.reveal');
+
+    // Progress overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(3,8,14,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;gap:18px;font-family:Space Grotesk,sans-serif;color:#dde6f2';
+    overlay.innerHTML = `
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 3v13M7 11l5 5 5-5M5 21h14" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="font-size:20px;font-weight:700">Saving Slides as Images</div>
+      <div id="img-status" style="font-size:13px;color:#8499b4">Starting…</div>
+      <div style="width:320px;height:3px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden">
+        <div id="img-bar" style="height:100%;width:0%;background:#00d4ff;border-radius:99px;transition:width 0.3s ease"></div>
+      </div>
+      <div style="font-size:11px;color:#3d5269">Do not navigate away</div>`;
+    document.body.appendChild(overlay);
+    await sleep(80);
+
+    const status = document.getElementById('img-status');
+    const bar    = document.getElementById('img-bar');
+
+    // Hide chrome
+    const chrome = document.querySelectorAll('#dl-btns, .controls, .progress, .slide-number');
+    chrome.forEach(el => el.style.visibility = 'hidden');
+
+    const zip = new JSZip();
+
+    for (let i = 0; i < total; i++) {
+      status.textContent = `Capturing slide ${i + 1} of ${total}…`;
+      bar.style.width    = `${((i) / total) * 90}%`;
+
+      Reveal.slide(i, 0, 0);
+      await sleep(400);
+
+      const canvas = await html2canvas(revealEl, {
+        backgroundColor : '#03080e',
+        scale           : 2,
+        useCORS         : true,
+        allowTaint      : true,
+        logging         : false,
+        width           : revealEl.offsetWidth,
+        height          : revealEl.offsetHeight,
+        ignoreElements  : el =>
+          el.id === 'dl-btns' ||
+          el.classList.contains('controls') ||
+          el.classList.contains('progress') ||
+          el.classList.contains('slide-number'),
+      });
+
+      // Convert to PNG blob and add to zip
+      const num     = String(i + 1).padStart(2, '0');
+      const imgData = canvas.toDataURL('image/png').replace('data:image/png;base64,', '');
+      zip.file(`Slide-${num}.png`, imgData, { base64: true });
+    }
+
+    // Restore
+    chrome.forEach(el => el.style.visibility = '');
+    Reveal.slide(origIdx.h, origIdx.v, origIdx.f);
+
+    status.textContent = 'Packaging ZIP…';
+    bar.style.width    = '95%';
+    await sleep(100);
+
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'Turbnetic-AI-Pitch-Deck-2026.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    bar.style.width = '100%';
+    await sleep(300);
+    overlay.remove();
+  }
+
+
+
+</script>
+</body>
+</html>

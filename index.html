@@ -31,6 +31,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
 
+  <!-- vanilla-tilt — premium 3D card tilt + glare -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+
   <!-- Styles -->
   <link rel="stylesheet" href="css/style.css?v=__VERSION__">
   <link rel="stylesheet" href="css/animations.css?v=__VERSION__">
@@ -101,8 +104,10 @@
       </a>
       <ul class="nav-links">
         <li><a href="#solution">Platform</a></li>
+        <li><a href="#agent">Agent AI</a></li>
         <li><a href="#integration">Integrations</a></li>
         <li><a href="#features">Capabilities</a></li>
+        <li><a href="#edge">Edge</a></li>
         <li><a href="#results">Results</a></li>
       </ul>
       <div class="nav-cta">
@@ -117,8 +122,10 @@
     <div class="mobile-menu" id="mobile-menu">
       <ul class="mobile-links">
         <li><a href="#solution">Platform</a></li>
+        <li><a href="#agent">Agent AI</a></li>
         <li><a href="#integration">Integrations</a></li>
         <li><a href="#features">Capabilities</a></li>
+        <li><a href="#edge">Edge</a></li>
         <li><a href="#results">Results</a></li>
         <li><a href="#cta" class="mobile-cta">Request Demo</a></li>
       </ul>
@@ -570,6 +577,78 @@
   </section>
 
   <!-- ═══════════════════════════════════════
+       MAINTENANCE AGENT AI
+  ═══════════════════════════════════════ -->
+  <section id="agent">
+    <div class="section-container">
+      <div class="section-eyebrow agent-eyebrow">Maintenance Agent AI</div>
+      <h2 class="section-headline">2,000 Pages of Manual.<br><span class="gradient-text">One Precise Action.</span></h2>
+      <p class="section-sub">Detecting the anomaly is half the job. Turbnetic.ai agents cross-reference the full maintenance manual and send the mechanic an exact, step-by-step directive &mdash; dashboard and pager, instantly.</p>
+    </div>
+
+    <div class="agent-flow-land section-container" data-animate="fade-up">
+      <div class="agent-step">
+        <div class="agent-step-num">01</div>
+        <h4>Sensor Signal</h4>
+        <p>Stage 3 discharge temp trending 8&deg;C above baseline. Bearing #2 vibration rising 0.3 mm/s per day.</p>
+      </div>
+      <div class="agent-arrow">&#8594;</div>
+      <div class="agent-step">
+        <div class="agent-step-num">02</div>
+        <h4>AI Anomaly Model</h4>
+        <p>Pattern matches early-stage blade fouling. Confidence 94.2%. Lead time to degraded performance: 11&ndash;14 days.</p>
+      </div>
+      <div class="agent-arrow">&#8594;</div>
+      <div class="agent-step agent-step-orange">
+        <div class="agent-step-num">03</div>
+        <h4>Agent Orchestration</h4>
+        <p>Cross-references manual &sect;12.4.2, &sect;7.1, Appendix C. Builds the response procedure with safety interlocks.</p>
+      </div>
+      <div class="agent-arrow">&#8594;</div>
+      <div class="agent-step agent-step-orange">
+        <div class="agent-step-num">04</div>
+        <h4>Mechanic Receives</h4>
+        <p>One clear directive on the pager app &mdash; what, where, how, in what order. No manual lookup. No guesswork.</p>
+      </div>
+      <div class="agent-arrow">&#8594;</div>
+      <div class="agent-step">
+        <div class="agent-step-num">05</div>
+        <h4>Fleet Learning Loop</h4>
+        <p>Mechanic confirms the fix. The model retrains. Detection improves for every turbine on the platform.</p>
+      </div>
+    </div>
+
+    <div class="agent-bottom section-container">
+      <!-- Pager notification mockup -->
+      <div class="pager-mock" data-animate="fade-up">
+        <div class="pager-head">
+          <span class="pager-dot"></span>
+          <span class="pager-app">Turbnetic Pager</span>
+          <span class="pager-time">now</span>
+        </div>
+        <div class="pager-title">Unit GT-07 &middot; Stage 3 Fouling &middot; Priority 2</div>
+        <div class="pager-body">"Inspect compressor leading edge, Stage 3. Measure tip clearance at 3 points per &sect;12.4.2. If &gt;0.032 in, schedule offline wash within 72 hrs."</div>
+        <div class="pager-actions"><span>Acknowledge</span><span>Open Procedure</span></div>
+      </div>
+
+      <div class="agent-points" data-animate="fade-up" data-delay="0.15">
+        <div class="agent-point">
+          <div class="agent-point-stat">Day 1</div>
+          <p>A new hire responds correctly to any turbine alert from their first shift &mdash; the institutional knowledge lives in the platform, not in one retiring engineer's head.</p>
+        </div>
+        <div class="agent-point">
+          <div class="agent-point-stat">Zero lookup</div>
+          <p>Blade degradation, combustion instability, vibration, fouling &mdash; every directive arrives with the exact manual section, measurement procedure, and escalation threshold.</p>
+        </div>
+        <div class="agent-point">
+          <div class="agent-point-stat">1 operator</div>
+          <p>One person can manage and dispatch maintenance across a 50+ turbine facility from a single fleet dashboard.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
        INTEGRATION SECTION
   ═══════════════════════════════════════ -->
   <section id="integration">
@@ -679,6 +758,54 @@
           <div class="metric-context">From sensor to scored alert</div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       EDGE INTELLIGENCE
+  ═══════════════════════════════════════ -->
+  <section id="edge">
+    <div class="section-container">
+      <div class="section-eyebrow">Edge Intelligence</div>
+      <h2 class="section-headline">Starts on Turbofans.<br><span class="gradient-text">Built for Every Critical Machine.</span></h2>
+      <p class="section-sub">Our compression pipeline distills the full cloud model into a tiny, hardware-optimized version that runs anywhere &mdash; offshore platforms, pipeline stations, air-gapped defense installations. No cloud. No connectivity. Same detection quality.</p>
+    </div>
+
+    <div class="edge-pipeline section-container" data-animate="fade-up">
+      <div class="edge-node edge-node-cloud">
+        <div class="edge-node-tag">CLOUD</div>
+        <h4>Teacher Model</h4>
+        <p>Large ensemble trained on millions of fleet-hours. Full accuracy, continuously updated.</p>
+        <div class="edge-node-spec">~500MB &middot; GPU &middot; Cloud</div>
+      </div>
+      <div class="edge-arrow">&#8594;</div>
+      <div class="edge-node edge-node-pipe">
+        <div class="edge-node-tag edge-tag-orange">OPTIMIZATION PIPELINE</div>
+        <h4>Compression Engine</h4>
+        <p>Knowledge distillation &middot; 8-bit quantization &middot; pruning &middot; hardware-aware architecture search.</p>
+        <div class="edge-node-spec">Automated &middot; per-chip tuning</div>
+      </div>
+      <div class="edge-arrow">&#8594;</div>
+      <div class="edge-node edge-node-device">
+        <div class="edge-node-tag">EDGE</div>
+        <h4>Student Model</h4>
+        <p>Runs on a $50 compute module inside a ruggedized device. Fully offline, encrypted sync when available.</p>
+        <div class="edge-node-spec">&lt;8MB &middot; &lt;50ms &middot; &lt;5W</div>
+      </div>
+    </div>
+
+    <div class="edge-path section-container" data-animate="fade-up" data-delay="0.15">
+      <div class="edge-path-label">Expansion path</div>
+      <div class="edge-path-chips">
+        <span class="edge-chip edge-chip-now">Gas Turbines <em>now</em></span>
+        <span class="edge-path-arrow">&#8594;</span>
+        <span class="edge-chip">Jet Engines &middot; DoD Unmanned Platforms</span>
+        <span class="edge-path-arrow">&#8594;</span>
+        <span class="edge-chip">Marine &middot; Pipeline &middot; Industrial Compressors</span>
+        <span class="edge-path-arrow">&#8594;</span>
+        <span class="edge-chip">Grid &amp; Electricity Demand Intelligence</span>
+      </div>
+      <p class="edge-path-note">One AI core. We prove it where failure costs the most &mdash; utility-scale gas turbines &mdash; then carry the same model, agents, and edge pipeline to every sensor-dense machine that can't afford to fail.</p>
     </div>
   </section>
 
@@ -1218,6 +1345,28 @@
   </section>
 
   <!-- ═══════════════════════════════════════
+       AI × ELECTRICITY LOOP
+  ═══════════════════════════════════════ -->
+  <section id="ai-loop">
+    <div class="section-container ai-loop-inner" data-animate="fade-up">
+      <div class="ai-loop-text">
+        <div class="section-eyebrow ai-loop-eyebrow">Why Now</div>
+        <h2 class="ai-loop-headline">AI Created the Demand.<br><span class="gradient-text">AI Keeps It Running.</span></h2>
+        <p>Data centers will draw over <strong>1,000 TWh a year</strong> &mdash; Japan's entire consumption &mdash; and US data center power demand is projected to grow <strong>160% by 2030</strong>. Gas turbines are the only dispatchable generation fast enough to follow that load. They can no longer afford to fail.</p>
+      </div>
+      <div class="ai-loop-cycle">
+        <div class="loop-step"><span>AI infrastructure</span> needs electricity</div>
+        <div class="loop-step-arrow">&#8595;</div>
+        <div class="loop-step"><span>Gas turbines</span> supply it &mdash; and must never fail</div>
+        <div class="loop-step-arrow">&#8595;</div>
+        <div class="loop-step loop-step-hl"><span>Turbnetic.ai</span> keeps them running</div>
+        <div class="loop-step-arrow">&#8595;</div>
+        <div class="loop-step">Reliable power <span>enables more AI</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
        CTA SECTION
   ═══════════════════════════════════════ -->
   <section id="cta">
@@ -1365,6 +1514,7 @@
   <script src="js/turbofan.js?v=__VERSION__"></script>
   <script src="js/dataflow.js?v=__VERSION__"></script>
   <script src="js/network.js"></script>
+  <script src="js/premium-ui.js?v=__VERSION__"></script>
 
 </body>
 </html>

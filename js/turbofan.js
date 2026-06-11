@@ -30,8 +30,10 @@ class TurbofanEngine3D {
 
     this._initRenderer();
     this._initScene();
+    this._initEnvironment();
     this._initLights();
     this._buildEngine();
+    this._buildGroundGlow();
     this._initCamera();
 
     window.addEventListener('resize', () => this._resize(), { passive: true });
@@ -61,6 +63,88 @@ class TurbofanEngine3D {
     this.scene.fog = new THREE.FogExp2(0x020810, 0.022);  /* reduced for larger scene */
   }
 
+  /* ─── Environment reflections ───────────────────── */
+  /* Procedural studio equirect → PMREM. Gives every PBR metal
+     real reflections instead of flat 3-light response. */
+  _initEnvironment() {
+    const cv = document.createElement('canvas');
+    cv.width = 512; cv.height = 256;
+    const x = cv.getContext('2d');
+
+    /* dark studio gradient: floor → horizon glow → ceiling */
+    const g = x.createLinearGradient(0, 256, 0, 0);
+    g.addColorStop(0.00, '#050b14');
+    g.addColorStop(0.42, '#0e2236');
+    g.addColorStop(0.55, '#1a3850');
+    g.addColorStop(0.56, '#16314a');
+    g.addColorStop(1.00, '#060d18');
+    x.fillStyle = g;
+    x.fillRect(0, 0, 512, 256);
+
+    /* softbox strips — create long highlight streaks on metal */
+    const box = (bx, by, bw, bh, c) => {
+      const bg = x.createLinearGradient(bx, by, bx, by + bh);
+      bg.addColorStop(0, 'rgba(0,0,0,0)');
+      bg.addColorStop(0.5, c);
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = bg;
+      x.fillRect(bx, by, bw, bh);
+    };
+    box( 40, 30, 150, 26, 'rgba(190,225,255,0.85)');  /* key softbox */
+    box(300, 48, 110, 18, 'rgba(120,180,255,0.45)');  /* fill */
+    box(190, 86, 70,  10, 'rgba(0,212,255,0.35)');    /* cyan accent */
+    box(430, 70, 60,  12, 'rgba(255,140,60,0.30)');   /* warm bounce */
+
+    const tex   = new THREE.CanvasTexture(cv);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    pmrem.compileEquirectangularShader();
+    this.scene.environment = pmrem.fromEquirectangular(tex).texture;
+    tex.dispose();
+    pmrem.dispose();
+  }
+
+  /* ─── Ground contact glow ───────────────────────── */
+  /* Radial-faded grid disc under the skid — grounds the package
+     like a product-render floor without a heavy reflector. */
+  _buildGroundGlow() {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 512;
+    const x = cv.getContext('2d');
+
+    /* faint engineering grid */
+    x.strokeStyle = 'rgba(0, 212, 255, 0.30)';
+    x.lineWidth = 1;
+    for (let i = 0; i <= 512; i += 32) {
+      x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 512); x.stroke();
+      x.beginPath(); x.moveTo(0, i); x.lineTo(512, i); x.stroke();
+    }
+    /* center pool */
+    const pool = x.createRadialGradient(256, 256, 30, 256, 256, 150);
+    pool.addColorStop(0, 'rgba(0, 212, 255, 0.20)');
+    pool.addColorStop(1, 'rgba(0, 212, 255, 0)');
+    x.fillStyle = pool;
+    x.fillRect(0, 0, 512, 512);
+
+    /* radial alpha falloff — fade grid to nothing at edges */
+    const mask = x.createRadialGradient(256, 256, 60, 256, 256, 252);
+    mask.addColorStop(0,    'rgba(0,0,0,1)');
+    mask.addColorStop(0.55, 'rgba(0,0,0,0.5)');
+    mask.addColorStop(1,    'rgba(0,0,0,0)');
+    x.globalCompositeOperation = 'destination-in';
+    x.fillStyle = mask;
+    x.fillRect(0, 0, 512, 512);
+
+    const tex = new THREE.CanvasTexture(cv);
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex, transparent: true, depthWrite: false, opacity: 0.85,
+    });
+    const disc = new THREE.Mesh(new THREE.PlaneGeometry(26, 26), mat);
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = -0.80;
+    this.engineGroup.add(disc);
+  }
+
   /* ─── Lights ────────────────────────────────────── */
   _initLights() {
     /* sky/ground hemisphere */
@@ -70,7 +154,8 @@ class TurbofanEngine3D {
     const key = new THREE.DirectionalLight(0xfff8f0, 4.0);
     key.position.set(-4, 5, 2);
     key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.mapSize.set(window.innerWidth < 768 ? 1024 : 2048, window.innerWidth < 768 ? 1024 : 2048);
+    key.shadow.bias = -0.0004;
     this.scene.add(key);
 
     /* fill – blue-ish right */
@@ -237,6 +322,18 @@ class TurbofanEngine3D {
         roughness: 0.25,
       }),
     };
+
+    /* env reflection strength — bright on polished parts, restrained on casings */
+    const envI = {
+      titaniumFan: 1.35, nickelBlade: 1.10, steelShaft: 1.25, ogvVane: 1.15,
+      disc: 0.95, copper: 1.20, nacelle: 0.70, enclosureSteel: 0.55,
+      darkMetal: 0.60, genBody: 0.65, exhaust: 0.75,
+    };
+    Object.keys(this.M).forEach(k => {
+      if ('envMapIntensity' in this.M[k]) {
+        this.M[k].envMapIntensity = envI[k] !== undefined ? envI[k] : 0.8;
+      }
+    });
 
     /* LP spool (fan + LPC + LPT + spinner + plug) */
     this.lpGroup = new THREE.Group();
@@ -1629,6 +1726,12 @@ class TurbofanEngine3D {
     this._camLook.z += (lz - this._camLook.z) * k;
 
     this.camera.position.copy(this._camPos);
+
+    /* idle micro-drift — keeps the shot alive between scroll moves */
+    const idle = this.time * 0.00042;
+    this.camera.position.x += Math.sin(idle)       * 0.05;
+    this.camera.position.y += Math.cos(idle * 1.3) * 0.035;
+
     this.camera.lookAt(this._camLook);
   }
 
