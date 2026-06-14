@@ -1683,7 +1683,20 @@ class TurbofanEngine3D {
      Phase 0.65→1.00: drift right to reveal gearbox + 38 MW alternator */
   _updateCamera() {
     const p   = this.scrollProgress;
-    const mob = this._isMobile ? 1.55 : 1.0; // scale-back factor for portrait
+    /* Portrait scale-back factor. Keep the camera pulled back for the wide
+       establishing shot (p<0.20) and the final gearbox/alternator reveal
+       (p>0.65) so the full package fits a portrait screen — but ease it back
+       toward ~1.0 through the interior cutaway phase (0.42–0.65) so the camera
+       actually moves *inside* the engine on mobile instead of staying small
+       and far away. Continuous at every phase boundary. */
+    let mob = 1.0;
+    if (this._isMobile) {
+      const WIDE = 1.55, NEAR = 1.12;
+      if      (p < 0.20) mob = WIDE;
+      else if (p < 0.42) mob = WIDE + (NEAR - WIDE) * ((p - 0.20) / 0.22);
+      else if (p < 0.65) mob = NEAR;
+      else               mob = NEAR + (WIDE - NEAR) * ((p - 0.65) / 0.35);
+    }
     let tx, ty, tz, lx, ly, lz;
 
     if (p < 0.20) {
