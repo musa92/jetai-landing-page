@@ -1142,7 +1142,7 @@ class TurbofanEngine3D {
   ═══════════════════════════════════════════════════ */
   _buildSensorMarkers() {
     /* Severity palette */
-    const C = { N: 0x00d4ff, W: 0xf59e0b, A: 0xef4444, O: 0xff6b00 };
+    const C = { N: 0x00d4ff, W: 0xf59e0b, A: 0xff2d78, O: 0xaef03f };
 
     /*  id, label, unit, value function, severity, alarm state, 3-D position
         Positions are in engineGroup local space (engine along +Z)  */
@@ -1497,7 +1497,7 @@ class TurbofanEngine3D {
       this.engineGroup.add(mesh);
       return { mesh, mat, baseZ: z };
     };
-    this._scanEGT = mk(0xef4444, 0.42);   /* critical — red   */
+    this._scanEGT = mk(0xff2d78, 0.42);   /* critical — red   */
     this._scanBRG = mk(0xf59e0b, 1.30);   /* warning  — amber */
     this._scanVIB = mk(0x00d4ff, -0.55);  /* vibration — cyan */
   }

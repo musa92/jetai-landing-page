@@ -13,6 +13,8 @@
   function dismiss() {
     loader.classList.add('out');
     document.body.style.overflow = '';
+    /* let the robotic hero headline start its decode once the curtain lifts */
+    document.dispatchEvent(new CustomEvent('preloader:done'));
     setTimeout(function () { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 750);
   }
 
@@ -623,7 +625,7 @@ var lenis = null;
       btn.innerHTML = originalHTML;
       btn.style.opacity = '1';
       btn.disabled = false;
-      btn.style.background = '#ef4444';
+      btn.style.background = '#ff2d78';
       btn.textContent = 'Something went wrong — please try again';
       setTimeout(function () {
         btn.innerHTML = originalHTML;
@@ -639,25 +641,25 @@ var lenis = null;
   const ASSETS = {
     'GT-07': {
       egt: 614, egtDelta: '↑ +14°C', rulMax: 2000, rul: 847, conf: 87,
-      action: 'Inspect in 23d', color: '#ff6b00',
+      action: 'Inspect in 23d', color: '#aef03f',
       alertLevel: 'HIGH', alertPillClass: 'alert-pill-high',
       alertTitle: 'Combustion Instability Precursor · GT-07',
       alertSub: 'T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.',
       alertTime: '~23 days to fault', alertCI: 'CI: 18–31 days',
       opcTag: 'GT07.COMB.T4_AVG', isaPrio: 'P1', isaAck: 'UNACK', isaAckClass: 'isa-unack', wo: 'WO-2026-0418 · PLANNED',
       egtLine: 'M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2',
-      egtStroke: '#ff6b00',
+      egtStroke: '#aef03f',
     },
     'GT-01': {
       egt: 589, egtDelta: '↑ +6°C', rulMax: 2000, rul: 312, conf: 91,
-      action: 'Schedule wash', color: '#ef4444',
+      action: 'Schedule wash', color: '#ff2d78',
       alertLevel: 'MED', alertPillClass: 'alert-pill-med',
       alertTitle: 'HPC Fouling Stage 5 · GT-01',
       alertSub: 'Isentropic efficiency −2.1% from baseline. Offline compressor wash recommended within 8 days.',
       alertTime: '~8 days to threshold', alertCI: 'Stage 5 of 6',
       opcTag: 'GT01.HPC.EFF_ISEN', isaPrio: 'P2', isaAck: 'UNACK', isaAckClass: 'isa-unack', wo: 'WO-2026-0421 · PLANNED',
       egtLine: 'M0,40 C20,39 40,38 70,36 C100,34 130,32 160,29 C190,26 220,23 260,20 C280,18 290,17 300,16',
-      egtStroke: '#ef4444',
+      egtStroke: '#ff2d78',
     },
     'GT-04': {
       egt: 571, egtDelta: '±1°C', rulMax: 3000, rul: 2340, conf: 99,
@@ -692,7 +694,7 @@ var lenis = null;
       rows: [
         ['Root cause',     'T4 temp rising above trend. Cross-correlated with ΔP oscillation at 200 Hz band.'],
         ['Confidence',     '<span style="color:#f59e0b">87% — High</span>'],
-        ['Predicted fault','<span style="color:#ff6b00">~23 days (CI: 18–31d)</span>'],
+        ['Predicted fault','<span style="color:#aef03f">~23 days (CI: 18–31d)</span>'],
         ['Recommended',    'Borescope inspection · hot section'],
       ],
     },
@@ -811,7 +813,7 @@ var lenis = null;
       const typeEl = row.querySelector('.fleet-type');
       if (rulRows[0]) rulRows[0].textContent = `${assetKey} ${typeEl?.textContent || ''}`;
       if (rulRows[1]) { rulRows[1].textContent = data.conf + '%'; rulRows[1].style.color = data.color; }
-      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'No action' ? '#22c55e' : '#ff6b00'; }
+      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'No action' ? '#22c55e' : '#aef03f'; }
       const arc = document.querySelector('.rul-gauge-svg path[stroke-dasharray]');
       if (arc) {
         const filled = (data.rul / data.rulMax) * 169.6;
@@ -1044,6 +1046,7 @@ var lenis = null;
     var splitHeadlines = function() {
       document.querySelectorAll('.section-headline, .hero-headline').forEach(function(el) {
         if (el.closest('.features-sticky')) return; // skip — pinned container clips the animation
+        if (el.classList.contains('hero-headline--robotic')) return; // robotic headline has its own decode animation
         var split = new SplitType(el, { types: 'lines' });
         split.lines.forEach(function(line) {
           // wrap each line in an overflow-hidden clip so it can rise out from behind

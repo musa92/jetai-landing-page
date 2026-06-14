@@ -87,3 +87,74 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+/* ═══════════════════════════════════════════════════
+   Robotic hero headline — "decode / scramble" reveal
+   Runs on all devices (mobile included). Each character
+   flickers through random glyphs, then resolves to the
+   real letter left-to-right, like a terminal decode.
+═══════════════════════════════════════════════════ */
+(function roboticHeadline() {
+  const headline = document.querySelector('.hero-headline--robotic');
+  if (!headline) return;
+  const lines = Array.from(headline.querySelectorAll('.hl-line'));
+  if (!lines.length) return;
+
+  /* preserve the real text + respect reduced motion (leave text untouched) */
+  lines.forEach(l => { l.dataset.scramble = l.dataset.scramble || l.textContent; });
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const CHARS = '01<>-_/\\[]{}=+*#%&!?ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const rnd   = () => CHARS[(Math.random() * CHARS.length) | 0];
+
+  function scramble(el, finalText) {
+    return new Promise(resolve => {
+      const queue = [];
+      for (let i = 0; i < finalText.length; i++) {
+        const start = (Math.random() * 18) | 0;
+        queue.push({ to: finalText[i], start, end: start + 12 + ((Math.random() * 22) | 0), char: null });
+      }
+      let frame = 0;
+      (function update() {
+        let out = '', done = 0;
+        for (const q of queue) {
+          if (q.to === ' ') { out += ' '; done++; }
+          else if (frame >= q.end) { out += q.to; done++; }
+          else if (frame >= q.start) {
+            if (!q.char || Math.random() < 0.3) q.char = rnd();
+            out += '<span class="dud">' + q.char + '</span>';
+          } else {
+            out += '<span class="dud">' + rnd() + '</span>';
+          }
+        }
+        el.innerHTML = out;
+        if (done >= queue.length) { resolve(); return; }
+        frame++;
+        requestAnimationFrame(update);
+      })();
+    });
+  }
+
+  let started = false;
+  function run() {
+    if (started) return;
+    started = true;
+    scramble(lines[0], lines[0].dataset.scramble);
+    if (lines[1]) {
+      setTimeout(() => {
+        scramble(lines[1], lines[1].dataset.scramble).then(() => {
+          headline.classList.add('glitch-flash');
+          setTimeout(() => headline.classList.remove('glitch-flash'), 500);
+        });
+      }, 380);
+    }
+  }
+
+  /* Start as the preloader curtain lifts (so the decode is actually visible).
+     The preloader can outlast a fixed timer because Three.js is slow to load,
+     so only use a short fallback when there is NO preloader; otherwise give a
+     long safety fallback that won't fire before the curtain is gone. */
+  const hasPreloader = !!document.getElementById('preloader');
+  document.addEventListener('preloader:done', () => setTimeout(run, 250), { once: true });
+  setTimeout(run, hasPreloader ? 9000 : 500);
+})();

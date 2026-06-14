@@ -29,7 +29,7 @@
   setInterval(() => {
     delta = Math.max(9, Math.min(21, delta + (Math.random() - 0.4) * 0.6));
     egt.textContent  = `↑ +${delta.toFixed(1)}°C`;
-    egt.style.color  = delta > 16 ? '#ef4444' : '#ff6b00';
+    egt.style.color  = delta > 16 ? '#ff2d78' : '#aef03f';
   }, 2800);
 })();
 
