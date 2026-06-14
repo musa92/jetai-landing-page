@@ -1660,7 +1660,7 @@ class TurbofanEngine3D {
        Continuous at every phase boundary. */
     let mob = 1.0;
     if (this._isMobile) {
-      const WIDE = 1.55, NEAR = 0.64;
+      const WIDE = 1.55, NEAR = 0.46;
       if      (p < 0.20) mob = WIDE;
       else if (p < 0.42) mob = WIDE + (NEAR - WIDE) * ((p - 0.20) / 0.22);
       else if (p < 0.65) mob = NEAR;
