@@ -221,44 +221,44 @@ class TurbofanEngine3D {
     this.M = {
       /* stage casings — clipped open to expose interior when camera zooms in */
       nacelle: new THREE.MeshStandardMaterial({
-        color:          0x2e3e50,
-        metalness:      0.88,
-        roughness:      0.26,
+        color:          0x9097a0,   /* brushed aluminium casing */
+        metalness:      0.90,
+        roughness:      0.34,
         side:           THREE.DoubleSide,
         clippingPlanes: [this.clipPlane],
         clipShadows:    true,
       }),
       nacelleInner: new THREE.MeshStandardMaterial({
-        color:    0x121e2c,
+        color:    0x3c4046,
         metalness: 0.7,
-        roughness: 0.45,
+        roughness: 0.5,
         side:     THREE.BackSide,
       }),
       titaniumFan: new THREE.MeshStandardMaterial({
-        color:     0x8ca0b4,
-        metalness: 0.92,
-        roughness: 0.14,
+        color:     0xc6ccd2,   /* polished steel nose */
+        metalness: 0.94,
+        roughness: 0.16,
       }),
       nickelBlade: new THREE.MeshStandardMaterial({
-        color:     0x5a6e82,
-        metalness: 0.90,
-        roughness: 0.20,
+        color:     0xbcc2c9,   /* bright polished compressor blades */
+        metalness: 0.95,
+        roughness: 0.22,
       }),
       hotBlade: new THREE.MeshStandardMaterial({
-        color:             0x7a4010,
-        metalness:         0.82,
-        roughness:         0.28,
-        emissive:          new THREE.Color(0x280800),
-        emissiveIntensity: 0.4,
+        color:             0x70747a,   /* gunmetal turbine blades */
+        metalness:         0.92,
+        roughness:         0.30,
+        emissive:          new THREE.Color(0x140d08),
+        emissiveIntensity: 0.14,
       }),
       disc: new THREE.MeshStandardMaterial({
-        color:     0x3a4e60,
-        metalness: 0.90,
-        roughness: 0.25,
+        color:     0x868c93,
+        metalness: 0.92,
+        roughness: 0.28,
       }),
       steelShaft: new THREE.MeshStandardMaterial({
-        color:     0x445566,
-        metalness: 0.95,
+        color:     0xced4da,   /* bright polished forged rotor */
+        metalness: 0.96,
         roughness: 0.15,
       }),
       combustor: new THREE.MeshStandardMaterial({
@@ -293,14 +293,14 @@ class TurbofanEngine3D {
         side:      THREE.DoubleSide,
       }),
       darkMetal: new THREE.MeshStandardMaterial({
-        color:     0x1c2a38,
-        metalness: 0.85,
-        roughness: 0.35,
+        color:     0x565b61,   /* neutral dark steel */
+        metalness: 0.88,
+        roughness: 0.36,
       }),
       ogvVane: new THREE.MeshStandardMaterial({
-        color:     0x6a7e92,
-        metalness: 0.88,
-        roughness: 0.22,
+        color:     0xa9afb6,   /* steel stator vanes */
+        metalness: 0.90,
+        roughness: 0.24,
       }),
       /* ── Generator materials ── */
       copper: new THREE.MeshStandardMaterial({
@@ -315,19 +315,19 @@ class TurbofanEngine3D {
         metalness: 0.85,
         roughness: 0.30,
       }),
-      /* HPC fouled blades — color lerps to brown during cutaway */
+      /* rear compressor blades — color lerps to fouled brown during cutaway */
       hpcFoul: new THREE.MeshStandardMaterial({
-        color:     0x5a6e82,
-        metalness: 0.88,
-        roughness: 0.25,
+        color:     0xbcc2c9,
+        metalness: 0.92,
+        roughness: 0.26,
       }),
     };
 
     /* env reflection strength — bright on polished parts, restrained on casings */
     const envI = {
-      titaniumFan: 1.35, nickelBlade: 1.10, steelShaft: 1.25, ogvVane: 1.15,
-      disc: 0.95, copper: 1.20, nacelle: 0.70, enclosureSteel: 0.55,
-      darkMetal: 0.60, genBody: 0.65, exhaust: 0.75,
+      titaniumFan: 1.45, nickelBlade: 1.30, steelShaft: 1.45, ogvVane: 1.25,
+      disc: 1.05, copper: 1.20, nacelle: 0.95, enclosureSteel: 0.55,
+      darkMetal: 0.65, genBody: 0.65, exhaust: 0.75, hpcFoul: 1.25,
     };
     Object.keys(this.M).forEach(k => {
       if ('envMapIntensity' in this.M[k]) {
@@ -335,9 +335,9 @@ class TurbofanEngine3D {
       }
     });
 
-    /* LP spool (fan + LPC + LPT + spinner + plug) */
+    /* Single rotor — compressor + turbine + nose + plug + generator rotor */
     this.lpGroup = new THREE.Group();
-    /* HP spool (HPC + HPT) */
+    /* kept for the rotation hook in _update; unused on a single-shaft machine */
     this.hpGroup = new THREE.Group();
 
     this.engineGroup = new THREE.Group();
@@ -349,17 +349,15 @@ class TurbofanEngine3D {
     this._buildControlCabinet();
     this._buildInletSystem();
 
-    /* ── Exposed turbine core (16-stage axial, annular combustor) ── */
+    /* ── Exposed heavy-duty core: 17-stage axial compressor · annular
+          combustor · 4-stage turbine — all on a single shaft ── */
     this._buildCoreCasings();
-    this._buildSpinner();
-    this._buildFan();
-    this._buildOGV();
-    this._buildCoreShaft();
-    this._buildLPC();
-    this._buildHPC();
+    this._buildInletNose();   /* polished inlet bullet */
+    this._buildIGV();         /* inlet guide vane ring */
+    this._buildCoreShaft();   /* fore/aft shaft + polished mid rotor */
+    this._buildCompressor();  /* 17 dense stages on a tapering drum */
     this._buildCombustor();
-    this._buildHPT();
-    this._buildLPT();
+    this._buildTurbine();     /* 4 large stages + nozzle guide vanes */
     this._buildExhaust();
 
     /* ── Hot section, coupling, alternator ── */
@@ -539,165 +537,128 @@ class TurbofanEngine3D {
     });
   }
 
-  /* ─── Turbine Core Stage Casings ────────────────── */
+  /* ─── Core Stage Casings (split, bolted, brushed steel) ─── */
   _buildCoreCasings() {
-    /* Bolted flanged cylindrical stage housings — no aerodynamic fairing */
+    const N = this.M.nacelle;
+
+    /* Casing barrels follow the compressor taper → combustor bulge → turbine
+       expansion. Clipped open on cutaway (nacelle material). */
     const SECTIONS = [
-      { z: -1.15, len: 1.18, rF: 0.515, rR: 0.510 }, /* fan / inlet */
-      { z: -0.27, len: 0.56, rF: 0.385, rR: 0.375 }, /* LPC         */
-      { z:  0.14, len: 0.50, rF: 0.300, rR: 0.292 }, /* HPC         */
-      { z:  0.57, len: 0.40, rF: 0.362, rR: 0.352 }, /* combustor   */
-      { z:  1.12, len: 0.84, rF: 0.420, rR: 0.415 }, /* turbine     */
+      { z: -1.45, len: 0.30, rF: 0.500, rR: 0.500 }, /* inlet            */
+      { z: -0.95, len: 0.78, rF: 0.498, rR: 0.405 }, /* compressor front */
+      { z: -0.30, len: 0.74, rF: 0.405, rR: 0.330 }, /* compressor rear  */
+      { z:  0.10, len: 0.20, rF: 0.330, rR: 0.360 }, /* diffuser         */
+      { z:  0.42, len: 0.50, rF: 0.420, rR: 0.420 }, /* combustor bulge  */
+      { z:  0.98, len: 0.66, rF: 0.405, rR: 0.500 }, /* turbine expand   */
+      { z:  1.50, len: 0.34, rF: 0.510, rR: 0.560 }, /* exhaust diffuser */
     ];
     SECTIONS.forEach(({ z, len, rF, rR }) => {
-      const g = new THREE.CylinderGeometry(rF, rR, len, 44, 1, true);
+      const g = new THREE.CylinderGeometry(rF, rR, len, 48, 1, true);
       g.rotateX(Math.PI / 2);
-      const m = new THREE.Mesh(g, this.M.nacelle);
+      const m = new THREE.Mesh(g, N);
       m.position.z = z;
       this.engineGroup.add(m);
-      /* bolted flanges at each end */
-      [-len / 2, len / 2].forEach(dz => {
-        const fg = new THREE.TorusGeometry(Math.max(rF, rR) + 0.008, 0.008, 6, 40);
-        fg.rotateX(Math.PI / 2);
-        const f  = new THREE.Mesh(fg, this.M.disc);
-        f.position.z = z + dz;
-        this.engineGroup.add(f);
-      });
     });
 
-    /* interstage diffuser (HPC → combustor) */
-    const dg = new THREE.CylinderGeometry(0.360, 0.300, 0.18, 36, 1, true);
+    /* Bolted flange ring: torus rim + instanced bolt circle at a casing joint */
+    const boltFlange = (z, r, nb) => {
+      const fg = new THREE.TorusGeometry(r + 0.012, 0.020, 8, 56);
+      fg.rotateX(Math.PI / 2);
+      const f = new THREE.Mesh(fg, this.M.disc);
+      f.position.z = z;
+      this.engineGroup.add(f);
+
+      const bg = new THREE.CylinderGeometry(0.009, 0.009, 0.030, 6);
+      bg.rotateX(Math.PI / 2);
+      const bolts = new THREE.InstancedMesh(bg, this.M.darkMetal, nb);
+      bolts.frustumCulled = false;
+      const mtx = new THREE.Matrix4();
+      for (let i = 0; i < nb; i++) {
+        const a = (i / nb) * Math.PI * 2;
+        mtx.makeTranslation(Math.cos(a) * (r + 0.012), Math.sin(a) * (r + 0.012), z);
+        bolts.setMatrixAt(i, mtx);
+      }
+      bolts.instanceMatrix.needsUpdate = true;
+      this.engineGroup.add(bolts);
+    };
+    boltFlange(-1.60, 0.500, 36);  /* front inlet ring      */
+    boltFlange(-0.56, 0.405, 30);  /* compressor mid        */
+    boltFlange( 0.18, 0.360, 26);  /* compressor exit       */
+    boltFlange( 0.67, 0.420, 30);  /* combustor → turbine   */
+    boltFlange( 1.31, 0.500, 34);  /* turbine exit big ring */
+    boltFlange( 1.67, 0.560, 40);  /* exhaust ring          */
+
+    /* interstage diffuser cone (compressor → combustor) */
+    const dg = new THREE.CylinderGeometry(0.300, 0.330, 0.16, 40, 1, true);
     dg.rotateX(Math.PI / 2);
     const dm = new THREE.Mesh(dg, this.M.darkMetal);
-    dm.position.z = 0.38;
+    dm.position.z = 0.22;
     this.engineGroup.add(dm);
 
-    /* turbine exit nozzle */
-    const ng = new THREE.CylinderGeometry(0.385, 0.420, 0.22, 36, 1, true);
-    ng.rotateX(Math.PI / 2);
-    const nm = new THREE.Mesh(ng, this.M.exhaust);
-    nm.position.z = 1.56;
-    this.engineGroup.add(nm);
-
-    /* inlet flare cone */
-    const ifg = new THREE.CylinderGeometry(0.515, 0.60, 0.30, 44, 1, true);
+    /* inlet flare bellmouth */
+    const ifg = new THREE.CylinderGeometry(0.500, 0.62, 0.30, 48, 1, true);
     ifg.rotateX(Math.PI / 2);
     const ifc = new THREE.Mesh(ifg, this.M.darkMetal);
-    ifc.position.z = -1.90;
+    ifc.position.z = -1.74;
     this.engineGroup.add(ifc);
   }
 
-  /* ─── Spinner cone ──────────────────────────────── */
-  _buildSpinner() {
-    /* Ogive nose cone — sits deep inside the widened intake */
-    const g = new THREE.ConeGeometry(0.10, 0.52, 36);
+  /* ─── Inlet nose bullet ─────────────────────────── */
+  _buildInletNose() {
+    /* Polished ogive bullet fairing the rotor into the intake airflow */
+    const g = new THREE.ConeGeometry(0.135, 0.46, 40);
     g.rotateX(-Math.PI / 2);
-    g.translate(0, 0, -1.72);
-    const cap = new THREE.Mesh(g, this.M.steelShaft);
-    this.lpGroup.add(cap);
+    g.translate(0, 0, -1.59);
+    const nose = new THREE.Mesh(g, this.M.steelShaft);
+    this.lpGroup.add(nose);
 
-    /* spinner back disc */
-    const disc = new THREE.Mesh(
-      (() => { const dg = new THREE.CylinderGeometry(0.10,0.10,0.035,32); dg.rotateX(Math.PI/2); return dg; })(),
-      this.M.disc
-    );
-    disc.position.z = -1.46;
-    this.lpGroup.add(disc);
+    /* back collar onto the first compressor disc */
+    const cg = new THREE.CylinderGeometry(0.135, 0.135, 0.05, 36);
+    cg.rotateX(Math.PI / 2);
+    const collar = new THREE.Mesh(cg, this.M.disc);
+    collar.position.z = -1.35;
+    this.lpGroup.add(collar);
   }
 
-  /* ─── Fan ───────────────────────────────────────── */
-  _buildFan() {
-    /* FAN_Z=-0.88: nacelle inner radius here ≈0.538 — fan tip (0.455) safely inside */
-    const FAN_Z    = -0.88;
-    const N        = 18;
-    const HUB_R    = 0.102;
-    const TIP_R    = 0.455;
-    const SPAN     = TIP_R - HUB_R;
-    const CHORD    = 0.060;  /* blade chord */
-    const THICK    = 0.012;  /* blade thickness */
-    const PITCH    = 0.28;   /* leading-edge pitch angle (rad) */
-    const SWEEP    = 0.22;   /* leading-edge sweep (rad, toward tip) */
-
-    /* hub disc */
-    const hubGeom = new THREE.CylinderGeometry(HUB_R, HUB_R, 0.065, 36);
-    hubGeom.rotateX(Math.PI / 2);
-    const hub = new THREE.Mesh(hubGeom, this.M.disc);
-    hub.position.z = FAN_Z;
-    this.lpGroup.add(hub);
-
-    /* fan blades — each uses a tapered box with pitch and sweep */
-    for (let i = 0; i < N; i++) {
-      const angle = (i / N) * Math.PI * 2;
-
-      /* Build a "blade" as a thin tapered box geometry with 4 segments
-         so the normals catch light nicely */
-      const bladeGeom = new THREE.BoxGeometry(CHORD, SPAN, THICK, 1, 4, 1);
-
-      /* sweep: shear the top vertices forward (along z) */
-      const pos = bladeGeom.attributes.position;
-      for (let vi = 0; vi < pos.count; vi++) {
-        const localY = pos.getY(vi);
-        const t      = (localY / (SPAN / 2) + 1) / 2;   /* 0=hub, 1=tip */
-        pos.setZ(vi, pos.getZ(vi) + t * SWEEP * SPAN);
-        /* taper chord toward tip */
-        pos.setX(vi, pos.getX(vi) * (1 - t * 0.35));
-      }
-      pos.needsUpdate = true;
-      bladeGeom.computeVertexNormals();
-
-      /* pivot group: spin angle around engine Z */
-      const pivot = new THREE.Group();
-      pivot.rotation.z = angle;
-      pivot.position.z = FAN_Z;
-
-      /* blade mesh: offset to hub radius, pitch rotation */
-      const blade = new THREE.Mesh(bladeGeom, this.M.titaniumFan);
-      blade.position.y = HUB_R + SPAN / 2;
-      blade.rotation.z = PITCH;
-
-      pivot.add(blade);
-      this.lpGroup.add(pivot);
-    }
-
-    /* outer tip shroud ring */
-    const shroud = new THREE.Mesh(
-      (() => { const tg = new THREE.TorusGeometry(TIP_R + 0.008, 0.006, 12, 80); tg.rotateX(Math.PI/2); return tg; })(),
-      this.M.darkMetal
-    );
-    shroud.position.z = FAN_Z;
-    this.engineGroup.add(shroud);
+  /* ─── Inlet Guide Vanes (static, ahead of stage 1) ── */
+  _buildIGV() {
+    /* Variable inlet guide vanes — single static row metering intake air */
+    this._buildStatorRing(-1.40, 0.145, 0.46, 40, this.M.ogvVane);
   }
 
-  /* ─── Outlet Guide Vanes (static, after fan) ────── */
-  _buildOGV() {
-    const OGV_Z = -0.72;   /* moved downstream — was -0.90 which overlapped fan */
-    const N     = 28;
-    const HUB   = 0.105;
-    const TIP   = 0.455;
-
-    for (let i = 0; i < N; i++) {
-      const angle = (i / N) * Math.PI * 2;
-      const vaneGeom = new THREE.BoxGeometry(0.006, TIP - HUB, 0.042);
-
-      const pivot = new THREE.Group();
-      pivot.rotation.z = angle;
-      pivot.position.z = OGV_Z;
-
-      const vane = new THREE.Mesh(vaneGeom, this.M.ogvVane);
-      vane.position.y  = HUB + (TIP - HUB) / 2;
-      vane.rotation.z  = 0.28;
-      pivot.add(vane);
-      this.engineGroup.add(pivot);
-    }
-  }
-
-  /* ─── Core shaft tube ───────────────────────────── */
+  /* ─── Core shaft + polished mid rotor ───────────── */
   _buildCoreShaft() {
-    const sg = new THREE.CylinderGeometry(0.095, 0.095, 3.6, 28);
-    sg.rotateX(Math.PI / 2);
-    const shaft = new THREE.Mesh(sg, this.M.steelShaft);
-    shaft.position.z = 0.18;
-    this.engineGroup.add(shaft);
+    /* Aft shaft stub (turbine → gearbox) on the single rotor */
+    const ag = new THREE.CylinderGeometry(0.10, 0.10, 1.1, 28);
+    ag.rotateX(Math.PI / 2);
+    const aft = new THREE.Mesh(ag, this.M.steelShaft);
+    aft.position.z = 1.85;
+    this.lpGroup.add(aft);
+
+    /* Forward stub through the inlet */
+    const fg = new THREE.CylinderGeometry(0.085, 0.085, 0.5, 24);
+    fg.rotateX(Math.PI / 2);
+    const fwd = new THREE.Mesh(fg, this.M.steelShaft);
+    fwd.position.z = -1.45;
+    this.lpGroup.add(fwd);
+
+    /* Prominent polished forged mid rotor: compressor discharge → turbine
+       inlet. Stays slender through the combustor annulus so the annular
+       can wrap around it. */
+    const profile = [
+      { z: 0.06, r: 0.250 },  /* compressor discharge drum  */
+      { z: 0.18, r: 0.150 },
+      { z: 0.62, r: 0.135 },  /* slender run through combustor */
+      { z: 0.74, r: 0.250 },  /* turbine inlet wheel rim    */
+    ];
+    for (let i = 0; i < profile.length - 1; i++) {
+      const a = profile[i], b = profile[i + 1];
+      const cg = new THREE.CylinderGeometry(b.r, a.r, b.z - a.z, 32);
+      cg.rotateX(Math.PI / 2);
+      const cm = new THREE.Mesh(cg, this.M.steelShaft);
+      cm.position.z = (a.z + b.z) / 2;
+      this.lpGroup.add(cm);
+    }
   }
 
   /* ─── Generic stage builder (InstancedMesh: dense, clean, 1 draw call) ───── */
@@ -739,36 +700,35 @@ class TurbofanEngine3D {
     group.add(inst);
   }
 
-  /* ─── LPC (3 stages, LP spool) ──────────────────── */
-  _buildLPC() {
-    [
-      { z: -0.78, hubR: 0.096, tipR: 0.320, n: 20, chord: 0.028, pitch: 0.30 },
-      { z: -0.64, hubR: 0.100, tipR: 0.295, n: 24, chord: 0.025, pitch: 0.28 },
-      { z: -0.50, hubR: 0.104, tipR: 0.272, n: 26, chord: 0.022, pitch: 0.26 },
-    ].forEach(s => this._buildStage(this.lpGroup, this.M.nickelBlade, s));
+  /* ─── Axial Compressor — 17 dense stages on a tapering drum ─── */
+  /* Single-shaft heavy-duty layout: blade height shrinks and blade count
+     rises stage-to-stage as the annulus closes down — the characteristic
+     dense "cone of blades" of a frame gas turbine. */
+  _buildCompressor() {
+    const N  = 17;
+    const z0 = -1.30, z1 = 0.04;
+    const dz = (z1 - z0) / (N - 1);
+    for (let i = 0; i < N; i++) {
+      const f     = i / (N - 1);                 /* 0 front → 1 rear */
+      const z     = z0 + i * dz;
+      const tipR  = 0.455 - f * 0.170;           /* 0.455 → 0.285 */
+      const hubR  = 0.135 + f * 0.120;           /* 0.135 → 0.255 (rising drum) */
+      const n     = Math.round(34 + f * 36);     /* 34 → 70 blades */
+      const chord = 0.050 - f * 0.028;           /* 0.050 → 0.022 */
+      const pitch = 0.34  - f * 0.17;
+      /* rear third fouls — drives the cutaway "fouling" scroll narrative */
+      const mat   = i >= 11 ? this.M.hpcFoul : this.M.nickelBlade;
+      this._buildStage(this.lpGroup, mat,
+        { z, hubR, tipR, n, chord, thick: 0.006, pitch });
 
-    /* LPC stator rings */
-    [-0.71, -0.57].forEach(z => this._buildStatorRing(z, 0.104, 0.27, 18, this.M.ogvVane));
-  }
-
-  /* ─── HPC (6 stages, HP spool) ──────────────────── */
-  _buildHPC() {
-    /* Stages 1-3: clean nickel — stages 4-6: hpcFoul (will lerp to brown) */
-    [
-      { z: -0.34, hubR: 0.106, tipR: 0.240, n: 28, chord: 0.020, pitch: 0.24 },
-      { z: -0.23, hubR: 0.108, tipR: 0.225, n: 30, chord: 0.018, pitch: 0.22 },
-      { z: -0.12, hubR: 0.110, tipR: 0.210, n: 30, chord: 0.017, pitch: 0.20 },
-    ].forEach(s => this._buildStage(this.hpGroup, this.M.nickelBlade, s));
-    [
-      { z:  0.00, hubR: 0.112, tipR: 0.200, n: 32, chord: 0.016, pitch: 0.19 },
-      { z:  0.12, hubR: 0.113, tipR: 0.195, n: 32, chord: 0.015, pitch: 0.18 },
-      { z:  0.24, hubR: 0.115, tipR: 0.190, n: 34, chord: 0.014, pitch: 0.17 },
-    ].forEach(s => this._buildStage(this.hpGroup, this.M.hpcFoul, s));
-
-    /* HPC stator rings */
-    [-0.28, -0.17, -0.06, 0.06, 0.18].forEach(z =>
-      this._buildStatorRing(z, 0.115, 0.19, 22, this.M.ogvVane)
-    );
+      /* static stator row just downstream of each rotor (except the last) */
+      if (i < N - 1) {
+        this._buildStage(this.engineGroup, this.M.ogvVane, {
+          z: z + dz * 0.5, hubR: hubR + 0.006, tipR: tipR - 0.004,
+          n: n + 4, chord: chord * 0.8, thick: 0.004, pitch: -0.24,
+        });
+      }
+    }
   }
 
   /* ─── Stator ring helper ────────────────────────── */
@@ -831,44 +791,46 @@ class TurbofanEngine3D {
     this.exhaustLight.position.set(0, 0, CZ + 1.1);
   }
 
-  /* ─── HPT (2 stages, HP spool) ──────────────────── */
-  _buildHPT() {
-    [
-      { z: 0.72, hubR: 0.115, tipR: 0.26, n: 24, chord: 0.026, pitch: 0.30 },
-      { z: 0.86, hubR: 0.112, tipR: 0.28, n: 22, chord: 0.028, pitch: 0.28 },
-    ].forEach(s => this._buildStage(this.hpGroup, this.M.hotBlade, s));
+  /* ─── Turbine — 4 large stages + nozzle guide vanes ─── */
+  /* Fewer, much larger blades than the compressor; annulus expands
+     downstream as the gas does work. */
+  _buildTurbine() {
+    const stages = [
+      { z: 0.80, hubR: 0.250, tipR: 0.345, n: 64, chord: 0.050, pitch: 0.34 },
+      { z: 0.99, hubR: 0.246, tipR: 0.390, n: 58, chord: 0.058, pitch: 0.32 },
+      { z: 1.18, hubR: 0.242, tipR: 0.435, n: 52, chord: 0.066, pitch: 0.30 },
+      { z: 1.37, hubR: 0.238, tipR: 0.475, n: 46, chord: 0.074, pitch: 0.28 },
+    ];
+    /* first-stage nozzle guide vanes (static) ahead of the HP turbine */
+    this._buildStage(this.engineGroup, this.M.ogvVane,
+      { z: 0.69, hubR: 0.250, tipR: 0.335, n: 48, chord: 0.052, thick: 0.010, pitch: -0.36 });
 
-    this._buildStatorRing(0.79, 0.113, 0.27, 18, this.M.hotBlade);
-  }
-
-  /* ─── LPT (4 stages, LP spool) ──────────────────── */
-  _buildLPT() {
-    [
-      { z: 1.02, hubR: 0.110, tipR: 0.31, n: 20, chord: 0.032, pitch: 0.32 },
-      { z: 1.16, hubR: 0.106, tipR: 0.33, n: 18, chord: 0.034, pitch: 0.30 },
-      { z: 1.30, hubR: 0.102, tipR: 0.35, n: 18, chord: 0.036, pitch: 0.29 },
-      { z: 1.44, hubR: 0.098, tipR: 0.37, n: 16, chord: 0.038, pitch: 0.27 },
-    ].forEach(s => this._buildStage(this.lpGroup, this.M.hotBlade, s));
-
-    [1.09, 1.23, 1.37].forEach(z =>
-      this._buildStatorRing(z, 0.104, 0.34, 16, this.M.hotBlade)
-    );
+    stages.forEach((s, i) => {
+      this._buildStage(this.lpGroup, this.M.hotBlade, { ...s, thick: 0.013 });
+      if (i < stages.length - 1) {
+        const nz = stages[i + 1];
+        this._buildStage(this.engineGroup, this.M.ogvVane, {
+          z: (s.z + nz.z) / 2, hubR: s.hubR + 0.002, tipR: s.tipR + 0.012,
+          n: s.n - 6, chord: s.chord * 0.72, thick: 0.007, pitch: -0.32,
+        });
+      }
+    });
   }
 
   /* ─── Exhaust ───────────────────────────────────── */
   _buildExhaust() {
-    /* exhaust duct / nozzle */
-    const eg = new THREE.CylinderGeometry(0.28, 0.20, 0.50, 36, 1, true);
+    /* exhaust diffuser inner cone — widens downstream from turbine exit */
+    const eg = new THREE.CylinderGeometry(0.46, 0.30, 0.42, 40, 1, true);
     eg.rotateX(Math.PI / 2);
     const duct = new THREE.Mesh(eg, this.M.exhaust);
-    duct.position.z = 1.70;
+    duct.position.z = 1.68;
     this.engineGroup.add(duct);
 
-    /* exhaust plug bullet — on LP shaft */
-    const pg = new THREE.ConeGeometry(0.08, 0.40, 28);
+    /* exhaust plug bullet — on the rotor, fairing the rotor tail */
+    const pg = new THREE.ConeGeometry(0.235, 0.62, 32);
     pg.rotateX(Math.PI / 2);
     const plug = new THREE.Mesh(pg, this.M.steelShaft);
-    plug.position.z = 1.65;
+    plug.position.z = 1.62;
     this.lpGroup.add(plug);
   }
 
@@ -1135,37 +1097,42 @@ class TurbofanEngine3D {
     this.engineGroup.add(trayM);
   }
 
-  /* ─── External Plumbing (fuel manifold, bleed, lube) ─── */
+  /* ─── External Plumbing — combustor fuel manifold only ─── */
+  /* Kept deliberately minimal for a clean OEM-cutaway look: one
+     circumferential fuel manifold around the combustor with injector stubs,
+     fed by two short pipes tucked along the bottom of the casing. No long
+     hoses sweeping across the exposed rotor. */
   _buildExternalPlumbing() {
     const imat = this.M.darkMetal;
 
-    /* Helper: oriented cylinder between two world points */
-    const addPipe = (x1, y1, z1, x2, y2, z2, r = 0.013) => {
-      const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
-      const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
-      if (len < 0.001) return;
-      const g = new THREE.CylinderGeometry(r, r, len, 8);
-      const m = new THREE.Mesh(g, imat);
-      m.position.set((x1+x2)/2, (y1+y2)/2, (z1+z2)/2);
-      const dir = new THREE.Vector3(dx, dy, dz).normalize();
-      const up  = new THREE.Vector3(0, 1, 0);
-      if (Math.abs(dir.dot(up)) > 0.9999) {
-        m.rotation.x = dir.y < 0 ? Math.PI : 0;
-      } else {
-        m.quaternion.setFromUnitVectors(up, dir);
-      }
-      this.engineGroup.add(m);
-    };
+    /* Circumferential fuel manifold ring around the combustor casing */
+    const CZ = 0.40, MR = 0.45;
+    const ringG = new THREE.TorusGeometry(MR, 0.016, 10, 56);
+    ringG.rotateX(Math.PI / 2);
+    const ring = new THREE.Mesh(ringG, imat);
+    ring.position.z = CZ;
+    this.engineGroup.add(ring);
 
-    /* ── Fuel supply lines: two thin axial runs along combustor casing ── */
-    [-0.40, 0.40].forEach(x =>
-      addPipe(x, 0, 0.05, x, 0, 0.60, 0.008)
-    );
+    /* injector branch stubs from the manifold inward to each port */
+    for (let i = 0; i < 12; i++) {
+      const a  = (i / 12) * Math.PI * 2;
+      const sg = new THREE.CylinderGeometry(0.007, 0.007, 0.07, 6);
+      const sm = new THREE.Mesh(sg, imat);
+      sm.position.set(Math.cos(a) * (MR - 0.03), Math.sin(a) * (MR - 0.03), CZ + 0.04);
+      sm.rotation.x = Math.PI / 2;
+      this.engineGroup.add(sm);
+    }
 
-    /* ── Lube oil lines: axial along turbine casing ── */
-    [-0.48, 0.48].forEach(x =>
-      addPipe(x, 0, 0.70, x, 0, 1.88, 0.008)
-    );
+    /* Two short straight fuel-feed pipes tucked along the bottom, running
+       back to the manifold ring — kept low so they stay out of the cutaway. */
+    const feedZ0 = -0.10, feedZ1 = CZ, len = feedZ1 - feedZ0;
+    [-0.15, 0.15].forEach(dx => {
+      const pg = new THREE.CylinderGeometry(0.012, 0.012, len, 10);
+      const pm = new THREE.Mesh(pg, imat);
+      pm.rotation.x = Math.PI / 2;
+      pm.position.set(dx, -0.42, (feedZ0 + feedZ1) / 2);
+      this.engineGroup.add(pm);
+    });
   }
 
   /* ═══════════════════════════════════════════════════
@@ -1565,13 +1532,13 @@ class TurbofanEngine3D {
   _updateFouling() {
     if (!this.M.hpcFoul) return;
     const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.40) / 0.18));
-    /* lerp: clean silver 0x5a6e82 → fouled brown 0x6b4a28 */
+    /* lerp: clean steel 0xbcc2c9 → fouled brown 0x6b4a28 */
     this.M.hpcFoul.color.setRGB(
-      0.353 + vis * 0.067,
-      0.431 - vis * 0.141,
-      0.510 - vis * 0.353
+      0.737 - vis * 0.317,
+      0.761 - vis * 0.471,
+      0.788 - vis * 0.628
     );
-    this.M.hpcFoul.roughness = 0.25 + vis * 0.20;
+    this.M.hpcFoul.roughness = 0.26 + vis * 0.22;
   }
 
   /* ═══════════════════════════════════════════════════
@@ -1683,15 +1650,17 @@ class TurbofanEngine3D {
      Phase 0.65→1.00: drift right to reveal gearbox + 38 MW alternator */
   _updateCamera() {
     const p   = this.scrollProgress;
-    /* Portrait scale-back factor. Keep the camera pulled back for the wide
-       establishing shot (p<0.20) and the final gearbox/alternator reveal
-       (p>0.65) so the full package fits a portrait screen — but ease it back
-       toward ~1.0 through the interior cutaway phase (0.42–0.65) so the camera
-       actually moves *inside* the engine on mobile instead of staying small
-       and far away. Continuous at every phase boundary. */
+    /* Portrait scale-back factor on the camera's x/y distance. Mobile uses a
+       much wider FOV (62° vs 42°), which makes everything look smaller — so:
+         • WIDE (1.55) for the establishing shot + final reveal: pulled back
+           far enough that the whole package fits a portrait screen.
+         • NEAR (0.64) for the interior cutaway: pushed in CLOSER than desktop
+           to cancel the wide FOV, so the opened engine actually fills the
+           frame and you can see inside instead of a tiny distant tube.
+       Continuous at every phase boundary. */
     let mob = 1.0;
     if (this._isMobile) {
-      const WIDE = 1.55, NEAR = 1.12;
+      const WIDE = 1.55, NEAR = 0.64;
       if      (p < 0.20) mob = WIDE;
       else if (p < 0.42) mob = WIDE + (NEAR - WIDE) * ((p - 0.20) / 0.22);
       else if (p < 0.65) mob = NEAR;
