@@ -2212,27 +2212,10 @@ body::after {
   .iphone-wrap { display: none; }  /* hide phone on mobile — browser takes full width */
   .browser-urlbar span { font-size: 0.6rem; }
 
-  /* ── Turbofan explore: collapse 400vh scroll track ── */
-  #turbofan-explore { height: auto !important; }
-  .explore-sticky {
-    position: relative !important;
-    height: 65vmax !important;
-    min-height: 340px;
-    max-height: 540px;
-  }
-  .engine-viewport {
-    height: calc(65vmax - 90px) !important;
-    min-height: 260px;
-    max-height: 450px;
-  }
-  .explore-header {
-    position: relative !important;
-    top: auto !important;
-    transform: none !important;
-    left: auto !important;
-    padding: 16px 20px 8px;
-    align-items: flex-start;
-  }
+  /* Turbofan explore: the pinned-cutaway treatment (sticky 100vh + 280vh
+     scroll track) lives in the later max-width:768px block. Do NOT cap the
+     sticky/viewport height here — those caps left the engine tiny at the top
+     of the screen and let the section scroll past before the zoom. */
   .explore-progress-bar { width: 120px; }
   .info-panel-left, .info-panel-right { display: none !important; }
 }
@@ -3615,9 +3598,12 @@ body::after {
   .fsviz { height: 170px !important; }
   .fspanel { padding: 28px 16px !important; }
   .fspanel-title { font-size: 1.1rem !important; }
+  /* keep the engine viewport full-height on small phones too, so it docks
+     and fills the screen while the scroll drives the cutaway zoom */
   .engine-viewport {
-    height: 62vmax !important;
-    max-height: 360px !important;
+    height: calc(100svh - 70px) !important;
+    height: calc(100vh - 70px) !important;
+    max-height: none !important;
   }
 }
 
