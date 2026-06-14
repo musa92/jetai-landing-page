@@ -60,19 +60,13 @@ var lenis = null;
 })();
 
 // ── SplitType headline reveals ─────────────────
+// NOTE: .hero-headline and .section-headline are owned by initPremiumAnimations'
+// masked line-reveal below. This handler only covers .cta-headline to avoid
+// double-splitting (which breaks the gradient/serif accent spans).
 (function initTextReveal() {
   if (typeof SplitType === 'undefined') return;
 
-  // Hero headline — animate whole element (has <br>+<span> inside, can't split)
-  var heroEl = document.querySelector('.hero-headline');
-  if (heroEl) {
-    gsap.from(heroEl, {
-      opacity: 0, y: 32, duration: 0.9, ease: 'power3.out', delay: 0.15,
-    });
-  }
-
-  // Section + CTA headlines — words slide in on scroll
-  document.querySelectorAll('.section-headline, .cta-headline').forEach(function (el) {
+  document.querySelectorAll('.cta-headline').forEach(function (el) {
     var split = new SplitType(el, { types: 'words' });
     gsap.from(split.words, {
       scrollTrigger: { trigger: el, start: 'top 88%' },
@@ -650,6 +644,7 @@ var lenis = null;
       alertTitle: 'Combustion Instability Precursor · GT-07',
       alertSub: 'T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.',
       alertTime: '~23 days to fault', alertCI: 'CI: 18–31 days',
+      opcTag: 'GT07.COMB.T4_AVG', isaPrio: 'P1', isaAck: 'UNACK', isaAckClass: 'isa-unack', wo: 'WO-2026-0418 · PLANNED',
       egtLine: 'M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2',
       egtStroke: '#ff6b00',
     },
@@ -660,6 +655,7 @@ var lenis = null;
       alertTitle: 'HPC Fouling Stage 5 · GT-01',
       alertSub: 'Isentropic efficiency −2.1% from baseline. Offline compressor wash recommended within 8 days.',
       alertTime: '~8 days to threshold', alertCI: 'Stage 5 of 6',
+      opcTag: 'GT01.HPC.EFF_ISEN', isaPrio: 'P2', isaAck: 'UNACK', isaAckClass: 'isa-unack', wo: 'WO-2026-0421 · PLANNED',
       egtLine: 'M0,40 C20,39 40,38 70,36 C100,34 130,32 160,29 C190,26 220,23 260,20 C280,18 290,17 300,16',
       egtStroke: '#ef4444',
     },
@@ -670,6 +666,7 @@ var lenis = null;
       alertTitle: 'No Active Anomalies · GT-04',
       alertSub: 'All readings nominal. EGT within ±2°C of baseline. Next scheduled inspection Aug 19, 2026.',
       alertTime: 'No predicted fault', alertCI: 'Healthy',
+      opcTag: 'GT04.BRG.VIB_84HZ', isaPrio: 'P4', isaAck: 'ACK', isaAckClass: 'isa-acked', wo: 'No open WO',
       egtLine: 'M0,30 C60,30 120,31 180,30 C220,29 260,30 300,30',
       egtStroke: '#22c55e',
     },
@@ -680,6 +677,7 @@ var lenis = null;
       alertTitle: 'No Active Anomalies · GT-02',
       alertSub: 'Minor LPT efficiency trend (−0.4%) under passive monitoring. No action required at this time.',
       alertTime: 'No predicted fault', alertCI: 'Monitor only',
+      opcTag: 'GT02.LPT.EFF_DEV', isaPrio: '—', isaAck: 'NORMAL', isaAckClass: 'isa-acked', wo: 'No open WO',
       egtLine: 'M0,32 C60,32 120,33 180,32 C220,31 260,32 300,32',
       egtStroke: '#22c55e',
     },
@@ -792,6 +790,19 @@ var lenis = null;
       if (alertTime) alertTime.lastChild.textContent = ' ' + data.alertTime;
       const alertCI = document.getElementById('dash-alert-ci');
       if (alertCI) alertCI.textContent = data.alertCI;
+
+      /* Industry-standard fields: OPC-UA tag, ISA-18.2 state, CMMS work order */
+      const tagName = document.getElementById('dash-tag-name');
+      if (tagName && data.opcTag) tagName.textContent = data.opcTag;
+      const isaState = document.getElementById('dash-alarm-state');
+      if (isaState && data.isaPrio) {
+        const prioEl = isaState.querySelector('.isa-prio');
+        const ackEl  = isaState.querySelector('.isa-ack');
+        if (prioEl) prioEl.textContent = data.isaPrio;
+        if (ackEl)  { ackEl.textContent = data.isaAck; ackEl.className = 'isa-ack ' + data.isaAckClass; }
+      }
+      const woEl = document.getElementById('dash-alert-wo');
+      if (woEl && data.wo) woEl.textContent = data.wo;
 
       /* RUL gauge */
       const rulText = document.querySelector('.rul-gauge-svg text:first-of-type');
@@ -1023,27 +1034,50 @@ var lenis = null;
   if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
   gsap.registerPlugin(ScrollTrigger);
 
-  // ── Word-by-word headline reveals with blur ──
-  if (typeof SplitType !== 'undefined') {
-    document.querySelectorAll('.section-headline, .hero-headline').forEach(function(el) {
-      if (el.closest('.features-sticky')) return; // skip — pinned container clips blur animation
-      // Skip if already inside a GSAP timeline
-      var split = new SplitType(el, { types: 'words', tagName: 'span' });
-      gsap.fromTo(split.words,
-        { opacity: 0, y: 22, filter: 'blur(6px)' },
-        {
-          opacity: 1, y: 0, filter: 'blur(0px)',
-          duration: 0.65,
-          stagger: 0.055,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 88%',
-            toggleActions: 'play none none none'
+  // ── Masked line reveals — each line rises out from behind a clip mask ──
+  // Line-level (not word-level) keeps the gradient/serif accent <span>s intact,
+  // since each accent phrase sits on its own line after a <br>.
+  // Must run AFTER web fonts load, or line breaks are measured with the fallback
+  // font and reflow when Clash Display / Zodiak arrive.
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof SplitType !== 'undefined' && !reduced) {
+    var splitHeadlines = function() {
+      document.querySelectorAll('.section-headline, .hero-headline').forEach(function(el) {
+        if (el.closest('.features-sticky')) return; // skip — pinned container clips the animation
+        var split = new SplitType(el, { types: 'lines' });
+        split.lines.forEach(function(line) {
+          // wrap each line in an overflow-hidden clip so it can rise out from behind
+          var mask = document.createElement('span');
+          mask.style.display = 'block';
+          mask.style.overflow = 'hidden';
+          mask.style.paddingBottom = '0.1em'; // room for descenders / italic overhang
+          line.parentNode.insertBefore(mask, line);
+          mask.appendChild(line);
+          line.style.display = 'block';
+          line.style.willChange = 'transform';
+        });
+        gsap.fromTo(split.lines,
+          { yPercent: 115 },
+          {
+            yPercent: 0,
+            duration: 0.95,
+            stagger: 0.1,
+            ease: 'expo.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              toggleActions: 'play none none none'
+            }
           }
-        }
-      );
-    });
+        );
+      });
+      ScrollTrigger.refresh(); // recompute trigger positions after split reflow
+    };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(splitHeadlines);
+    } else {
+      splitHeadlines();
+    }
 
     // Eyebrow slide-in from left with line reveal
     document.querySelectorAll('.section-eyebrow').forEach(function(el) {

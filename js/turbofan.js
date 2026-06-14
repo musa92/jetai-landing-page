@@ -700,44 +700,43 @@ class TurbofanEngine3D {
     this.engineGroup.add(shaft);
   }
 
-  /* ─── Generic stage builder ─────────────────────── */
+  /* ─── Generic stage builder (InstancedMesh: dense, clean, 1 draw call) ───── */
   _buildStage(group, material, { z, hubR, tipR, n, chord, thick, pitch }) {
-    /* hub disc */
-    const dg = new THREE.CylinderGeometry(hubR * 0.96, hubR * 0.96, 0.030, 24);
+    /* rotor drum / hub disc — slightly proud so the bladed disk reads as a unit */
+    const dg = new THREE.CylinderGeometry(hubR, hubR, 0.046, 32);
     dg.rotateX(Math.PI / 2);
     const disc = new THREE.Mesh(dg, this.M.disc);
     disc.position.z = z;
     group.add(disc);
 
-    /* blades */
-    const span   = tipR - hubR;
+    /* one tapered+staggered blade geometry, baked out to mid-span radius */
+    const span     = tipR - hubR;
     const midChord = chord || 0.022;
-    const t      = thick  || 0.005;
+    const t        = thick || 0.005;
+    const bladeGeom = new THREE.BoxGeometry(midChord, span, t, 1, 2, 1);
 
-    for (let i = 0; i < n; i++) {
-      const angle    = (i / n) * Math.PI * 2;
-      const bladeGeom = new THREE.BoxGeometry(midChord, span, t, 1, 2, 1);
-
-      /* slight pitch taper toward tip */
-      const pos = bladeGeom.attributes.position;
-      for (let vi = 0; vi < pos.count; vi++) {
-        const localY = pos.getY(vi);
-        const tt     = (localY / (span / 2) + 1) / 2;
-        pos.setX(vi, pos.getX(vi) * (1 - tt * 0.25));
-      }
-      pos.needsUpdate = true;
-      bladeGeom.computeVertexNormals();
-
-      const pivot = new THREE.Group();
-      pivot.rotation.z = angle;
-      pivot.position.z = z;
-
-      const blade = new THREE.Mesh(bladeGeom, material);
-      blade.position.y = hubR + span / 2;
-      blade.rotation.z = pitch || 0.25;
-      pivot.add(blade);
-      group.add(pivot);
+    /* taper chord toward the tip (root wider than tip) */
+    const pos = bladeGeom.attributes.position;
+    for (let vi = 0; vi < pos.count; vi++) {
+      const tt = (pos.getY(vi) / (span / 2) + 1) / 2;     // 0 at root → 1 at tip
+      pos.setX(vi, pos.getX(vi) * (1 - tt * 0.32));
     }
+    pos.needsUpdate = true;
+    bladeGeom.computeVertexNormals();
+    bladeGeom.rotateZ(pitch || 0.25);                     // stagger (same for all blades)
+    bladeGeom.translate(0, hubR + span / 2, 0);           // out to mid-span
+
+    /* dense ring of blades as a single instanced mesh */
+    const inst = new THREE.InstancedMesh(bladeGeom, material, n);
+    inst.position.z = z;
+    inst.frustumCulled = false;
+    const m = new THREE.Matrix4();
+    for (let i = 0; i < n; i++) {
+      m.makeRotationZ((i / n) * Math.PI * 2);
+      inst.setMatrixAt(i, m);
+    }
+    inst.instanceMatrix.needsUpdate = true;
+    group.add(inst);
   }
 
   /* ─── LPC (3 stages, LP spool) ──────────────────── */

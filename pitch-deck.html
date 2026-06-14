@@ -4,9 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Turbnetic.ai — Series A Pitch Deck 2026</title>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@300,400,500,700&f[]=zodiak@400,500&f[]=zodiak-italic@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
 <style>
 /* ═══════════════════════════════════════════════════
@@ -25,8 +28,8 @@
   --text: #dde6f2;
   --mid: #8499b4;
   --dim: #3d5269;
-  --fh: 'Space Grotesk', sans-serif;
-  --fb: 'Inter', sans-serif;
+  --fh: 'Clash Display', 'Space Grotesk', sans-serif;
+  --fb: 'Satoshi', 'Inter', sans-serif;
   --fm: 'JetBrains Mono', monospace;
 }
 
@@ -72,10 +75,37 @@
 .reveal strong { color: var(--text); font-weight: 600; }
 
 .grad {
+  font-family: 'Zodiak', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   color: var(--c);
   -webkit-text-fill-color: var(--c);
   background: none;
+  padding-right: 0.04em;
 }
+
+/* ── typography refinement ── */
+.reveal h1, .reveal h2, .reveal h3 { font-feature-settings: 'ss01'; }
+.stat, .lbl, .pill, .fb-pct, .fb-amt, .pbar-val, .rm-num, .af-num, .ct,
+.stat-sub, .reveal .slide-number, .sf {
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── film grain — kills the flat digital look ── */
+.reveal::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+@media print { .reveal::after { display: none !important; } }
 
 /* ── label ── */
 .lbl {

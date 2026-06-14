@@ -12,10 +12,13 @@
   <link rel="apple-touch-icon" href="assets/turbnetic-logo.png">
   <meta name="theme-color" content="#020810">
 
-  <!-- Fonts -->
+  <!-- Fonts — Clash Display (headlines) + Satoshi (body) via Fontshare, JetBrains Mono (technical labels) -->
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&f[]=zodiak@400,500&f[]=zodiak-italic@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Three.js — 3D turbofan engine -->
   <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
@@ -44,19 +47,28 @@
   <div id="preloader">
     <div class="preloader-inner">
       <svg class="preloader-logo" width="72" height="72" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
-        <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.88" transform="rotate(0 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.72" transform="rotate(45 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(90 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.40" transform="rotate(135 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(180 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.70" transform="rotate(225 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(270 14 14)"/>
-        <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.78" transform="rotate(315 14 14)"/>
-        <circle cx="14" cy="14" r="5" fill="#020810"/>
-        <circle cx="14" cy="14" r="5" stroke="#00d4ff" stroke-width="0.8"/>
-        <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+        <circle cx="14" cy="14" r="12.6" stroke="#00d4ff" stroke-width="1.1" opacity="0.55"/>
+        <circle cx="14" cy="14" r="8.4" stroke="#00d4ff" stroke-width="0.6" opacity="0.16"/>
+        <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
+        <g stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round">
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(0 14 14)"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(180 14 14)"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
+        </g>
+        <g stroke="#00d4ff" stroke-width="0.8" opacity="0.35">
+          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(0 14 14)"/>
+          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(60 14 14)"/>
+          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(120 14 14)"/>
+          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(180 14 14)"/>
+          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(240 14 14)"/>
+          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(300 14 14)"/>
+        </g>
+        <circle cx="14" cy="14" r="4.3" fill="#020810"/>
+        <circle cx="14" cy="14" r="4.3" stroke="#00d4ff" stroke-width="1" opacity="0.9"/>
+        <circle cx="14" cy="14" r="1.5" fill="#ff6b00"/>
       </svg>
       <div class="preloader-wordmark">Turb<span>netic</span><em>.ai</em></div>
       <div class="preloader-bar"><div class="preloader-fill"></div></div>
@@ -79,26 +91,36 @@
   <nav id="navbar">
     <div class="nav-inner">
       <a class="nav-logo" href="#" aria-label="Back to top">
-        <!-- JetIQ: front-view turbofan intake · 8 swept blades · electric bolt hub -->
+        <!-- Turbnetic mark — matches asset logo: 6 swept fan blades · nacelle ring · hub -->
         <svg id="nav-logo-spin" width="30" height="30" viewBox="0 0 28 28" fill="none" style="transform-origin:center;will-change:transform;">
           <!-- Nacelle outer ring -->
-          <circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
-          <!-- Orange electric arc — top-right quadrant, thrust/power indicator -->
-          <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
-          <!-- 8 swept fan blades (front view, staggered opacity for 3-D depth) -->
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.88" transform="rotate(0 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.72" transform="rotate(45 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(90 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.40" transform="rotate(135 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.55" transform="rotate(180 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.70" transform="rotate(225 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(270 14 14)"/>
-          <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.78" transform="rotate(315 14 14)"/>
-          <!-- Hub disc (dark fill hides blade root intersections) -->
-          <circle cx="14" cy="14" r="5" fill="#020810"/>
-          <circle cx="14" cy="14" r="5" stroke="#00d4ff" stroke-width="0.8"/>
-          <!-- Electric bolt — eVTOL / smart-analyzer icon -->
-          <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/>
+          <circle cx="14" cy="14" r="12.6" stroke="#00d4ff" stroke-width="1.1" opacity="0.55"/>
+          <!-- Subtle mid ring -->
+          <circle cx="14" cy="14" r="8.4" stroke="#00d4ff" stroke-width="0.6" opacity="0.16"/>
+          <!-- Orange power arc — top-right, thrust/energy indicator -->
+          <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/>
+          <!-- 6 swept fan blades — thin curved sweeps, staggered opacity for depth -->
+          <g stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round">
+            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(0 14 14)"/>
+            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
+            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
+            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(180 14 14)"/>
+            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
+            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
+          </g>
+          <!-- Tick marks at blade-tip positions -->
+          <g stroke="#00d4ff" stroke-width="0.8" opacity="0.35">
+            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(0 14 14)"/>
+            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(60 14 14)"/>
+            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(120 14 14)"/>
+            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(180 14 14)"/>
+            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(240 14 14)"/>
+            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(300 14 14)"/>
+          </g>
+          <!-- Hub disc + center dot -->
+          <circle cx="14" cy="14" r="4.3" fill="#020810"/>
+          <circle cx="14" cy="14" r="4.3" stroke="#00d4ff" stroke-width="1" opacity="0.9"/>
+          <circle cx="14" cy="14" r="1.5" fill="#ff6b00"/>
         </svg>
         <span class="logo-text">Turb<span class="logo-accent">netic</span><span class="logo-dot">.ai</span></span>
       </a>
@@ -325,15 +347,37 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">GT-04 &middot; SENSOR HEATMAP &middot; LIVE</span>
-                <span class="fsviz-badge warn">&#9888; ANOMALY SCORE 0.87</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04 · Frame 7<span class="sep">/</span>Anomaly Monitor</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">1H</span><span class="fsc-seg">6H</span><span class="fsc-seg on">24H</span><span class="fsc-seg">7D</span></div>
+                <div class="fsc-live"><span class="ld"></span>LIVE</div>
               </div>
-              <canvas class="fsviz" id="fsviz-anomaly"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg"><span class="sw" style="background:#0a64c8"></span>Nominal</span>
+                <span class="fsc-leg"><span class="sw" style="background:#f59e0b"></span>Elevated</span>
+                <span class="fsc-leg"><span class="sw" style="background:#ff4040"></span>Anomalous</span>
+                <span class="fsc-leg" style="color:var(--orange)"><span class="sw dash"></span>Score threshold 0.70</span>
+                <span class="fsc-leg-unit">8 CHANNELS · 200 ms REFRESH</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-anomaly"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat o">⚠ ANOMALY SCORE <b>0.87</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">MODEL <b>LSTM-AE v2.3</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">EPOCH <b>14:32:07Z</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat g">● <b>PIPELINE HEALTHY</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">EPOCH: 2024-11-18 14:32:07Z</span><span class="fsviz-fmeta">8 PARAMETERS &middot; 120s WINDOW</span></div>
           </div>
         </div>
 
@@ -357,15 +401,37 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">FLEET RUL FORECAST &middot; 3 ASSETS</span>
-                <span class="fsviz-badge alert">1 CRITICAL</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>Fleet</b><span class="sep">/</span>3 Assets<span class="sep">/</span>Predictive RUL</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">4W</span><span class="fsc-seg">13W</span><span class="fsc-seg on">52W</span><span class="fsc-seg">2Y</span></div>
+                <div class="fsc-clock">UPDATED 14:32Z</div>
               </div>
-              <canvas class="fsviz" id="fsviz-rul"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg" style="color:#ff4444"><span class="sw" style="background:#ff4444"></span>GT-04</span>
+                <span class="fsc-leg" style="color:#00d4ff"><span class="sw" style="background:#00d4ff"></span>GT-07</span>
+                <span class="fsc-leg" style="color:#4ade80"><span class="sw" style="background:#4ade80"></span>GT-11</span>
+                <span class="fsc-leg"><span class="sw dash"></span>Forecast</span>
+                <span class="fsc-leg-unit">RUL % · 90% CI BAND</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-rul"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat o">▲ <b style="color:#ff4444">1 CRITICAL</b> · GT-04 48d</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">HORIZON <b>52 WEEKS</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">MODEL <b>Bayesian RUL</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat g">● <b>CMMS SYNCED</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">HORIZON: 52 WEEKS</span><span class="fsviz-fmeta">CONFIDENCE: 90% CI</span></div>
           </div>
         </div>
 
@@ -389,15 +455,36 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">GT-04 &middot; COMBUSTION ΔP &middot; LIVE</span>
-                <span class="fsviz-badge warn">&#9888; OSCILLATION ONSET</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04<span class="sep">/</span>Combustion Dynamics</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">0.1s</span><span class="fsc-seg on">0.2s</span><span class="fsc-seg">0.5s</span></div>
+                <div class="fsc-live"><span class="ld"></span>LIVE</div>
               </div>
-              <canvas class="fsviz" id="fsviz-combustion"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg" style="color:#00d4ff"><span class="sw" style="background:#00d4ff"></span>CAN-A ΔP</span>
+                <span class="fsc-leg" style="color:#ff6b00"><span class="sw" style="background:#ff6b00"></span>CAN-B ΔP</span>
+                <span class="fsc-leg" style="color:#f59e0b"><span class="sw" style="background:#f59e0b"></span>200 Hz band</span>
+                <span class="fsc-leg-unit">FFT · 0–400 Hz · 2 kHz SAMPLE</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-combustion"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat o">⚠ <b style="color:var(--orange)">OSCILLATION ONSET</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">RMS <b>2.4 kPa</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">PEAK <b>198 Hz</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat">CHANNELS <b>CAN-A + CAN-B</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">CHANNEL: CAN-A + CAN-B</span><span class="fsviz-fmeta">ΔP &middot; 0–400 Hz BAND</span></div>
           </div>
         </div>
 
@@ -421,15 +508,36 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">COMPRESSOR MAP &middot; GT-07</span>
-                <span class="fsviz-badge">&#951; 93.2% &darr; 3.1PP</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-07<span class="sep">/</span>Compressor Performance</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">7D</span><span class="fsc-seg">30D</span><span class="fsc-seg on">90D</span><span class="fsc-seg">1Y</span></div>
+                <div class="fsc-clock">UPDATED 14:30Z</div>
               </div>
-              <canvas class="fsviz" id="fsviz-fouling"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg" style="color:#00d4ff"><span class="sw" style="background:#00d4ff"></span>Isentropic η</span>
+                <span class="fsc-leg"><span class="sw dash"></span>Commissioning baseline</span>
+                <span class="fsc-leg" style="color:#22c55e"><span class="sw" style="background:#22c55e"></span>Wash event</span>
+                <span class="fsc-leg-unit">η % · HEAT-RATE DEVIATION</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-fouling"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat o">η <b style="color:var(--orange)">93.2%</b> ↓ 3.1 pp</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">HEAT RATE <b>+2.4%</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">OP HOURS <b>7,200 h</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat o">● <b style="color:var(--orange)">OFFLINE WASH ADVISED</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">ISENTROPIC EFFICIENCY</span><span class="fsviz-fmeta">OP. HOURS: 7,200 h</span></div>
           </div>
         </div>
 
@@ -453,15 +561,36 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">BEARING WATERFALL &middot; GT-04 &middot; BRG-3</span>
-                <span class="fsviz-badge warn">BPFO: 4.2 g &uarr;</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04 · BRG-3<span class="sep">/</span>Vibration Spectrum</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">100Hz</span><span class="fsc-seg on">200Hz</span><span class="fsc-seg">500Hz</span></div>
+                <div class="fsc-live"><span class="ld"></span>LIVE</div>
               </div>
-              <canvas class="fsviz" id="fsviz-bearing"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg" style="color:#00d4ff"><span class="sw" style="background:#00d4ff"></span>Spectral density</span>
+                <span class="fsc-leg" style="color:#ff4040"><span class="sw" style="background:#ff4040"></span>BPFO 84 Hz</span>
+                <span class="fsc-leg" style="color:#f59e0b"><span class="sw" style="background:#f59e0b"></span>2×BPFO</span>
+                <span class="fsc-leg-unit">ENVELOPE · g RMS · 0–200 Hz</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-bearing"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat o">BPFO <b style="color:var(--orange)">4.2 g</b> ↑</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">KURTOSIS <b>8.4</b> (thr 5.0)</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat o">ISO 10816 <b style="color:var(--orange)">ZONE C</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat">DEFECT <b>OUTER RACE</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">FREQ: 0–200 Hz</span><span class="fsviz-fmeta">KURTOSIS: 8.4 (THRESH: 5.0)</span></div>
           </div>
         </div>
 
@@ -485,15 +614,36 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">MODEL TRAINING &middot; GT-04 &middot; EPOCH 147</span>
-                <span class="fsviz-badge ok">&#10003; CONVERGED</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>MLOps</b><span class="sep">/</span>GT-04 baseline<span class="sep">/</span>Model Training</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">50</span><span class="fsc-seg">100</span><span class="fsc-seg on">147</span><span class="fsc-seg">EPOCHS</span></div>
+                <div class="fsc-clock">RUN 02:14Z</div>
               </div>
-              <canvas class="fsviz" id="fsviz-retrain"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg" style="color:#7fd8ff"><span class="sw" style="background:rgba(0,212,255,0.5)"></span>Train accuracy</span>
+                <span class="fsc-leg" style="color:#00d4ff"><span class="sw" style="background:#00d4ff"></span>Val accuracy</span>
+                <span class="fsc-leg" style="color:#22c55e"><span class="sw" style="background:#22c55e"></span>Confusion matrix</span>
+                <span class="fsc-leg-unit">12 ASSETS · NIGHTLY CADENCE</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-retrain"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat g">✓ <b style="color:#22c55e">CONVERGED</b> · epoch 147</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">ACCURACY <b>99.2%</b> (+0.3%)</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">VAL LOSS <b>0.018</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat c">● <b>AUTO-DEPLOYED</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">ASSETS: 12 &middot; LAST: 02:14 UTC</span><span class="fsviz-fmeta">ACCURACY: 99.2% (+0.3%)</span></div>
           </div>
         </div>
 
@@ -519,15 +669,36 @@
             </div>
           </div>
           <div class="fspanel-viz-wrap">
-            <div class="fsviz-chrome">
-              <div class="fsviz-bar">
-                <span class="fsviz-dot r"></span><span class="fsviz-dot y"></span><span class="fsviz-dot g"></span>
-                <span class="fsviz-chip">EDGE NODE &middot; GT-04 &middot; CABINET A</span>
-                <span class="fsviz-badge ok">&#10003; ONLINE &middot; MODEL v2.3</span>
+            <div class="fsconsole">
+              <div class="fsc-toolbar">
+                <div class="fsc-app">
+                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#00d4ff" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#ff6b00" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#00d4ff" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#ff6b00"/></svg>
+                  <span class="fsc-app-name">Turbnetic</span>
+                </div>
+                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04 · Cabinet A<span class="sep">/</span>Edge Node</div>
+                <div class="fsc-spacer"></div>
+                <div class="fsc-range"><span class="fsc-seg">1H</span><span class="fsc-seg">6H</span><span class="fsc-seg on">24H</span><span class="fsc-seg">7D</span></div>
+                <div class="fsc-live"><span class="ld"></span>ONLINE</div>
               </div>
-              <canvas class="fsviz" id="fsviz-edge"></canvas>
+              <div class="fsc-legend">
+                <span class="fsc-leg" style="color:#00d4ff"><span class="sw" style="background:#00d4ff"></span>Sensor ingest</span>
+                <span class="fsc-leg" style="color:#a78bfa"><span class="sw" style="background:#a78bfa"></span>Edge inference</span>
+                <span class="fsc-leg" style="color:#ff6b00"><span class="sw" style="background:#ff6b00"></span>Cloud · CMMS sync</span>
+                <span class="fsc-leg-unit">LSTM v2.3 · OFFLINE-CAPABLE</span>
+              </div>
+              <div class="fsc-chartwrap">
+                <canvas class="fsviz" id="fsviz-edge"></canvas>
+              </div>
+              <div class="fsc-status">
+                <span class="fsc-stat g">✓ <b style="color:#22c55e">ONLINE</b> · model v2.3</span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">UPTIME <b>2,847 h</b></span>
+                <span class="fsc-dot-sep"></span>
+                <span class="fsc-stat">INFERENCES <b>1.2M</b></span>
+                <span class="fsc-spacer"></span>
+                <span class="fsc-stat">LAST SYNC <b>04:12Z</b></span>
+              </div>
             </div>
-            <div class="fsviz-footer"><span class="fsviz-ftag">UPTIME: 2,847 h &middot; LAST SYNC: 04:12 UTC</span><span class="fsviz-fmeta">INFERENCES: 1.2M</span></div>
           </div>
         </div>
 
@@ -968,6 +1139,10 @@
                       <div class="fleet-name">GT-07 <span class="fleet-type">Frame 7</span></div>
                       <div class="fleet-status">Combustion anomaly · 87% conf.</div>
                     </div>
+                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
+                      <span class="vz vz-c">C</span>
+                      <span class="hi">71<i>HI</i></span>
+                    </div>
                     <div class="fleet-rul">
                       <div class="rul-num">847</div>
                       <div class="rul-unit">hrs</div>
@@ -983,6 +1158,10 @@
                     <div class="fleet-info">
                       <div class="fleet-name">GT-01 <span class="fleet-type">Frame 5</span></div>
                       <div class="fleet-status">Fouling stage 5 · schedule wash</div>
+                    </div>
+                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
+                      <span class="vz vz-d">D</span>
+                      <span class="hi">48<i>HI</i></span>
                     </div>
                     <div class="fleet-rul">
                       <div class="rul-num" style="color:#ef4444">312</div>
@@ -1000,6 +1179,10 @@
                       <div class="fleet-name" data-turbine="GT-04">GT-04 <span class="fleet-type">LM6000</span></div>
                       <div class="fleet-status">Normal operations</div>
                     </div>
+                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
+                      <span class="vz vz-a">A</span>
+                      <span class="hi">96<i>HI</i></span>
+                    </div>
                     <div class="fleet-rul">
                       <div class="rul-num" style="color:#22c55e">2,340</div>
                       <div class="rul-unit">hrs</div>
@@ -1015,6 +1198,10 @@
                     <div class="fleet-info">
                       <div class="fleet-name" data-turbine="GT-02">GT-02 <span class="fleet-type">Frame 6</span></div>
                       <div class="fleet-status">Normal operations</div>
+                    </div>
+                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
+                      <span class="vz vz-b">B</span>
+                      <span class="hi">92<i>HI</i></span>
                     </div>
                     <div class="fleet-rul">
                       <div class="rul-num" style="color:#22c55e">1,920</div>
@@ -1033,13 +1220,18 @@
               <div class="dash-panel-right">
                 <!-- Priority alert -->
                 <div class="priority-alert">
-                  <div class="alert-pill alert-pill-high" id="dash-alert-pill">HIGH</div>
+                  <div class="alert-pillcol">
+                    <div class="alert-pill alert-pill-high" id="dash-alert-pill">HIGH</div>
+                    <div class="isa-state" id="dash-alarm-state" title="ISA-18.2 alarm priority &amp; acknowledgment state"><span class="isa-prio">P1</span><span class="isa-ack isa-unack">UNACK</span></div>
+                  </div>
                   <div class="alert-body">
                     <div class="alert-title2" id="dash-alert-title">Combustion Instability Precursor · GT-07</div>
+                    <div class="alert-tag" id="dash-alert-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M7 7h.01M7 3h5a2 2 0 011.41.59l7 7a2 2 0 010 2.82l-5 5a2 2 0 01-2.82 0l-7-7A2 2 0 014 9.5V5a2 2 0 012-2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> <span id="dash-tag-name">GT07.COMB.T4_AVG</span> <span class="tag-proto">OPC-UA</span></div>
                     <div class="alert-sub" id="dash-alert-sub">T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.</div>
                     <div class="alert-meta-row">
                       <span class="alert-meta" id="dash-alert-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ~23 days to fault</span>
                       <span class="alert-meta" id="dash-alert-ci">CI: 18–31 days</span>
+                      <span class="alert-meta wo-chip" id="dash-alert-wo">WO-2026-0418 · PLANNED</span>
                       <span class="alert-meta alert-meta-action">Create WO →</span>
                     </div>
                   </div>
@@ -1049,6 +1241,7 @@
                 <div class="trend-panel">
                   <div class="trend-header">
                     <span class="trend-label">EGT · GT-07</span>
+                    <span class="trend-unit">°C</span>
                     <span class="trend-value trend-value-hot" id="egt-live">614°C</span>
                     <span class="trend-delta" id="egt-delta">↑ +14°C</span>
                   </div>
@@ -1065,6 +1258,7 @@
                       <line x1="0" y1="12" x2="300" y2="12" stroke="#ff4500" stroke-width="0.8" stroke-dasharray="6,4" opacity="0.5"/>
                       <text x="4" y="10" font-size="7" fill="#ff4500" opacity="0.7" font-family="monospace">THRESHOLD</text>
                     </svg>
+                    <div class="trend-axis"><span>−24h</span><span>−18h</span><span>−12h</span><span>−6h</span><span>now</span></div>
                   </div>
                 </div>
 

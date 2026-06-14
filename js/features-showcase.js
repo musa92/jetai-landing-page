@@ -14,6 +14,7 @@
   function vAnomaly(cv){
     var{ctx,W,H}=setup(cv),t=0,raf;
     var PL=56,PR=14,PT=20,PB=52,ROWS=8,COLS=46;
+    var NZ=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>Math.random()-0.5));
     var gW=W-PL-PR,gH=H-PT-PB,cW=gW/COLS,rH=gH/ROWS;
     var LBL=['EGT','CDP','CIT','FF','VIB-C','VIB-T','TGT','ΔP'];
     var RC=['#00d4ff','#00d4ff','#ff6b00','#00d4ff','#00d4ff','#00d4ff','#ff4040','#00d4ff'];
@@ -23,7 +24,7 @@
       var p=(z-0.55)/0.45;return'rgba(255,'+Math.round(L(80,20,p))+',0,'+L(0.72,0.97,p)+')';
     }
     function zs(r,c){
-      var v=0.05+0.07*S(r*1.7+c*0.3+t*0.12),cf=c/COLS;
+      var v=0.05+0.045*S(r*1.7+c*0.3+t*0.12)+0.06*NZ[r][c]+0.02*S(c*1.9+t*0.5+r),cf=c/COLS;
       if(cf>0.68){var p=(cf-0.68)/0.32;
         if(r===2)v+=p*p*(0.82+0.1*S(t*1.4+c*0.5));
         if(r===6)v+=p*(0.58+0.1*S(t*0.9));
@@ -99,10 +100,12 @@
       A.forEach(a=>{
         if(pp>0){
           var ew=NW+pp*(WK-NW),vp=a.p.filter(pt=>pt[0]<=ew);
+          // Bayesian forecast uncertainty fans out with horizon (wider further from NOW)
+          var ciw=function(w){return a.ci*0.5*(1+2.4*(w-NW)/(WK-NW));};
           if(vp.length>=2){
-            ctx.beginPath();ctx.moveTo(xOf(vp[0][0]),yOf(vp[0][1]+a.ci*0.5));
-            vp.forEach(pt=>ctx.lineTo(xOf(pt[0]),yOf(pt[1]+a.ci*0.5)));
-            for(var i=vp.length-1;i>=0;i--)ctx.lineTo(xOf(vp[i][0]),yOf(vp[i][1]-a.ci*0.5));
+            ctx.beginPath();ctx.moveTo(xOf(vp[0][0]),yOf(vp[0][1]+ciw(vp[0][0])));
+            vp.forEach(pt=>ctx.lineTo(xOf(pt[0]),yOf(pt[1]+ciw(pt[0]))));
+            for(var i=vp.length-1;i>=0;i--)ctx.lineTo(xOf(vp[i][0]),yOf(vp[i][1]-ciw(vp[i][0])));
             ctx.closePath();ctx.fillStyle=h2r(a.c,0.07);ctx.fill();
             ctx.beginPath();ctx.moveTo(xOf(vp[0][0]),yOf(vp[0][1]));
             vp.forEach(pt=>ctx.lineTo(xOf(pt[0]),yOf(pt[1])));
@@ -115,7 +118,7 @@
           ctx.strokeStyle=a.c;ctx.lineWidth=2.2;ctx.stroke();
           var lp=vh[vh.length-1];ctx.beginPath();ctx.arc(xOf(lp[0]),yOf(lp[1]),4,0,PI*2);ctx.fillStyle=a.c;ctx.fill();
         }
-        if(hp>0.2){ctx.font='600 8.5px "JetBrains Mono",monospace';ctx.fillStyle=a.c;ctx.textAlign='left';ctx.fillText(a.l,xOf(a.h[0][0])+5,yOf(a.h[0][1])-6);}
+        if(hp>0.2&&vh.length>=2){var llp=vh[vh.length-1];ctx.font='600 8.5px "JetBrains Mono",monospace';ctx.fillStyle=a.c;ctx.textAlign='right';ctx.fillText(a.l,xOf(llp[0])-7,yOf(llp[1])+3);}
       });
       ctx.font='400 8px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.2)';
       ctx.textAlign='center';ctx.fillText('weeks →',PL+gW/2,PT+gH+26);
@@ -127,58 +130,69 @@
   }
 
 
-  // ── 3. COMBUSTION: waveform + live spectrogram ───────────────────────────
+  // ── 3. COMBUSTION: dual-channel ΔP scope + onset-aligned spectrogram ──────
+  // Both panels share one time axis (left→right). Pre-onset: stochastic broadband
+  // combustion noise. Post-onset: a growing limit-cycle oscillation at the
+  // instability frequency, with spectral energy emerging at 200 Hz + its 400 Hz
+  // harmonic — i.e. the two views tell the same story at the same instant.
   function vCombustion(cv){
-    var{ctx,W,H}=setup(cv),t=0,raf,tick=0;
-    var PL=38,PR=10,spY=H*0.54,SCOLS=80,SFREQS=56;
-    var sg=Array.from({length:SCOLS},()=>Array.from({length:SFREQS},()=>0.02+Math.random()*0.04));
+    var{ctx,W,H}=setup(cv),t=0,raf;
+    var PL=38,PR=10,spY=H*0.54,SCOLS=90,SFREQS=54;
+    var ONS=0.60, FREQ=0.43;               // onset fraction · waveform angular freq
+    // stable broadband noise (deterministic per pixel/cell, not reseeded each frame)
+    var nA=[],nB=[]; for(var i=0;i<W;i++){nA.push(Math.random()-0.5);nB.push(Math.random()-0.5);}
+    var nS=Array.from({length:SCOLS},()=>Array.from({length:SFREQS},()=>Math.random()));
     function sc(v){
       v=K(v,0,1);
-      if(v<0.3)return'rgba(0,40,70,'+L(0.2,0.5,v/0.3)+')';
-      if(v<0.65){var p=(v-0.3)/0.35;return'rgba(0,'+Math.round(L(100,212,p))+','+Math.round(L(140,255,p))+','+L(0.5,0.82,p)+')';}
-      var p=(v-0.65)/0.35;return'rgba('+Math.round(L(0,255,p))+','+Math.round(L(212,60,p))+','+Math.round(L(255,0,p))+','+L(0.82,1,p)+')';
-    }
-    function push(){
-      var row=[];for(var f=0;f<SFREQS;f++){
-        var fr=f/SFREQS,v=0.02+Math.random()*0.05+0.08*Math.exp(-Math.pow(fr-0.10,2)/0.005);
-        var b=0.52*K((t-1.5)/4,0,1);
-        v+=b*Math.exp(-Math.pow(fr-0.50,2)/0.006)*(0.8+0.2*S(t*3));
-        v+=b*0.35*Math.exp(-Math.pow(fr-0.76,2)/0.008);
-        row.push(K(v,0,1));
-      }
-      sg.shift();sg.push(row);
+      if(v<0.30)return'rgba(0,40,70,'+L(0.18,0.5,v/0.30)+')';
+      if(v<0.62){var p=(v-0.30)/0.32;return'rgba(0,'+Math.round(L(110,210,p))+','+Math.round(L(150,255,p))+','+L(0.5,0.8,p)+')';}
+      var p=(v-0.62)/0.38;return'rgba(255,'+Math.round(L(150,40,p))+',0,'+L(0.82,1,p)+')';
     }
     function draw(){
       ctx.clearRect(0,0,W,H);ctx.fillStyle='#080c10';ctx.fillRect(0,0,W,H);
-      var cy=spY*0.5,ox=PL+(W-PL-PR)*0.60;
+      var cy=spY*0.46, x0=PL, x1=W-PR, span=x1-x0, ox=x0+span*ONS;
       ctx.font='500 7.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.22)';ctx.textAlign='left';
-      ctx.fillText('ΔP WAVEFORM · CAN-A',PL,13);
-      ctx.beginPath();ctx.moveTo(PL,cy);
-      for(var x=PL;x<=ox;x++)ctx.lineTo(x,cy+S(x*0.18+t)*3.5+S(x*0.43+t*1.3)*2+S(x*0.89+t*0.7)*1);
-      ctx.strokeStyle='rgba(0,212,255,0.82)';ctx.lineWidth=1.5;ctx.stroke();
-      ctx.beginPath();ctx.moveTo(ox,cy);
-      for(var x=ox;x<=W-PR;x++){var p=(x-ox)/(W-PR-ox),a=4+p*p*32+S(t*1.8)*p*8;ctx.lineTo(x,cy+S(x*0.15+t*2.8)*a+S(x*0.38+t*1.4)*a*0.4);}
-      var wg=ctx.createLinearGradient(ox,0,W-PR,0);
-      wg.addColorStop(0,'rgba(0,212,255,0.82)');wg.addColorStop(0.4,'rgba(255,140,0,0.88)');wg.addColorStop(1,'rgba(255,40,0,0.96)');
-      ctx.strokeStyle=wg;ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillText('ΔP DYNAMIC PRESSURE · CAN-A / CAN-B · 0.2 s WINDOW',PL,13);
+      // two correlated pressure channels — each keeps its own colour
+      function chan(noise,phase,col,lw){
+        ctx.beginPath();
+        for(var x=x0;x<=x1;x++){
+          var frac=(x-x0)/span, i=(x-x0)|0, y;
+          if(frac<ONS){ y=cy+noise[i]*4.6; }
+          else{ var amp=3+Math.pow((frac-ONS)/(1-ONS),1.5)*30; y=cy+S(x*FREQ+phase+t*3)*amp+noise[i]*amp*0.18; }
+          x===x0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+        }
+        ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.stroke();
+      }
+      chan(nB,0.7,'rgba(255,120,0,0.55)',1.1);   // CAN-B — correlated, slight phase lag
+      chan(nA,0.0,'rgba(0,212,255,0.85)',1.5);   // CAN-A — front trace
+      // onset marker
       ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(ox,15);ctx.lineTo(ox,spY-5);
       ctx.strokeStyle='rgba(255,107,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);
-      ctx.font='600 7.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,107,0,0.9)';ctx.fillText('ONSET',ox+3,27);
+      ctx.font='600 7.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,107,0,0.9)';ctx.textAlign='left';ctx.fillText('ONSET',ox+3,27);
       ctx.beginPath();ctx.moveTo(0,spY);ctx.lineTo(W,spY);ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;ctx.stroke();
-      // Spectrogram
-      tick++;if(tick%3===0)push();
+      // ── spectrogram: band emerges at the SAME onset and intensifies (time →) ──
       var s0=spY+4,sH2=H-s0;
-      ctx.font='500 7.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.22)';ctx.fillText('FREQ SPECTROGRAM · 0–400 Hz',PL,s0+11);
-      var cw=(W-PL-PR)/SCOLS,ch=(sH2-16)/SFREQS;
-      for(var ci=0;ci<SCOLS;ci++)for(var fi=0;fi<SFREQS;fi++){
-        ctx.fillStyle=sc(sg[ci][fi]);ctx.fillRect(PL+ci*cw,s0+14+(SFREQS-1-fi)*ch,cw+0.3,ch+0.3);
+      ctx.font='500 7.5px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.22)';ctx.textAlign='left';ctx.fillText('FREQ SPECTROGRAM · 0–400 Hz',PL,s0+11);
+      var cw=(W-PL-PR)/SCOLS,gridY=s0+14,gridH=sH2-16,ch=gridH/SFREQS;
+      for(var ci=0;ci<SCOLS;ci++){
+        var cfrac=ci/SCOLS, g=K((cfrac-ONS)/(1-ONS),0,1), sh=0.82+0.18*S(t*3+ci*0.35);
+        for(var fi=0;fi<SFREQS;fi++){
+          var fr=fi/SFREQS;                                  // 0..1  →  0..400 Hz
+          var v=0.02+0.035*nS[ci][fi];                       // broadband noise floor
+          v+=g*0.95*sh*Math.exp(-Math.pow(fr-0.5,2)/0.004);  // 200 Hz fundamental
+          v+=g*0.48*sh*Math.exp(-Math.pow(fr-1.0,2)/0.006);  // 400 Hz harmonic
+          ctx.fillStyle=sc(K(v,0,1));
+          ctx.fillRect(PL+ci*cw,gridY+(SFREQS-1-fi)*ch,cw+0.4,ch+0.4);
+        }
       }
       ctx.font='400 7px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.18)';ctx.textAlign='right';
-      ['400','200','0'].forEach((l,i)=>ctx.fillText(l,PL-3,s0+14+(i/2)*(sH2-16)+3));
-      var b2y=s0+14+(1-0.5)*(sH2-16);
-      ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(PL,b2y);ctx.lineTo(W-PR,b2y);
-      ctx.strokeStyle='rgba(255,107,0,0.28)';ctx.lineWidth=0.8;ctx.stroke();ctx.setLineDash([]);
-      ctx.font='600 7px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,107,0,0.55)';ctx.textAlign='right';ctx.fillText('200 Hz',W-PR-2,b2y-2);
+      ['400','200','0'].forEach((l,i)=>ctx.fillText(l,PL-3,gridY+(i/2)*gridH+3));
+      var by=gridY+0.5*gridH;
+      ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(PL,by);ctx.lineTo(W-PR,by);
+      ctx.strokeStyle='rgba(255,107,0,0.30)';ctx.lineWidth=0.8;ctx.stroke();ctx.setLineDash([]);
+      ctx.font='600 7px "JetBrains Mono",monospace';ctx.fillStyle='rgba(255,107,0,0.7)';ctx.textAlign='right';ctx.fillText('200 Hz',W-PR-2,by-2);
+      ctx.fillStyle='rgba(255,255,255,0.16)';ctx.fillText('time →',W-PR-2,gridY+gridH+9);
       t+=0.02;raf=requestAnimationFrame(draw);
     }
     draw();return()=>cancelAnimationFrame(raf);
@@ -298,8 +312,8 @@
     var tA=[],vA=[];
     for(var e=0;e<EP;e++){
       var ep=e/EP;
-      tA.push(K(0.78+0.21*(1-Math.exp(-ep*5.5))+(Math.random()-0.5)*0.018,0,1));
-      vA.push(K(0.75+0.242*(1-Math.exp(-ep*4.8))+(Math.random()-0.5)*0.012,0,1));
+      tA.push(K(0.80+0.198*(1-Math.exp(-ep*5.5))+(Math.random()-0.5)*0.016,0,1)); // → ~99.8%
+      vA.push(K(0.77+0.218*(1-Math.exp(-ep*4.8))+(Math.random()-0.5)*0.012,0,1)); // → ~98.8% (slight gap below train)
     }
     function draw(){
       ctx.clearRect(0,0,W,H);ctx.fillStyle='#080c10';ctx.fillRect(0,0,W,H);

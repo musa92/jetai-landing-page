@@ -5,10 +5,10 @@
 
 /* ── Design Tokens ── */
 :root {
-  --bg:           #020810;
-  --bg-2:         #040e1c;
-  --bg-card:      #070f1e;
-  --bg-card-2:    #0a1428;
+  --bg:           #05080e;
+  --bg-2:         #080d17;
+  --bg-card:      #0a1019;
+  --bg-card-2:    #0d1422;
   --border:       rgba(30, 74, 110, 0.4);
   --border-bright: rgba(0, 212, 255, 0.2);
   --cyan:         #00d4ff;
@@ -21,9 +21,10 @@
   --text:         #e2e8f0;
   --text-2:       #94a3b8;
   --text-3:       #475569;
-  --font-head:    'Space Grotesk', sans-serif;
-  --font-body:    'Inter', sans-serif;
+  --font-head:    'Clash Display', 'Space Grotesk', sans-serif;
+  --font-body:    'Satoshi', 'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
+  --font-serif:   'Zodiak', Georgia, serif;
   --radius:       12px;
   --radius-lg:    20px;
   --transition:   0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -44,10 +45,40 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01', 'cv01';
 }
 a { color: inherit; text-decoration: none; }
 img, svg { display: block; }
 input, select, button { font-family: inherit; }
+
+/* ── Typography refinement ── */
+h1, h2, h3, .section-headline {
+  font-family: var(--font-head);
+  letter-spacing: -0.02em;
+  font-feature-settings: 'ss01';
+}
+/* tabular, lining figures for every stat / metric / mono label so numbers align */
+.font-mono, [class*="-value"], [class*="-num"], [class*="metric"],
+.stat, .mono, .section-eyebrow, .hero-stat-value, .problem-stat-value {
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── Film grain overlay — kills the flat "digital" look ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+@media (prefers-reduced-motion: reduce) { body::after { display: none; } }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
@@ -57,10 +88,15 @@ input, select, button { font-family: inherit; }
 
 /* ── Utility ── */
 .gradient-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   background: linear-gradient(135deg, var(--cyan) 0%, #60a5fa 50%, var(--purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  padding-right: 0.06em; /* italic overhang guard */
 }
 .section-container { max-width: var(--max-w); margin: 0 auto; padding: 0 48px; }
 .section-eyebrow {
@@ -811,7 +847,7 @@ input, select, button { font-family: inherit; }
 ══════════════════════════════════════════════ */
 #features {
   padding: 120px 0;
-  background: var(--bg);
+  background: transparent;
 }
 #features .section-container { margin-bottom: 64px; }
 .features-grid {
@@ -1325,7 +1361,7 @@ input, select, button { font-family: inherit; }
 .ind-warning  { background: #f59e0b; animation: pulse-dot 1.5s infinite; }
 .ind-critical { background: #ef4444; animation: pulse-dot 1s infinite; }
 .fleet-info { flex: 1; min-width: 0; }
-.fleet-name { font-size: 0.72rem; font-weight: 600; color: var(--text); }
+.fleet-name { font-size: 0.72rem; font-weight: 600; color: var(--text); white-space: nowrap; }
 .fleet-type { font-weight: 400; color: var(--text-3); font-size: 0.65rem; }
 .fleet-status { font-family: var(--font-mono); font-size: 0.58rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fleet-rul { text-align: right; flex-shrink: 0; }
@@ -1333,6 +1369,44 @@ input, select, button { font-family: inherit; }
 .rul-unit { font-family: var(--font-mono); font-size: 0.55rem; color: var(--text-3); }
 .fleet-sparkline { width: 48px; flex-shrink: 0; }
 .fleet-sparkline svg { width: 100%; height: 20px; display: block; }
+
+/* ── Condition indicators — ISO 10816 vibration zone + ISO 13374 health index ── */
+.fleet-cond { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.vz {
+  width: 17px; height: 17px; border-radius: 4px;
+  font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+}
+.vz-a { background: rgba(34,197,94,0.14);  color: #22c55e; border: 1px solid rgba(34,197,94,0.40); }
+.vz-b { background: rgba(132,204,22,0.14); color: #a3e635; border: 1px solid rgba(132,204,22,0.40); }
+.vz-c { background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.40); }
+.vz-d { background: rgba(239,68,68,0.16);  color: #ef4444; border: 1px solid rgba(239,68,68,0.45); }
+.hi {
+  display: flex; flex-direction: column; align-items: center; line-height: 1;
+  font-family: var(--font-head); font-size: 0.74rem; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.hi i { font-family: var(--font-mono); font-size: 0.42rem; font-weight: 400; font-style: normal; color: var(--text-3); letter-spacing: 0.1em; margin-top: 2px; }
+
+/* ── ISA-18.2 alarm priority + acknowledgment state ── */
+.alert-pillcol { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; flex-shrink: 0; }
+.isa-state { display: flex; align-items: stretch; border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.06em; }
+.isa-prio { background: rgba(255,255,255,0.07); color: var(--text-2); padding: 2px 5px; font-weight: 600; }
+.isa-ack  { padding: 2px 5px; font-weight: 600; }
+.isa-unack { background: rgba(239,68,68,0.16); color: #f87171; animation: pulse-dot 1.4s infinite; }
+.isa-acked { background: rgba(34,197,94,0.14); color: #22c55e; }
+
+/* ── OPC-UA process tag ── */
+.alert-tag { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 0.56rem; color: var(--text-2); margin: 3px 0 5px; letter-spacing: 0.02em; }
+.alert-tag svg { color: var(--cyan); opacity: 0.7; flex-shrink: 0; }
+.tag-proto { background: rgba(0,212,255,0.10); color: var(--cyan); border: 1px solid rgba(0,212,255,0.22); border-radius: 3px; padding: 1px 5px; font-size: 0.5rem; letter-spacing: 0.08em; }
+
+/* ── CMMS work-order chip ── */
+.wo-chip { font-family: var(--font-mono); color: var(--text-2); background: rgba(124,58,237,0.10); border: 1px solid rgba(124,58,237,0.28); border-radius: 4px; padding: 2px 7px; }
+
+/* ── Grafana-style trend axis + engineering unit ── */
+.trend-unit { font-family: var(--font-mono); font-size: 0.55rem; color: var(--text-3); align-self: center; }
+.trend-axis { display: flex; justify-content: space-between; margin-top: 4px; font-family: var(--font-mono); font-size: 0.48rem; color: var(--text-3); letter-spacing: 0.04em; }
 
 /* Priority alert card */
 .priority-alert {
@@ -2692,6 +2766,99 @@ input, select, button { font-family: inherit; }
   letter-spacing: 0.07em;
 }
 
+/* ══════════════════════════════════════════════
+   FS CONSOLE — realistic product dashboard frame
+══════════════════════════════════════════════ */
+.fsconsole {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.09);
+  background: linear-gradient(180deg, #0c121c 0%, #080b11 60%, #070a0f 100%);
+  box-shadow:
+    0 32px 70px rgba(0,0,0,0.6),
+    0 8px 24px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(0,212,255,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.4s ease, transform 0.4s ease;
+}
+/* gradient hairline border + top sheen */
+.fsconsole::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 14px;
+  padding: 1px;
+  background: linear-gradient(160deg, rgba(0,212,255,0.35), rgba(0,212,255,0) 35%, rgba(255,107,0,0) 70%, rgba(255,107,0,0.18));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+.fspanel.active .fsconsole {
+  box-shadow:
+    0 36px 80px rgba(0,0,0,0.62),
+    0 8px 24px rgba(0,0,0,0.4),
+    0 0 40px rgba(0,212,255,0.06),
+    0 0 0 1px rgba(0,212,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+}
+/* ── top toolbar ── */
+.fsc-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.fsc-app { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.fsc-app svg { display: block; }
+.fsc-app-name { font-family: var(--font-head); font-weight: 600; font-size: 0.74rem; color: var(--text); letter-spacing: -0.01em; }
+.fsc-crumb { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-3); letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; }
+.fsc-crumb b { color: var(--text-2); font-weight: 500; }
+.fsc-crumb .sep { opacity: 0.4; }
+.fsc-spacer { flex: 1; }
+/* segmented time-range control */
+.fsc-range { display: flex; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.fsc-seg { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.05em; color: var(--text-3); padding: 3px 8px; border-right: 1px solid rgba(255,255,255,0.06); }
+.fsc-seg:last-child { border-right: none; }
+.fsc-seg.on { background: rgba(0,212,255,0.12); color: var(--cyan); }
+.fsc-live { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; color: #22c55e; flex-shrink: 0; }
+.fsc-live .ld { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse-dot 1.5s infinite; }
+.fsc-clock { font-family: var(--font-mono); font-size: 0.58rem; color: var(--text-3); letter-spacing: 0.04em; flex-shrink: 0; }
+/* ── legend strip ── */
+.fsc-legend { display: flex; align-items: center; gap: 14px; padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.012); flex-wrap: wrap; }
+.fsc-leg { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.58rem; color: var(--text-2); letter-spacing: 0.03em; }
+.fsc-leg .sw { width: 10px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.fsc-leg .sw.dash { background: none !important; border-top: 1.5px dashed currentColor; height: 0; }
+.fsc-leg-unit { margin-left: auto; font-family: var(--font-mono); font-size: 0.56rem; color: var(--text-3); letter-spacing: 0.05em; }
+/* ── chart area ── */
+.fsc-chartwrap {
+  position: relative;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(0,212,255,0.04), transparent 60%),
+    linear-gradient(180deg, #090d13, #06080d);
+}
+/* faint engineering grid under the canvas */
+.fsc-chartwrap::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 34px 34px;
+  pointer-events: none;
+}
+.fsc-chartwrap .fsviz { position: relative; height: 244px; }
+/* ── bottom status bar ── */
+.fsc-status { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); font-family: var(--font-mono); }
+.fsc-stat { font-size: 0.56rem; letter-spacing: 0.05em; color: var(--text-3); display: flex; align-items: center; gap: 5px; }
+.fsc-stat b { color: var(--text-2); font-weight: 500; }
+.fsc-stat.c b { color: var(--cyan); }
+.fsc-stat.o b { color: var(--orange); }
+.fsc-stat.g b { color: #22c55e; }
+.fsc-dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--text-3); opacity: 0.5; }
+
 /* ── Responsive: showcase ── */
 @media (max-width: 1024px) {
   .fspanel { grid-template-columns: 1fr; gap: 32px; padding: 32px; }
@@ -3002,8 +3169,15 @@ input, select, button { font-family: inherit; }
 .section-headline {
   font-size: clamp(2.1rem, 4.2vw, 3.4rem) !important;
   letter-spacing: -0.03em !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
 }
+/* Clash Display sits taller than the old Space Grotesk — give cap headroom
+   so glyph tops aren't clipped by the features sticky's overflow:hidden. */
+.section-headline {
+  line-height: 1.24;
+  padding-top: 0.08em;
+}
+#features .section-headline { padding-top: 0.12em; }
 
 /* ── Animated gradient border on feature panel ── */
 @property --border-angle {
@@ -3077,12 +3251,13 @@ input, select, button { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 0;
-  background: rgba(7,15,30,0.7);
-  border: 1px solid rgba(0,212,255,0.1);
+  background: linear-gradient(135deg, rgba(12,22,38,0.85), rgba(7,12,22,0.85));
+  border: 1px solid rgba(0,212,255,0.12);
   border-radius: 14px;
   padding: 14px 20px;
   backdrop-filter: blur(12px);
   flex-shrink: 0;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 .pipe-node {
   display: flex;
@@ -3798,4 +3973,37 @@ input, select, button { font-family: inherit; }
 .btn-primary span, .btn-cta-submit span {
   display: inline-block;
   will-change: transform;
+}
+
+/* ══════════════════════════════════════════════
+   MOBILE FIXES — final responsive pass
+══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Feature showcase was forcing the whole page to ~689px wide (sideways scroll).
+     Force single column + allow flex/grid children to shrink below content size. */
+  #features-showcase { padding: 0 16px; }
+  .fshowcase-body,
+  .fspanel,
+  .fspanel-text,
+  .fspanel-viz-wrap,
+  .fsconsole { min-width: 0; max-width: 100%; }
+  .fspanel { grid-template-columns: 1fr !important; }
+
+  /* Console frame: wrap its toolbar/legend/status instead of overflowing */
+  .fsc-toolbar,
+  .fsc-legend,
+  .fsc-status { flex-wrap: wrap; row-gap: 6px; }
+  .fsc-crumb { order: 3; width: 100%; }
+  .fsc-range { display: none; }            /* secondary control — hide on phones */
+  .fsc-chartwrap .fsviz { height: 196px; }
+
+  /* Operator Dashboard mockup: swipe horizontally instead of clipping content */
+  .browser-chrome { overflow: hidden; }
+  .dash-app { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .dash-content { min-width: 580px; }
+}
+
+/* Safety net: never allow horizontal page scroll on small screens */
+@media (max-width: 768px) {
+  html, body { overflow-x: hidden; max-width: 100%; }
 }
