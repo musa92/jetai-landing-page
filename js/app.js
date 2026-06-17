@@ -77,37 +77,7 @@ var lenis = null;
   });
 })();
 
-// ── Custom cursor ──────────────────────────────
-(function initCursor() {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-
-  var dot  = document.createElement('div');
-  var ring = document.createElement('div');
-  dot.id = 'cursor-dot'; ring.id = 'cursor-ring';
-  document.body.append(dot, ring);
-
-  var mx = -100, my = -100, rx = -100, ry = -100;
-
-  document.addEventListener('mousemove', function (e) {
-    mx = e.clientX; my = e.clientY;
-    dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-  });
-
-  (function tickRing() {
-    rx += (mx - rx) * 0.11;
-    ry += (my - ry) * 0.11;
-    ring.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
-    requestAnimationFrame(tickRing);
-  })();
-
-  document.querySelectorAll('a, button, [role="button"], input, select, label').forEach(function (el) {
-    el.addEventListener('mouseenter', function () { dot.classList.add('cursor-hover'); ring.classList.add('cursor-hover'); });
-    el.addEventListener('mouseleave', function () { dot.classList.remove('cursor-hover'); ring.classList.remove('cursor-hover'); });
-  });
-
-  document.addEventListener('mouseleave', function () { dot.style.opacity = '0'; ring.style.opacity = '0'; });
-  document.addEventListener('mouseenter', function () { dot.style.opacity = ''; ring.style.opacity = ''; });
-})();
+// ── Custom cursor: removed — native OS cursor is used ──────────────
 
 // ── Magnetic buttons ───────────────────────────
 (function initMagnetic() {
@@ -304,8 +274,8 @@ var lenis = null;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
       ctx.fillStyle = this.cyan
-        ? `rgba(0,212,255,${this.o})`
-        : `rgba(124,58,237,${this.o * 0.6})`;
+        ? `rgba(110, 147, 179,${this.o})`
+        : `rgba(84, 113, 140,${this.o * 0.6})`;
       ctx.fill();
     }
   }
@@ -321,7 +291,7 @@ var lenis = null;
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(0,212,255,${(1 - d / maxDist) * 0.08})`;
+          ctx.strokeStyle = `rgba(110, 147, 179,${(1 - d / maxDist) * 0.08})`;
           ctx.lineWidth = 0.5;
           ctx.stroke();
         }
@@ -335,17 +305,17 @@ var lenis = null;
 
     /* large spotlight illuminating the particle field */
     const spot = ctx.createRadialGradient(mx, my, 0, mx, my, 220);
-    spot.addColorStop(0,   'rgba(0,212,255,0.06)');
-    spot.addColorStop(0.4, 'rgba(0,212,255,0.025)');
-    spot.addColorStop(1,   'rgba(0,212,255,0.00)');
+    spot.addColorStop(0,   'rgba(110, 147, 179,0.06)');
+    spot.addColorStop(0.4, 'rgba(110, 147, 179,0.025)');
+    spot.addColorStop(1,   'rgba(110, 147, 179,0.00)');
     ctx.fillStyle = spot;
     ctx.beginPath(); ctx.arc(mx, my, 220, 0, Math.PI * 2); ctx.fill();
 
     /* soft glow behind probe */
     const glow = ctx.createRadialGradient(mx, my, 0, mx, my, 52);
-    glow.addColorStop(0,   'rgba(0,212,255,0.10)');
-    glow.addColorStop(0.4, 'rgba(0,212,255,0.04)');
-    glow.addColorStop(1,   'rgba(0,212,255,0.00)');
+    glow.addColorStop(0,   'rgba(110, 147, 179,0.10)');
+    glow.addColorStop(0.4, 'rgba(110, 147, 179,0.04)');
+    glow.addColorStop(1,   'rgba(110, 147, 179,0.00)');
     ctx.fillStyle = glow;
     ctx.beginPath(); ctx.arc(mx, my, 52, 0, Math.PI * 2); ctx.fill();
 
@@ -356,22 +326,22 @@ var lenis = null;
       const a = (1 - t) * 0.32;
       ctx.beginPath();
       ctx.arc(mx, my, r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(0,212,255,${a})`;
+      ctx.strokeStyle = `rgba(110, 147, 179,${a})`;
       ctx.lineWidth = 1.2;
       ctx.stroke();
     }
 
     /* reticle: outer circle */
     ctx.beginPath(); ctx.arc(mx, my, 18, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,212,255,0.55)';
+    ctx.strokeStyle = 'rgba(110, 147, 179,0.55)';
     ctx.lineWidth = 1.1; ctx.stroke();
 
     /* inner dot */
     ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,212,255,0.80)'; ctx.fill();
+    ctx.fillStyle = 'rgba(110, 147, 179,0.80)'; ctx.fill();
 
     /* crosshair arms with gap */
-    ctx.strokeStyle = 'rgba(0,212,255,0.45)';
+    ctx.strokeStyle = 'rgba(110, 147, 179,0.45)';
     ctx.lineWidth = 0.9;
     const arm = 12, gap = 5;
     [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx, dy]) => {
@@ -386,10 +356,10 @@ var lenis = null;
     const iy = Math.round(my * 10) / 10;
     ctx.font = '500 9px "JetBrains Mono", monospace';
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(0,212,255,0.55)';
+    ctx.fillStyle = 'rgba(110, 147, 179,0.55)';
     ctx.fillText(`P: ${ix},${iy}`, mx + 24, my - 6);
     ctx.font = '400 8px "JetBrains Mono", monospace';
-    ctx.fillStyle = 'rgba(0,212,255,0.35)';
+    ctx.fillStyle = 'rgba(110, 147, 179,0.35)';
     ctx.fillText('SENSOR PROBE', mx + 24, my + 6);
   }
 
@@ -625,7 +595,7 @@ var lenis = null;
       btn.innerHTML = originalHTML;
       btn.style.opacity = '1';
       btn.disabled = false;
-      btn.style.background = '#ff2d78';
+      btn.style.background = '#c08a3e';
       btn.textContent = 'Something went wrong — please try again';
       setTimeout(function () {
         btn.innerHTML = originalHTML;
@@ -641,25 +611,25 @@ var lenis = null;
   const ASSETS = {
     'GT-07': {
       egt: 614, egtDelta: '↑ +14°C', rulMax: 2000, rul: 847, conf: 87,
-      action: 'Inspect in 23d', color: '#aef03f',
+      action: 'Inspect in 23d', color: '#8fb3d0',
       alertLevel: 'HIGH', alertPillClass: 'alert-pill-high',
       alertTitle: 'Combustion Instability Precursor · GT-07',
       alertSub: 'T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.',
       alertTime: '~23 days to fault', alertCI: 'CI: 18–31 days',
       opcTag: 'GT07.COMB.T4_AVG', isaPrio: 'P1', isaAck: 'UNACK', isaAckClass: 'isa-unack', wo: 'WO-2026-0418 · PLANNED',
       egtLine: 'M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2',
-      egtStroke: '#aef03f',
+      egtStroke: '#8fb3d0',
     },
     'GT-01': {
       egt: 589, egtDelta: '↑ +6°C', rulMax: 2000, rul: 312, conf: 91,
-      action: 'Schedule wash', color: '#ff2d78',
+      action: 'Schedule wash', color: '#c08a3e',
       alertLevel: 'MED', alertPillClass: 'alert-pill-med',
       alertTitle: 'HPC Fouling Stage 5 · GT-01',
       alertSub: 'Isentropic efficiency −2.1% from baseline. Offline compressor wash recommended within 8 days.',
       alertTime: '~8 days to threshold', alertCI: 'Stage 5 of 6',
       opcTag: 'GT01.HPC.EFF_ISEN', isaPrio: 'P2', isaAck: 'UNACK', isaAckClass: 'isa-unack', wo: 'WO-2026-0421 · PLANNED',
       egtLine: 'M0,40 C20,39 40,38 70,36 C100,34 130,32 160,29 C190,26 220,23 260,20 C280,18 290,17 300,16',
-      egtStroke: '#ff2d78',
+      egtStroke: '#c08a3e',
     },
     'GT-04': {
       egt: 571, egtDelta: '±1°C', rulMax: 3000, rul: 2340, conf: 99,
@@ -694,7 +664,7 @@ var lenis = null;
       rows: [
         ['Root cause',     'T4 temp rising above trend. Cross-correlated with ΔP oscillation at 200 Hz band.'],
         ['Confidence',     '<span style="color:#f59e0b">87% — High</span>'],
-        ['Predicted fault','<span style="color:#aef03f">~23 days (CI: 18–31d)</span>'],
+        ['Predicted fault','<span style="color:#8fb3d0">~23 days (CI: 18–31d)</span>'],
         ['Recommended',    'Borescope inspection · hot section'],
       ],
     },
@@ -715,7 +685,7 @@ var lenis = null;
       asset: 'GT-04 · LM6000 · Plant Alpha',
       rows: [
         ['Root cause',     'BPFO signal +0.3 g above trend at 84 Hz. Early-stage indication, within spec limits.'],
-        ['Confidence',     '<span style="color:#00d4ff">72% — Medium</span>'],
+        ['Confidence',     '<span style="color:#6e93b3">72% — Medium</span>'],
         ['Predicted fault','No fault expected within 90 days'],
         ['Recommended',    'Continue monitoring · re-assess in 30 days'],
       ],
@@ -813,7 +783,7 @@ var lenis = null;
       const typeEl = row.querySelector('.fleet-type');
       if (rulRows[0]) rulRows[0].textContent = `${assetKey} ${typeEl?.textContent || ''}`;
       if (rulRows[1]) { rulRows[1].textContent = data.conf + '%'; rulRows[1].style.color = data.color; }
-      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'No action' ? '#22c55e' : '#aef03f'; }
+      if (rulRows[2]) { rulRows[2].textContent = data.action; rulRows[2].style.color = data.action === 'No action' ? '#22c55e' : '#8fb3d0'; }
       const arc = document.querySelector('.rul-gauge-svg path[stroke-dasharray]');
       if (arc) {
         const filled = (data.rul / data.rulMax) * 169.6;
@@ -1140,7 +1110,7 @@ var lenis = null;
   document.querySelectorAll('#hero, #problem, #integration, #results').forEach(function(sec) {
     var glow = document.createElement('div');
     glow.className = 'ambient-glow';
-    glow.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 50% 35% at 50% 50%,rgba(0,212,255,0.04) 0%,transparent 70%);will-change:transform;';
+    glow.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 50% 35% at 50% 50%,rgba(110, 147, 179,0.04) 0%,transparent 70%);will-change:transform;';
     sec.style.position = 'relative';
     sec.appendChild(glow);
     gsap.to(glow, {

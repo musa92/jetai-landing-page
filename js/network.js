@@ -141,7 +141,7 @@
     ctx.fillStyle = '#020810';
     ctx.fillRect(0, 0, W, H);
     /* subtle grid */
-    ctx.strokeStyle = 'rgba(0,212,255,0.022)';
+    ctx.strokeStyle = 'rgba(110, 147, 179,0.022)';
     ctx.lineWidth = 0.5;
     for (let x = 0; x <= W; x += 72) {
       ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
@@ -341,8 +341,8 @@
 
     /* soft spotlight */
     const sg = ctx.createRadialGradient(mx,my,0, mx,my,105);
-    sg.addColorStop(0, 'rgba(0,212,255,0.055)');
-    sg.addColorStop(1, 'rgba(0,212,255,0)');
+    sg.addColorStop(0, 'rgba(110, 147, 179,0.055)');
+    sg.addColorStop(1, 'rgba(110, 147, 179,0)');
     ctx.beginPath(); ctx.arc(mx,my,105,0,Math.PI*2);
     ctx.fillStyle = sg; ctx.fill();
 
@@ -350,21 +350,21 @@
     for (let i = 0; i < 3; i++) {
       const t = ((scanPhase * 0.42 + i / 3) % 1);
       ctx.beginPath(); ctx.arc(mx,my, t * 78, 0, Math.PI*2);
-      ctx.strokeStyle = `rgba(0,212,255,${(1 - t) * 0.22})`;
+      ctx.strokeStyle = `rgba(110, 147, 179,${(1 - t) * 0.22})`;
       ctx.lineWidth = 1; ctx.stroke();
     }
 
     /* reticle circle */
     ctx.beginPath(); ctx.arc(mx,my,14,0,Math.PI*2);
-    ctx.strokeStyle = 'rgba(0,212,255,0.48)';
+    ctx.strokeStyle = 'rgba(110, 147, 179,0.48)';
     ctx.lineWidth = 1.1; ctx.stroke();
 
     /* center fill */
     ctx.beginPath(); ctx.arc(mx,my,2.8,0,Math.PI*2);
-    ctx.fillStyle = 'rgba(0,212,255,0.78)'; ctx.fill();
+    ctx.fillStyle = 'rgba(110, 147, 179,0.78)'; ctx.fill();
 
     /* crosshair arms */
-    ctx.strokeStyle = 'rgba(0,212,255,0.38)';
+    ctx.strokeStyle = 'rgba(110, 147, 179,0.38)';
     ctx.lineWidth   = 0.9;
     [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dy]) => {
       ctx.beginPath();

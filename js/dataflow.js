@@ -29,7 +29,7 @@
   setInterval(() => {
     delta = Math.max(9, Math.min(21, delta + (Math.random() - 0.4) * 0.6));
     egt.textContent  = `↑ +${delta.toFixed(1)}°C`;
-    egt.style.color  = delta > 16 ? '#ff2d78' : '#aef03f';
+    egt.style.color  = delta > 16 ? '#c08a3e' : '#8fb3d0';
   }, 2800);
 })();
 
@@ -119,7 +119,7 @@
   inner.style.cssText = 'display:inline-block;animation:ticker-scroll 30s linear infinite;';
 
   const row = items.map(i =>
-    `<span style="display:inline-block;padding:0 28px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(71,85,105,.75)">${i}</span><span style="color:rgba(0,212,255,.14);padding:0 4px">·</span>`
+    `<span style="display:inline-block;padding:0 28px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(71,85,105,.75)">${i}</span><span style="color:rgba(110, 147, 179,.14);padding:0 4px">·</span>`
   ).join('');
 
   inner.innerHTML = row + row;
