@@ -3,54 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Turbnetic.ai | Gas Turbine Intelligence Platform</title>
-  <meta name="description" content="AI-powered smart analyzer for gas turbine and electric powerplant fleets. Connect to existing SCADA & historians. Detect failures and optimize performance weeks before they happen.">
+  <title>Turbnetic.ai | Edge AI for Deep-Tech Industries</title>
+  <meta name="description" content="Turbnetic builds edge-AI systems that turn raw sensor data into real-time decisions — on-prem, where the data lives. One foundation, engineered per industry: energy, healthcare, heavy industry and beyond.">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="icon" type="image/png" href="assets/turbnetic-logo.png">
   <link rel="apple-touch-icon" href="assets/turbnetic-logo.png">
-  <meta name="theme-color" content="#020810">
+  <meta name="theme-color" content="#f4f1ea">
 
-  <!-- Fonts — Clash Display (headlines) + Satoshi (body) via Fontshare, JetBrains Mono (technical labels) -->
+  <!-- Fonts — Switzer (Swiss grotesque, headlines + body) · Zodiak (serif italic accent) · JetBrains Mono (labels) -->
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
   <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&f[]=zodiak@400,500,700&f[]=zodiak-italic@400,500,700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&f[]=zodiak@400,500&f[]=zodiak-italic@400,500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- Three.js — 3D turbofan engine -->
-  <script src="https://unpkg.com/three@0.134.0/build/three.min.js"></script>
-
-  <!-- Lenis — silky smooth scroll -->
+  <!-- Premium libs -->
   <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
-
-  <!-- SplitType — premium text reveal -->
   <script src="https://unpkg.com/split-type@0.3.4/umd/index.min.js"></script>
-
-  <!-- GSAP CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
-
-  <!-- vanilla-tilt — premium 3D card tilt + glare -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20260616-1">
-  <link rel="stylesheet" href="css/animations.css?v=20260616-1">
+  <link rel="stylesheet" href="css/home.css?v=20260703-11">
 </head>
 <body>
 
+  <!-- Paper grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
+
   <!-- Preloader -->
   <div id="preloader">
-    <div class="preloader-inner">
-      <svg class="preloader-logo" width="72" height="72" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="12.6" stroke="#6e93b3" stroke-width="1.1" opacity="0.55"/>
-        <circle cx="14" cy="14" r="8.4" stroke="#6e93b3" stroke-width="0.6" opacity="0.16"/>
-        <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/>
-        <g stroke="#6e93b3" stroke-width="1.5" stroke-linecap="round">
+    <div class="pre-inner">
+      <svg width="64" height="64" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="12.6" stroke="#111111" stroke-width="1.1" opacity="0.55"/>
+        <circle cx="14" cy="14" r="8.4" stroke="#111111" stroke-width="0.6" opacity="0.16"/>
+        <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#e8462a" stroke-width="1.8" stroke-linecap="round"/>
+        <g stroke="#111111" stroke-width="1.5" stroke-linecap="round">
           <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(0 14 14)"/>
           <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
           <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
@@ -58,49 +48,24 @@
           <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
           <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
         </g>
-        <g stroke="#6e93b3" stroke-width="0.8" opacity="0.35">
-          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(0 14 14)"/>
-          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(60 14 14)"/>
-          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(120 14 14)"/>
-          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(180 14 14)"/>
-          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(240 14 14)"/>
-          <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(300 14 14)"/>
-        </g>
-        <circle cx="14" cy="14" r="4.3" fill="#020810"/>
-        <circle cx="14" cy="14" r="4.3" stroke="#6e93b3" stroke-width="1" opacity="0.9"/>
-        <circle cx="14" cy="14" r="1.5" fill="#8fb3d0"/>
+        <circle cx="14" cy="14" r="4.3" fill="#f4f1ea"/>
+        <circle cx="14" cy="14" r="4.3" stroke="#111111" stroke-width="1" opacity="0.9"/>
+        <circle cx="14" cy="14" r="1.5" fill="#e8462a"/>
       </svg>
-      <div class="preloader-wordmark">Turb<span>netic</span><em>.ai</em></div>
-      <div class="preloader-bar"><div class="preloader-fill"></div></div>
+      <div class="pre-word">Turb<span>netic</span><em>.ai</em></div>
+      <div class="pre-bar"><div class="pre-fill"></div></div>
     </div>
   </div>
 
-  <!-- Scroll progress bar -->
-  <div id="scroll-progress"></div>
-
-  <!-- Back to top -->
-  <button id="back-to-top" aria-label="Back to top">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M9 14V4M4 9l5-5 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-
-  <!-- ═══════════════════════════════════════
-       NAVIGATION
-  ═══════════════════════════════════════ -->
-  <nav id="navbar">
+  <!-- Nav -->
+  <nav id="nav">
     <div class="nav-inner">
-      <a class="nav-logo" href="#" aria-label="Back to top">
-        <!-- Turbnetic mark — matches asset logo: 6 swept fan blades · nacelle ring · hub -->
-        <svg id="nav-logo-spin" width="30" height="30" viewBox="0 0 28 28" fill="none" style="transform-origin:center;will-change:transform;">
-          <!-- Nacelle outer ring -->
-          <circle cx="14" cy="14" r="12.6" stroke="#6e93b3" stroke-width="1.1" opacity="0.55"/>
-          <!-- Subtle mid ring -->
-          <circle cx="14" cy="14" r="8.4" stroke="#6e93b3" stroke-width="0.6" opacity="0.16"/>
-          <!-- Orange power arc — top-right, thrust/energy indicator -->
-          <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/>
-          <!-- 6 swept fan blades — thin curved sweeps, staggered opacity for depth -->
-          <g stroke="#6e93b3" stroke-width="1.5" stroke-linecap="round">
+      <a class="nav-logo" href="#" aria-label="Turbnetic home">
+        <svg width="30" height="30" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="12.6" stroke="#111111" stroke-width="1.1" opacity="0.55"/>
+          <circle cx="14" cy="14" r="8.4" stroke="#111111" stroke-width="0.6" opacity="0.16"/>
+          <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#e8462a" stroke-width="1.8" stroke-linecap="round"/>
+          <g stroke="#111111" stroke-width="1.5" stroke-linecap="round">
             <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(0 14 14)"/>
             <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
             <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
@@ -108,1611 +73,383 @@
             <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
             <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
           </g>
-          <!-- Tick marks at blade-tip positions -->
-          <g stroke="#6e93b3" stroke-width="0.8" opacity="0.35">
-            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(0 14 14)"/>
-            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(60 14 14)"/>
-            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(120 14 14)"/>
-            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(180 14 14)"/>
-            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(240 14 14)"/>
-            <line x1="14" y1="2.6" x2="14" y2="3.9" transform="rotate(300 14 14)"/>
-          </g>
-          <!-- Hub disc + center dot -->
-          <circle cx="14" cy="14" r="4.3" fill="#020810"/>
-          <circle cx="14" cy="14" r="4.3" stroke="#6e93b3" stroke-width="1" opacity="0.9"/>
-          <circle cx="14" cy="14" r="1.5" fill="#8fb3d0"/>
+          <circle cx="14" cy="14" r="4.3" fill="#f4f1ea"/>
+          <circle cx="14" cy="14" r="4.3" stroke="#111111" stroke-width="1" opacity="0.9"/>
+          <circle cx="14" cy="14" r="1.5" fill="#e8462a"/>
         </svg>
-        <span class="logo-text">Turb<span class="logo-accent">netic</span><span class="logo-dot">.ai</span></span>
+        <span class="logo-text">Turb<span class="accent">netic</span><span class="dot">.ai</span></span>
       </a>
       <ul class="nav-links">
-        <li><a href="#solution">Platform</a></li>
-        <li><a href="#agent">Agent AI</a></li>
-        <li><a href="#integration">Integrations</a></li>
-        <li><a href="#features">Capabilities</a></li>
-        <li><a href="#edge">Edge</a></li>
-        <li><a href="#results">Results</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#approach">Approach</a></li>
+        <li><a href="#stack">Edge stack</a></li>
+        <li><a href="turbofan.html">Turbofan</a></li>
       </ul>
       <div class="nav-cta">
-        <a href="#cta" class="btn-nav">Request Demo</a>
+        <a href="#contact" class="btn-nav">Request Demo</a>
       </div>
-      <button class="nav-hamburger" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button class="nav-burger" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
       </button>
     </div>
     <div class="mobile-menu" id="mobile-menu">
-      <ul class="mobile-links">
-        <li><a href="#solution">Platform</a></li>
-        <li><a href="#agent">Agent AI</a></li>
-        <li><a href="#integration">Integrations</a></li>
-        <li><a href="#features">Capabilities</a></li>
-        <li><a href="#edge">Edge</a></li>
-        <li><a href="#results">Results</a></li>
-        <li><a href="#cta" class="mobile-cta">Request Demo</a></li>
-      </ul>
+      <a href="#projects">Projects</a>
+      <a href="#approach">Approach</a>
+      <a href="#stack">Edge stack</a>
+      <a href="#edge">Why edge</a>
+      <a href="turbofan.html">Turbofan</a>
+      <a href="#contact" class="cta">Request Demo</a>
     </div>
   </nav>
 
-  <!-- ═══════════════════════════════════════
-       HERO
-  ═══════════════════════════════════════ -->
+  <!-- ═══════════ HERO ═══════════ -->
   <section id="hero">
-    <canvas id="hero-canvas"></canvas>
-
-    <div class="hero-content">
-      <div class="eyebrow-tag" data-animate="fade-up">
-        <span class="dot-pulse"></span>
-        Electric Jet Engine Intelligence &mdash; GE Frame 5 / 6 / 7 &middot; LM-Series &middot; eVTOL
+    <div class="wrap">
+      <div class="hero-meta" data-reveal>
+        <span>Edge AI Systems</span>
+        <span>Est. 2026 — Turbnetic.ai</span>
+        <span>Fig. 01 / Deep Tech</span>
       </div>
 
-      <h1 class="hero-headline hero-headline--robotic" aria-label="Stop Turbine Failures Before They Start">
-        <span class="hl-line" data-scramble="Stop Turbine Failures">Stop Turbine Failures</span>
-        <span class="hl-line hl-line--accent" data-scramble="Before They Start">Before They Start</span>
-      </h1>
+      <div class="hero-grid">
+        <div class="hero-inner">
+          <span class="eyebrow" data-reveal>Edge AI / Deep Tech</span>
+          <h1 class="hero-h1" data-split>Deep-tech intelligence, deployed <em>at the edge.</em></h1>
+          <p class="hero-sub" data-reveal>
+            Turbnetic builds edge-AI systems that turn raw sensor data into real-time decisions —
+            on-prem, where the data lives. One foundation, engineered per industry.
+          </p>
+          <div class="hero-actions" data-reveal>
+            <a href="#projects" class="btn btn-primary" data-magnetic>Explore projects <span class="arr">→</span></a>
+            <a href="#contact" class="btn btn-ghost" data-magnetic>Request a demo</a>
+          </div>
+        </div>
 
-      <p class="hero-sub" data-animate="fade-up" data-delay="0.3">
-        Real-time AI diagnostics for gas turbines, hybrid-electric propulsion, and eVTOL powertrains.<br>
-        Detect combustion instability, blade fouling, and bearing degradation
-        <strong>weeks before failure</strong> &mdash; zero hardware changes.
-      </p>
+        <figure class="hero-fig" data-reveal>
+          <div class="fig-head">
+            <span>Fig. 01</span>
+            <span>Sensor swarm → Edge inference</span>
+          </div>
+          <canvas id="edge-canvas"></canvas>
+          <span class="fig-tick tl"></span><span class="fig-tick tr"></span>
+          <span class="fig-tick bl"></span><span class="fig-tick br"></span>
+          <figcaption class="fig-cap">
+            <span>Live · on-device</span>
+            <span><b data-swarm-count>0</b> packets processed</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
 
-      <div class="hero-actions" data-animate="fade-up" data-delay="0.45">
-        <a href="#cta" class="btn-primary">
-          <span>Request Demo</span>
-          <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="hero-foot wrap" data-reveal>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="n" data-count="100" data-suffix="%">0%</div><div class="l">On-prem · data stays on site</div></div>
+        <div class="hero-stat"><div class="n">Real-time</div><div class="l">Inference at the edge</div></div>
+        <div class="hero-stat"><div class="n" data-count="4" data-suffix="+">0</div><div class="l">Deep-tech verticals</div></div>
+      </div>
+      <a href="#projects" class="scroll-cue" aria-label="Scroll to projects">
+        <span>Scroll</span>
+        <span class="scroll-track"><span class="scroll-dot"></span></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- vertical marquee -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-row">
+      <span>Energy</span><i>◇</i><span>Healthcare</span><i>◇</i><span>Heavy Industry</span><i>◇</i><span>Agriculture</span><i>◇</i>
+      <span>Predictive Maintenance</span><i>◇</i><span>Anomaly Detection</span><i>◇</i><span>On-Prem AI</span><i>◇</i>
+      <span>Energy</span><i>◇</i><span>Healthcare</span><i>◇</i><span>Heavy Industry</span><i>◇</i><span>Agriculture</span><i>◇</i>
+      <span>Predictive Maintenance</span><i>◇</i><span>Anomaly Detection</span><i>◇</i><span>On-Prem AI</span><i>◇</i>
+    </div>
+  </div>
+
+  <!-- ═══════════ PROJECTS ═══════════ -->
+  <section id="projects" class="section-pad">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">01 / Projects</span>
+        <h2 class="section-title">One edge-AI foundation, <em>engineered per industry.</em></h2>
+        <p class="section-lead">
+          Each vertical is a purpose-built product on the same core — physics-aware models running
+          on the operator's own infrastructure. Start with energy; expand into every deep-tech domain.
+        </p>
+      </div>
+
+      <div class="proj-index">
+
+        <!-- Turbofan / Energy — LIVE -->
+        <a class="proj-row is-live" href="turbofan.html" data-reveal>
+          <div class="proj-num">01</div>
+          <div class="proj-main">
+            <div class="proj-name">Turbofan Intelligence</div>
+            <p class="proj-desc">Predictive maintenance &amp; fleet intelligence for gas-turbine and powerplant operators. Connects to existing SCADA &amp; historians — detects failures weeks before they happen.</p>
+          </div>
+          <div class="proj-meta">
+            <span class="proj-sector">Energy</span>
+            <span class="badge live"><span class="dot"></span>Live</span>
+          </div>
+          <div class="proj-go"><span class="proj-go-label">View</span><span class="arr">→</span></div>
         </a>
-        <a id="live-demo-link" href="https://turbneticai.floot.app" target="_blank" rel="noopener" class="btn-ghost">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M14 4h6m0 0v6m0-6L10 14M18 13v5a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Live Demo</span>
-        </a>
-      </div>
 
-      <div class="hero-stats" data-animate="fade-up" data-delay="0.6">
-        <div class="stat-item">
-          <span class="stat-num" data-count="23">0</span><span class="stat-unit">wk</span>
-          <span class="stat-label">Early Detection Lead Time</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-num" data-count="99">0</span><span class="stat-unit">.2%</span>
-          <span class="stat-label">Anomaly Detection Precision</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-num">$50K</span>
-          <span class="stat-label">Avg. Prevented Failure Cost</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-num" data-count="0">0</span><span class="stat-unit"> hardware</span>
-          <span class="stat-label">Changes Required</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="hero-scroll-hint">
-      <div class="scroll-line"></div>
-      <span>Scroll to explore</span>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════
-       TURBOFAN EXPLORE — canvas engine
-  ═══════════════════════════════════════ -->
-  <section id="turbofan-explore">
-    <div class="explore-sticky">
-
-      <div class="explore-header">
-        <div class="explore-stage-label" id="stage-label">Exterior View</div>
-        <div class="explore-progress-bar">
-          <div class="explore-progress-fill" id="explore-progress-fill"></div>
-        </div>
-        <div class="explore-stage-hint" id="stage-hint">Scroll to zoom inside the engine</div>
-      </div>
-
-      <div class="engine-viewport" id="engine-viewport">
-        <canvas id="engine-canvas"></canvas>
-
-        <div class="info-panel info-panel-left" id="panel-sensors">
-          <div class="panel-dot"></div>
-          <div class="panel-title">8 Critical Sensor Streams</div>
-          <div class="panel-items">
-            <div class="panel-item"><span class="tag-cyan">T1/P1</span> Inlet temp &amp; pressure</div>
-            <div class="panel-item"><span class="tag-cyan">T3/P3</span> Compressor exit</div>
-            <div class="panel-item"><span class="tag-orange">EGT</span> Exhaust gas temp</div>
-            <div class="panel-item"><span class="tag-orange">T4</span> Turbine inlet temp</div>
-            <div class="panel-item"><span class="tag-cyan">BRG1/2</span> Vibration signatures</div>
-            <div class="panel-item"><span class="tag-orange">FF</span> Fuel flow rate</div>
+        <!-- Hospital / Healthcare — IN DEV -->
+        <div class="proj-row" data-reveal>
+          <div class="proj-num">02</div>
+          <div class="proj-main">
+            <div class="proj-name">Hospital Intelligence</div>
+            <p class="proj-desc">Edge AI for clinical monitoring and medical-device intelligence. Anomaly detection at the bedside — patient data stays inside the building, fully compliant.</p>
           </div>
+          <div class="proj-meta">
+            <span class="proj-sector">Healthcare</span>
+            <span class="badge dev"><span class="dot"></span>In development</span>
+          </div>
+          <div class="proj-go"><span class="proj-go-label">Soon</span></div>
         </div>
 
-        <div class="info-panel info-panel-right" id="panel-ai">
-          <div class="panel-dot panel-dot-purple"></div>
-          <div class="panel-title">ML Engine</div>
-          <div class="panel-items">
-            <div class="panel-item"><span class="tag-purple">Multivariate</span> Anomaly detection</div>
-            <div class="panel-item"><span class="tag-purple">RUL</span> Remaining useful life</div>
-            <div class="panel-item"><span class="tag-purple">Self-learning</span> Per-asset models</div>
-            <div class="panel-item"><span class="tag-purple">&lt;200ms</span> Inference latency</div>
+        <!-- Heavy Industry — IN DEV -->
+        <div class="proj-row" data-reveal>
+          <div class="proj-num">03</div>
+          <div class="proj-main">
+            <div class="proj-name">Plant &amp; Process Intelligence</div>
+            <p class="proj-desc">Anomaly detection and process optimization for manufacturing, mining and plant machinery — turning legacy sensor networks into a live decision layer.</p>
           </div>
+          <div class="proj-meta">
+            <span class="proj-sector">Heavy Industry</span>
+            <span class="badge dev"><span class="dot"></span>In development</span>
+          </div>
+          <div class="proj-go"><span class="proj-go-label">Soon</span></div>
         </div>
+
+        <!-- Agriculture — EXPLORING -->
+        <div class="proj-row" data-reveal>
+          <div class="proj-num">04</div>
+          <div class="proj-main">
+            <div class="proj-name">Precision Ag Intelligence</div>
+            <p class="proj-desc">Autonomous sensing and yield intelligence for precision agriculture — edge inference in the field, no connectivity required.</p>
+          </div>
+          <div class="proj-meta">
+            <span class="proj-sector">Agriculture</span>
+            <span class="badge explore"><span class="dot"></span>Exploring</span>
+          </div>
+          <div class="proj-go"><span class="proj-go-label">Soon</span></div>
+        </div>
+
       </div>
 
+      <a class="proj-more reveal" href="#contact" data-reveal data-magnetic>
+        <div>
+          <div class="proj-more-t">Have a deep-tech domain in mind?</div>
+          <p class="proj-more-d">We adapt the edge-AI foundation to new industries — anywhere sensor data outpaces the humans reading it.</p>
+        </div>
+        <span class="proj-more-cta">Talk to us <span class="arr">→</span></span>
+      </a>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       FEATURES SECTION
-  ═══════════════════════════════════════ -->
-  <section id="features">
-    <div class="features-sticky">
-    <div class="section-container features-header-row">
-      <div class="features-header-left">
-        <div class="section-eyebrow">Capabilities</div>
-        <h2 class="section-headline">What the Platform Does</h2>
+  <!-- ═══════════ APPROACH ═══════════ -->
+  <section id="approach" class="section-pad">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">02 / Approach</span>
+        <h2 class="section-title">How we build.</h2>
       </div>
-      <div class="pipeline-strip">
-        <div class="pipe-node">
-          <div class="pipe-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#6e93b3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="pipe-node-body"><div class="pipe-node-label">Raw Sensor Data</div><div class="pipe-node-sub">OPC-UA · PI · REST</div></div>
+      <div class="appro-grid">
+        <div class="appro reveal">
+          <div class="appro-n">01</div>
+          <div class="appro-t">Runs at the edge</div>
+          <div class="appro-d">Models run on the operator's own hardware. Raw data never leaves the site — private, compliant, always available.</div>
         </div>
-        <div class="pipe-connector"><span class="pipe-travel"></span></div>
-        <div class="pipe-node">
-          <div class="pipe-icon pipe-icon-purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#a78bfa" stroke-width="1.6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-          <div class="pipe-node-body"><div class="pipe-node-label">AI Inference</div><div class="pipe-node-sub">&lt;200ms · LSTM · IsoForest</div></div>
+        <div class="appro reveal">
+          <div class="appro-n">02</div>
+          <div class="appro-t">Physics-aware</div>
+          <div class="appro-d">Deep-tech native. We combine domain physics with machine learning, so the model understands the asset — not just the numbers.</div>
         </div>
-        <div class="pipe-connector"><span class="pipe-travel pipe-travel-2"></span></div>
-        <div class="pipe-node">
-          <div class="pipe-icon pipe-icon-orange"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#8fb3d0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="pipe-node-body"><div class="pipe-node-label">Actionable Alert</div><div class="pipe-node-sub">CMMS · Dashboard · SMS</div></div>
+        <div class="appro reveal">
+          <div class="appro-n">03</div>
+          <div class="appro-t">One foundation</div>
+          <div class="appro-d">A shared core adapts per industry. Each vertical ships faster because the hard edge-AI plumbing is already solved.</div>
         </div>
-      </div>
-    </div>
-
-    <!-- Premium tabbed feature showcase -->
-    <div class="features-showcase" id="features-showcase">
-
-      <!-- Tab navigation -->
-      <div class="fshowcase-nav">
-        <button class="fstab active" data-tab="0">
-          <span class="fstab-num">01</span>
-          <span class="fstab-label">Anomaly Detection</span>
-        </button>
-        <button class="fstab" data-tab="1">
-          <span class="fstab-num">02</span>
-          <span class="fstab-label">Remaining Useful Life</span>
-        </button>
-        <button class="fstab" data-tab="2">
-          <span class="fstab-num">03</span>
-          <span class="fstab-label">Combustion Instability</span>
-        </button>
-        <button class="fstab" data-tab="3">
-          <span class="fstab-num">04</span>
-          <span class="fstab-label">Blade Fouling</span>
-        </button>
-        <button class="fstab" data-tab="4">
-          <span class="fstab-num">05</span>
-          <span class="fstab-label">Bearing Degradation</span>
-        </button>
-        <button class="fstab" data-tab="5">
-          <span class="fstab-num">06</span>
-          <span class="fstab-label">Adaptive Retraining</span>
-        </button>
-        <button class="fstab" data-tab="6">
-          <span class="fstab-num">07</span>
-          <span class="fstab-label">Edge Device</span>
-        </button>
-      </div>
-
-      <!-- Auto-advance progress bar -->
-      <div class="fshowcase-pbar"><div class="fshowcase-pbar-fill" id="fspbar-fill"></div></div>
-
-      <!-- Panels -->
-      <div class="fshowcase-body">
-
-        <!-- Panel 0: Anomaly Detection -->
-        <div class="fspanel active" data-panel="0">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Core Engine &middot; LSTM + Isolation Forest</div>
-            <h3 class="fspanel-title">Multivariate Anomaly Detection</h3>
-            <p class="fspanel-desc">Isolation Forest and LSTM autoencoder models trained on GE Frame 5/6/7 and LM-series patterns. Detects subtle cross-parameter deviations invisible to threshold-based alarms.</p>
-            <ul class="fspanel-bullets">
-              <li>8+ simultaneous sensor streams correlated in latent space</li>
-              <li>Anomaly score updates every 200 ms from raw sensor feeds</li>
-              <li>Zero false positives during validated baseline cruise conditions</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>Frame 5 · 6 · 7</span><span>LM2500 · LM6000</span><span>LSTM Autoencoder</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val">99.2%</span>
-              <span class="fspanel-kpi-lbl">Detection Precision</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04 · Frame 7<span class="sep">/</span>Anomaly Monitor</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">1H</span><span class="fsc-seg">6H</span><span class="fsc-seg on">24H</span><span class="fsc-seg">7D</span></div>
-                <div class="fsc-live"><span class="ld"></span>LIVE</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg"><span class="sw" style="background:#0a64c8"></span>Nominal</span>
-                <span class="fsc-leg"><span class="sw" style="background:#f59e0b"></span>Elevated</span>
-                <span class="fsc-leg"><span class="sw" style="background:#c08a3e"></span>Anomalous</span>
-                <span class="fsc-leg" style="color:var(--orange)"><span class="sw dash"></span>Score threshold 0.70</span>
-                <span class="fsc-leg-unit">8 CHANNELS · 200 ms REFRESH</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-anomaly"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat o">⚠ ANOMALY SCORE <b>0.87</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">MODEL <b>LSTM-AE v2.3</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">EPOCH <b>14:32:07Z</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat g">● <b>PIPELINE HEALTHY</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 1: RUL -->
-        <div class="fspanel" data-panel="1" data-panel-num="02">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Predictive Engine &middot; Bayesian Models</div>
-            <h3 class="fspanel-title">Predicted Remaining Useful Life</h3>
-            <p class="fspanel-desc">Bayesian degradation models output a RUL estimate with 90% confidence intervals for each asset. Maintenance windows ranked by criticality — never face another surprise forced outage.</p>
-            <ul class="fspanel-bullets">
-              <li>Per-asset baseline auto-calibrated during commissioning week</li>
-              <li>Confidence intervals tighten as more operational data accumulates</li>
-              <li>Integrates with CMMS for automatic work order generation</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>Bayesian RUL</span><span>Monte Carlo CI</span><span>CMMS Integration</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val" style="color:#a78bfa">23 wk</span>
-              <span class="fspanel-kpi-lbl">Avg. Early Warning Lead Time</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>Fleet</b><span class="sep">/</span>3 Assets<span class="sep">/</span>Predictive RUL</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">4W</span><span class="fsc-seg">13W</span><span class="fsc-seg on">52W</span><span class="fsc-seg">2Y</span></div>
-                <div class="fsc-clock">UPDATED 14:32Z</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg" style="color:#c08a3e"><span class="sw" style="background:#c08a3e"></span>GT-04</span>
-                <span class="fsc-leg" style="color:#6e93b3"><span class="sw" style="background:#6e93b3"></span>GT-07</span>
-                <span class="fsc-leg" style="color:#4ade80"><span class="sw" style="background:#4ade80"></span>GT-11</span>
-                <span class="fsc-leg"><span class="sw dash"></span>Forecast</span>
-                <span class="fsc-leg-unit">RUL % · 90% CI BAND</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-rul"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat o">▲ <b style="color:#c08a3e">1 CRITICAL</b> · GT-04 48d</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">HORIZON <b>52 WEEKS</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">MODEL <b>Bayesian RUL</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat g">● <b>CMMS SYNCED</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 2: Combustion -->
-        <div class="fspanel" data-panel="2" data-panel-num="03">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Combustion Analytics &middot; Spectral Analysis</div>
-            <h3 class="fspanel-title">Combustion Instability Detection</h3>
-            <p class="fspanel-desc">Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset — hours before flame-out risk.</p>
-            <ul class="fspanel-bullets">
-              <li>200 Hz band ΔP monitoring with harmonic decomposition</li>
-              <li>Dual-channel combustor inlet and exit pressure correlation</li>
-              <li>Auto load-reduction recommendation at configurable thresholds</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>FFT Spectral</span><span>200 Hz Band</span><span>Lean Blowout</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val" style="color:#8fb3d0">&lt;8 hr</span>
-              <span class="fspanel-kpi-lbl">Onset-to-Alarm Lead Time</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04<span class="sep">/</span>Combustion Dynamics</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">0.1s</span><span class="fsc-seg on">0.2s</span><span class="fsc-seg">0.5s</span></div>
-                <div class="fsc-live"><span class="ld"></span>LIVE</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg" style="color:#6e93b3"><span class="sw" style="background:#6e93b3"></span>CAN-A ΔP</span>
-                <span class="fsc-leg" style="color:#8fb3d0"><span class="sw" style="background:#8fb3d0"></span>CAN-B ΔP</span>
-                <span class="fsc-leg" style="color:#f59e0b"><span class="sw" style="background:#f59e0b"></span>200 Hz band</span>
-                <span class="fsc-leg-unit">FFT · 0–400 Hz · 2 kHz SAMPLE</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-combustion"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat o">⚠ <b style="color:var(--orange)">OSCILLATION ONSET</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">RMS <b>2.4 kPa</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">PEAK <b>198 Hz</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat">CHANNELS <b>CAN-A + CAN-B</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 3: Blade Fouling -->
-        <div class="fspanel" data-panel="3" data-panel-num="04">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Performance Map &middot; Flett Method</div>
-            <h3 class="fspanel-title">Blade Fouling &amp; Degradation</h3>
-            <p class="fspanel-desc">Continuous compressor performance monitoring using modified Flett efficiency map methods to detect fouling accumulation and stage stall margin erosion weeks before it becomes critical.</p>
-            <ul class="fspanel-bullets">
-              <li>Real-time operating point tracked against clean baseline map</li>
-              <li>Stall margin erosion quantified as percentage of design margin</li>
-              <li>Wash schedule optimizer cuts annual heat rate loss by up to 3%</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>Compressor Map</span><span>Stall Margin</span><span>Wash Optimizer</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val">3%</span>
-              <span class="fspanel-kpi-lbl">Heat Rate Improvement</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-07<span class="sep">/</span>Compressor Performance</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">7D</span><span class="fsc-seg">30D</span><span class="fsc-seg on">90D</span><span class="fsc-seg">1Y</span></div>
-                <div class="fsc-clock">UPDATED 14:30Z</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg" style="color:#6e93b3"><span class="sw" style="background:#6e93b3"></span>Isentropic η</span>
-                <span class="fsc-leg"><span class="sw dash"></span>Commissioning baseline</span>
-                <span class="fsc-leg" style="color:#22c55e"><span class="sw" style="background:#22c55e"></span>Wash event</span>
-                <span class="fsc-leg-unit">η % · HEAT-RATE DEVIATION</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-fouling"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat o">η <b style="color:var(--orange)">93.2%</b> ↓ 3.1 pp</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">HEAT RATE <b>+2.4%</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">OP HOURS <b>7,200 h</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat o">● <b style="color:var(--orange)">OFFLINE WASH ADVISED</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 4: Bearing -->
-        <div class="fspanel" data-panel="4" data-panel-num="05">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Vibration Analytics &middot; Envelope Analysis</div>
-            <h3 class="fspanel-title">Bearing Degradation Tracking</h3>
-            <p class="fspanel-desc">Envelope analysis and kurtosis trend monitoring on raw vibration time-series. Detects inner/outer race defects and roller element spalling weeks ahead of threshold breach.</p>
-            <ul class="fspanel-bullets">
-              <li>BPFO / BPFI / BSF harmonic tracking updated in real time</li>
-              <li>Kurtosis trend isolates defect signal from structural noise floor</li>
-              <li>Spectral waterfall captures defect frequency growth history</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>BPFO / BPFI / BSF</span><span>Kurtosis</span><span>Waterfall FFT</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val" style="color:#8fb3d0">6 wk</span>
-              <span class="fspanel-kpi-lbl">Avg. Detection Lead Time</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04 · BRG-3<span class="sep">/</span>Vibration Spectrum</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">100Hz</span><span class="fsc-seg on">200Hz</span><span class="fsc-seg">500Hz</span></div>
-                <div class="fsc-live"><span class="ld"></span>LIVE</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg" style="color:#6e93b3"><span class="sw" style="background:#6e93b3"></span>Spectral density</span>
-                <span class="fsc-leg" style="color:#c08a3e"><span class="sw" style="background:#c08a3e"></span>BPFO 84 Hz</span>
-                <span class="fsc-leg" style="color:#f59e0b"><span class="sw" style="background:#f59e0b"></span>2×BPFO</span>
-                <span class="fsc-leg-unit">ENVELOPE · g RMS · 0–200 Hz</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-bearing"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat o">BPFO <b style="color:var(--orange)">4.2 g</b> ↑</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">KURTOSIS <b>8.4</b> (thr 5.0)</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat o">ISO 10816 <b style="color:var(--orange)">ZONE C</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat">DEFECT <b>OUTER RACE</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 5: Retraining -->
-        <div class="fspanel" data-panel="5" data-panel-num="06">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Adaptive Learning &middot; Federated ML</div>
-            <h3 class="fspanel-title">Continuous Per-Asset Retraining</h3>
-            <p class="fspanel-desc">Every turbine builds its own operational baseline. Models retrain nightly on each plant's history, accounting for fuel quality, ambient conditions, and load profile — a dataset moat that strengthens over time.</p>
-            <ul class="fspanel-bullets">
-              <li>Federated architecture — raw sensor data never leaves your plant</li>
-              <li>AutoML selects optimal model architecture per asset class</li>
-              <li>Model drift detection auto-triggers targeted retraining cycles</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>Federated Learning</span><span>AutoML</span><span>Nightly Cadence</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val" style="color:#a78bfa">Nightly</span>
-              <span class="fspanel-kpi-lbl">Per-Asset Retraining Cadence</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>MLOps</b><span class="sep">/</span>GT-04 baseline<span class="sep">/</span>Model Training</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">50</span><span class="fsc-seg">100</span><span class="fsc-seg on">147</span><span class="fsc-seg">EPOCHS</span></div>
-                <div class="fsc-clock">RUN 02:14Z</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg" style="color:#7fd8ff"><span class="sw" style="background:rgba(110, 147, 179,0.5)"></span>Train accuracy</span>
-                <span class="fsc-leg" style="color:#6e93b3"><span class="sw" style="background:#6e93b3"></span>Val accuracy</span>
-                <span class="fsc-leg" style="color:#22c55e"><span class="sw" style="background:#22c55e"></span>Confusion matrix</span>
-                <span class="fsc-leg-unit">12 ASSETS · NIGHTLY CADENCE</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-retrain"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat g">✓ <b style="color:#22c55e">CONVERGED</b> · epoch 147</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">ACCURACY <b>99.2%</b> (+0.3%)</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">VAL LOSS <b>0.018</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat c">● <b>AUTO-DEPLOYED</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- Panel 6: Edge Device -->
-        <div class="fspanel" data-panel="6" data-panel-num="07">
-          <div class="fspanel-text">
-            <div class="fspanel-eyebrow">Plugin-Based Hardware &middot; Zero Cloud Dependency</div>
-            <h3 class="fspanel-title">Edge AI Device</h3>
-            <p class="fspanel-desc">A ruggedized DIN-rail edge module ships pre-loaded with your turbine's trained model. Runs full LSTM inference on-device — no internet required. Snaps into existing control cabinet wiring in under 30 minutes.</p>
-            <ul class="fspanel-bullets">
-              <li>Plugin architecture — swappable model cards per asset class</li>
-              <li>Operates fully air-gapped; syncs model updates over secure OTA</li>
-              <li>Hardened for &minus;40°C to 85°C, IP67, Class I Div 2 rated</li>
-              <li>Local alert relay: 4&times;DI / 4&times;DO + Modbus RTU output</li>
-            </ul>
-            <div class="fspanel-tags">
-              <span>DIN-Rail Mount</span><span>Air-Gapped</span><span>OTA Updates</span><span>Modbus RTU</span>
-            </div>
-            <div class="fspanel-kpi">
-              <span class="fspanel-kpi-val" style="color:#4ade80">&lt;30 min</span>
-              <span class="fspanel-kpi-lbl">Field Installation Time</span>
-            </div>
-          </div>
-          <div class="fspanel-viz-wrap">
-            <div class="fsconsole">
-              <div class="fsc-toolbar">
-                <div class="fsc-app">
-                  <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/><path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(0 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/><path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/><circle cx="14" cy="14" r="4.6" fill="#080b11"/><path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/></svg>
-                  <span class="fsc-app-name">Turbnetic</span>
-                </div>
-                <div class="fsc-crumb"><b>Plant Alpha</b><span class="sep">/</span>GT-04 · Cabinet A<span class="sep">/</span>Edge Node</div>
-                <div class="fsc-spacer"></div>
-                <div class="fsc-range"><span class="fsc-seg">1H</span><span class="fsc-seg">6H</span><span class="fsc-seg on">24H</span><span class="fsc-seg">7D</span></div>
-                <div class="fsc-live"><span class="ld"></span>ONLINE</div>
-              </div>
-              <div class="fsc-legend">
-                <span class="fsc-leg" style="color:#6e93b3"><span class="sw" style="background:#6e93b3"></span>Sensor ingest</span>
-                <span class="fsc-leg" style="color:#a78bfa"><span class="sw" style="background:#a78bfa"></span>Edge inference</span>
-                <span class="fsc-leg" style="color:#8fb3d0"><span class="sw" style="background:#8fb3d0"></span>Cloud · CMMS sync</span>
-                <span class="fsc-leg-unit">LSTM v2.3 · OFFLINE-CAPABLE</span>
-              </div>
-              <div class="fsc-chartwrap">
-                <canvas class="fsviz" id="fsviz-edge"></canvas>
-              </div>
-              <div class="fsc-status">
-                <span class="fsc-stat g">✓ <b style="color:#22c55e">ONLINE</b> · model v2.3</span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">UPTIME <b>2,847 h</b></span>
-                <span class="fsc-dot-sep"></span>
-                <span class="fsc-stat">INFERENCES <b>1.2M</b></span>
-                <span class="fsc-spacer"></span>
-                <span class="fsc-stat">LAST SYNC <b>04:12Z</b></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /.fshowcase-body -->
-    </div><!-- /.features-showcase -->
-    <!-- Scroll hint -->
-    <div class="features-scroll-hint">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      SCROLL TO EXPLORE
-    </div>
-    </div><!-- /.features-sticky -->
-  </section>
-
-
-  <!-- ═══════════════════════════════════════
-       PROBLEM SECTION
-  ═══════════════════════════════════════ -->
-  <section id="problem">
-    <div class="section-container">
-      <div class="section-eyebrow">The $50B Problem</div>
-      <h2 class="section-headline">Unplanned Turbine Downtime<br>Is Destroying Your Margins</h2>
-    </div>
-    <div class="problem-grid">
-      <div class="problem-stat" data-animate="slide-up">
-        <div class="problem-number">$50B</div>
-        <div class="problem-label">Annual cost of unplanned downtime in global power generation</div>
-      </div>
-      <div class="problem-stat" data-animate="slide-up" data-delay="0.1">
-        <div class="problem-number">72hrs</div>
-        <div class="problem-label">Average time to diagnose a combustion instability event post-failure</div>
-      </div>
-      <div class="problem-stat" data-animate="slide-up" data-delay="0.2">
-        <div class="problem-number">3-5%</div>
-        <div class="problem-label">Heat rate efficiency loss from undetected blade fouling per year</div>
-      </div>
-      <div class="problem-stat" data-animate="slide-up" data-delay="0.3">
-        <div class="problem-number">68%</div>
-        <div class="problem-label">Of major failures show warning signatures 2+ weeks prior in sensor data</div>
-      </div>
-    </div>
-    <div class="problem-callout" data-animate="fade-up">
-      <div class="callout-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 8v4M12 16h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#8fb3d0" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </div>
-      <p>Your historians are already capturing this data. You're just not acting on it fast enough.</p>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════
-       MAINTENANCE AGENT AI
-  ═══════════════════════════════════════ -->
-  <section id="agent">
-    <div class="section-container">
-      <div class="section-eyebrow agent-eyebrow">Maintenance Agent AI</div>
-      <h2 class="section-headline">2,000 Pages of Manual.<br><span class="gradient-text">One Precise Action.</span></h2>
-      <p class="section-sub">Detecting the anomaly is half the job. Turbnetic.ai agents cross-reference the full maintenance manual and send the mechanic an exact, step-by-step directive &mdash; dashboard and pager, instantly.</p>
-    </div>
-
-    <div class="agent-flow-land section-container" data-animate="fade-up">
-      <div class="agent-step">
-        <div class="agent-step-num">01</div>
-        <h4>Sensor Signal</h4>
-        <p>Stage 3 discharge temp trending 8&deg;C above baseline. Bearing #2 vibration rising 0.3 mm/s per day.</p>
-      </div>
-      <div class="agent-arrow">&#8594;</div>
-      <div class="agent-step">
-        <div class="agent-step-num">02</div>
-        <h4>AI Anomaly Model</h4>
-        <p>Pattern matches early-stage blade fouling. Confidence 94.2%. Lead time to degraded performance: 11&ndash;14 days.</p>
-      </div>
-      <div class="agent-arrow">&#8594;</div>
-      <div class="agent-step agent-step-orange">
-        <div class="agent-step-num">03</div>
-        <h4>Agent Orchestration</h4>
-        <p>Cross-references manual &sect;12.4.2, &sect;7.1, Appendix C. Builds the response procedure with safety interlocks.</p>
-      </div>
-      <div class="agent-arrow">&#8594;</div>
-      <div class="agent-step agent-step-orange">
-        <div class="agent-step-num">04</div>
-        <h4>Mechanic Receives</h4>
-        <p>One clear directive on the pager app &mdash; what, where, how, in what order. No manual lookup. No guesswork.</p>
-      </div>
-      <div class="agent-arrow">&#8594;</div>
-      <div class="agent-step">
-        <div class="agent-step-num">05</div>
-        <h4>Fleet Learning Loop</h4>
-        <p>Mechanic confirms the fix. The model retrains. Detection improves for every turbine on the platform.</p>
-      </div>
-    </div>
-
-    <div class="agent-bottom section-container">
-      <!-- Pager notification mockup -->
-      <div class="pager-mock" data-animate="fade-up">
-        <div class="pager-head">
-          <span class="pager-dot"></span>
-          <span class="pager-app">Turbnetic Pager</span>
-          <span class="pager-time">now</span>
-        </div>
-        <div class="pager-title">Unit GT-07 &middot; Stage 3 Fouling &middot; Priority 2</div>
-        <div class="pager-body">"Inspect compressor leading edge, Stage 3. Measure tip clearance at 3 points per &sect;12.4.2. If &gt;0.032 in, schedule offline wash within 72 hrs."</div>
-        <div class="pager-actions"><span>Acknowledge</span><span>Open Procedure</span></div>
-      </div>
-
-      <div class="agent-points" data-animate="fade-up" data-delay="0.15">
-        <div class="agent-point">
-          <div class="agent-point-stat">Day 1</div>
-          <p>A new hire responds correctly to any turbine alert from their first shift &mdash; the institutional knowledge lives in the platform, not in one retiring engineer's head.</p>
-        </div>
-        <div class="agent-point">
-          <div class="agent-point-stat">Zero lookup</div>
-          <p>Blade degradation, combustion instability, vibration, fouling &mdash; every directive arrives with the exact manual section, measurement procedure, and escalation threshold.</p>
-        </div>
-        <div class="agent-point">
-          <div class="agent-point-stat">1 operator</div>
-          <p>One person can manage and dispatch maintenance across a 50+ turbine facility from a single fleet dashboard.</p>
+        <div class="appro reveal">
+          <div class="appro-n">04</div>
+          <div class="appro-t">Deploy in hours</div>
+          <div class="appro-d">Connect to existing sensors, historians and control systems. First insight in hours — no rip-and-replace, no new hardware.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       INTEGRATION SECTION
-  ═══════════════════════════════════════ -->
-  <section id="integration">
-    <div class="section-container">
-      <div class="section-eyebrow">Zero-Friction Integration</div>
-      <h2 class="section-headline">Plug Into Your Existing<br>Plant Infrastructure</h2>
-      <p class="section-sub">No new hardware. No rip-and-replace. API connectors for every major industrial historian and control system &mdash; live in days.</p>
-    </div>
-
-    <div class="integration-grid">
-      <div class="integration-card" data-animate="fade-up">
-        <div class="integration-logo">
-          <div class="int-badge" style="color:#00a651;">PI</div>
-        </div>
-        <div class="integration-name">OSIsoft PI System</div>
-        <div class="integration-desc">Native PI Web API connector with tag-level subscription streaming</div>
-        <div class="integration-tag">OPC-DA · AF · PI Vision</div>
+  <!-- ═══════════ EDGE STACK ═══════════ -->
+  <section id="stack" class="section-pad">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">03 / The edge stack</span>
+        <h2 class="section-title">Everything an edge device needs, <em>in one runtime.</em></h2>
+        <p class="section-lead">
+          From auto-selected models to on-device compression — the full pipeline that lets a
+          physics-aware model run next to the machine: offline, private, in milliseconds.
+        </p>
       </div>
 
-      <div class="integration-card" data-animate="fade-up" data-delay="0.1">
-        <div class="integration-logo">
-          <div class="int-badge" style="color:#0078d4;">GE</div>
+      <!-- live spec strip -->
+      <div class="spec-strip reveal">
+        <div class="spec">
+          <div class="spec-n" data-count="12" data-suffix=" ms">0</div>
+          <div class="spec-l">Inference latency · on-device</div>
         </div>
-        <div class="integration-name">GE APM / Asset360</div>
-        <div class="integration-desc">Bidirectional APM integration for alert write-back and case management</div>
-        <div class="integration-tag">REST · GraphQL · Asset Model</div>
+        <div class="spec">
+          <div class="spec-n" data-count="8" data-suffix="×">0</div>
+          <div class="spec-l">Model compression · INT8</div>
+        </div>
+        <div class="spec">
+          <div class="spec-n" data-count="24" data-suffix="">0</div>
+          <div class="spec-l">Sensor channels fused</div>
+        </div>
+        <div class="spec">
+          <div class="spec-n">99.9<span class="spec-sub">%</span></div>
+          <div class="spec-l">Uptime · network-independent</div>
+        </div>
       </div>
 
-      <div class="integration-card" data-animate="fade-up" data-delay="0.2">
-        <div class="integration-logo">
-          <div class="int-badge" style="color:#e8a020;">OPC</div>
+      <!-- component grid -->
+      <div class="stack-grid">
+        <div class="stack-cell reveal">
+          <div class="stack-top"><span class="stack-i">01</span><span class="stack-tag">AutoML</span></div>
+          <h3 class="stack-t">Auto-model selection</h3>
+          <p class="stack-d">Per-asset AutoML picks and tunes the right model for each machine's signature — no data-science team required.</p>
         </div>
-        <div class="integration-name">OPC-UA Server</div>
-        <div class="integration-desc">Standard IEC 62541 OPC-UA subscription model for real-time historian bypass</div>
-        <div class="integration-tag">IEC 62541 · Unified Architecture</div>
+        <div class="stack-cell reveal">
+          <div class="stack-top"><span class="stack-i">02</span><span class="stack-tag">INT8 · Prune</span></div>
+          <h3 class="stack-t">Model compression</h3>
+          <p class="stack-d">Quantization and pruning shrink models 4–8× so they run on low-power edge NPUs without losing accuracy.</p>
+        </div>
+        <div class="stack-cell reveal">
+          <div class="stack-top"><span class="stack-i">03</span><span class="stack-tag">Multi-channel</span></div>
+          <h3 class="stack-t">Sensor fusion</h3>
+          <p class="stack-d">Cross-correlates vibration, thermal, acoustic, pressure and electrical channels into one health state.</p>
+        </div>
+        <div class="stack-cell reveal">
+          <div class="stack-top"><span class="stack-i">04</span><span class="stack-tag">&lt; 15 ms</span></div>
+          <h3 class="stack-t">On-device inference</h3>
+          <p class="stack-d">Sub-15 ms predictions right at the machine — no cloud round-trip, no downtime when the link drops.</p>
+        </div>
+        <div class="stack-cell reveal">
+          <div class="stack-top"><span class="stack-i">05</span><span class="stack-tag">Private</span></div>
+          <h3 class="stack-t">Federated retraining</h3>
+          <p class="stack-d">Nightly on-prem retraining keeps every model sharp; raw data never leaves the site.</p>
+        </div>
+        <div class="stack-cell reveal">
+          <div class="stack-top"><span class="stack-i">06</span><span class="stack-tag">ARM · x86 · NPU</span></div>
+          <h3 class="stack-t">Portable runtime</h3>
+          <p class="stack-d">One deployable runtime spanning ARM, x86 and dedicated NPU accelerators — install in hours.</p>
+        </div>
       </div>
 
-      <div class="integration-card" data-animate="fade-up" data-delay="0.3">
-        <div class="integration-logo">
-          <div class="int-badge" style="color:#c0392b;">DCS</div>
-        </div>
-        <div class="integration-name">DCS / SCADA</div>
-        <div class="integration-desc">Honeywell Experion, ABB Symphony, Emerson DeltaV, Siemens SPPA-T3000</div>
-        <div class="integration-tag">Modbus · DNP3 · IEC 61850</div>
-      </div>
-
-      <div class="integration-card" data-animate="fade-up" data-delay="0.4">
-        <div class="integration-logo">
-          <div class="int-badge" style="color:#54718c;">CMMS</div>
-        </div>
-        <div class="integration-name">CMMS Systems</div>
-        <div class="integration-desc">Automatic work order generation into SAP PM, IBM Maximo, and Infor EAM</div>
-        <div class="integration-tag">SAP PM · Maximo · Infor</div>
-      </div>
-
-      <div class="integration-card" data-animate="fade-up" data-delay="0.5">
-        <div class="integration-logo">
-          <div class="int-badge" style="color:#6e93b3;">API</div>
-        </div>
-        <div class="integration-name">Custom REST API</div>
-        <div class="integration-desc">Open webhook and REST API for bespoke integrations and data lake pipelines</div>
-        <div class="integration-tag">REST · Kafka · InfluxDB</div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ═══════════════════════════════════════
-       RESULTS / METRICS
-  ═══════════════════════════════════════ -->
-  <section id="results">
-    <div class="results-inner">
-      <div class="section-container">
-        <div class="section-eyebrow results-eyebrow">Proven Results</div>
-        <h2 class="section-headline results-headline">Built for the World's Most<br>Demanding Turbine Fleets</h2>
-      </div>
-
-      <div class="metrics-grid">
-        <div class="metric-card" data-animate="scale-in">
-          <div class="metric-value"><span class="counter" data-target="23">0</span><span class="metric-unit">wk</span></div>
-          <div class="metric-label">Average early detection lead time</div>
-          <div class="metric-context">Before failure &mdash; not before alarm</div>
-        </div>
-        <div class="metric-card" data-animate="scale-in" data-delay="0.1">
-          <div class="metric-value"><span class="counter" data-target="99">0</span><span class="metric-unit">.2%</span></div>
-          <div class="metric-label">Anomaly detection precision</div>
-          <div class="metric-context">Across Frame 7 and LM6000 fleets</div>
-        </div>
-        <div class="metric-card" data-animate="scale-in" data-delay="0.2">
-          <div class="metric-value"><span class="metric-unit">$</span><span class="counter" data-target="50">0</span><span class="metric-unit">K</span></div>
-          <div class="metric-label">Average value per prevented failure</div>
-          <div class="metric-context">Parts + labor + lost generation</div>
-        </div>
-        <div class="metric-card" data-animate="scale-in" data-delay="0.3">
-          <div class="metric-value"><span class="counter" data-target="4">0</span><span class="metric-unit">hr</span></div>
-          <div class="metric-label">Time to first live data connection</div>
-          <div class="metric-context">Via OPC-UA or PI Web API</div>
-        </div>
-        <div class="metric-card" data-animate="scale-in" data-delay="0.4">
-          <div class="metric-value"><span class="counter" data-target="3">0</span><span class="metric-unit">%</span></div>
-          <div class="metric-label">Heat rate improvement via fouling ops</div>
-          <div class="metric-context">Optimizing compressor wash schedules</div>
-        </div>
-        <div class="metric-card" data-animate="scale-in" data-delay="0.5">
-          <div class="metric-value"><span class="metric-unit">&lt;</span><span class="counter" data-target="200">0</span><span class="metric-unit">ms</span></div>
-          <div class="metric-label">End-to-end inference latency</div>
-          <div class="metric-context">From sensor to scored alert</div>
-        </div>
+      <!-- integrations strip -->
+      <div class="integ reveal">
+        <span class="integ-l">Connects to</span>
+        <span class="integ-list">OSIsoft PI &nbsp;·&nbsp; GE Digital APM &nbsp;·&nbsp; ABB Ability &nbsp;·&nbsp; Siemens MindSphere &nbsp;·&nbsp; Honeywell Forge &nbsp;·&nbsp; SAP PM</span>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       EDGE INTELLIGENCE
-  ═══════════════════════════════════════ -->
-  <section id="edge">
-    <div class="section-container">
-      <div class="section-eyebrow">Edge Intelligence</div>
-      <h2 class="section-headline">Starts on Turbofans.<br><span class="gradient-text">Built for Every Critical Machine.</span></h2>
-      <p class="section-sub">Our compression pipeline distills the full cloud model into a tiny, hardware-optimized version that runs anywhere &mdash; offshore platforms, pipeline stations, air-gapped defense installations. No cloud. No connectivity. Same detection quality.</p>
-    </div>
-
-    <div class="edge-pipeline section-container" data-animate="fade-up">
-      <div class="edge-node edge-node-cloud">
-        <div class="edge-node-tag">CLOUD</div>
-        <h4>Teacher Model</h4>
-        <p>Large ensemble trained on millions of fleet-hours. Full accuracy, continuously updated.</p>
-        <div class="edge-node-spec">~500MB &middot; GPU &middot; Cloud</div>
+  <!-- ═══════════ WHY EDGE ═══════════ -->
+  <section id="edge" class="section-pad">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">04 / Why edge</span>
+        <h2 class="section-title">The intelligence belongs <em>where the data is born.</em></h2>
+        <p class="section-lead">
+          Deep-tech operations generate more sensor data than any team can read, and the most critical
+          decisions can't wait on a round-trip to the cloud. Turbnetic puts the model next to the machine —
+          low latency, full data sovereignty, and resilience even when the network drops.
+        </p>
       </div>
-      <div class="edge-arrow">&#8594;</div>
-      <div class="edge-node edge-node-pipe">
-        <div class="edge-node-tag edge-tag-orange">OPTIMIZATION PIPELINE</div>
-        <h4>Compression Engine</h4>
-        <p>Knowledge distillation &middot; 8-bit quantization &middot; pruning &middot; hardware-aware architecture search.</p>
-        <div class="edge-node-spec">Automated &middot; per-chip tuning</div>
-      </div>
-      <div class="edge-arrow">&#8594;</div>
-      <div class="edge-node edge-node-device">
-        <div class="edge-node-tag">EDGE</div>
-        <h4>Student Model</h4>
-        <p>Runs on a $50 compute module inside a ruggedized device. Fully offline, encrypted sync when available.</p>
-        <div class="edge-node-spec">&lt;8MB &middot; &lt;50ms &middot; &lt;5W</div>
-      </div>
-    </div>
-
-    <div class="edge-path section-container" data-animate="fade-up" data-delay="0.15">
-      <div class="edge-path-label">Expansion path</div>
-      <div class="edge-path-chips">
-        <span class="edge-chip edge-chip-now">Gas Turbines <em>now</em></span>
-        <span class="edge-path-arrow">&#8594;</span>
-        <span class="edge-chip">Jet Engines &middot; DoD Unmanned Platforms</span>
-        <span class="edge-path-arrow">&#8594;</span>
-        <span class="edge-chip">Marine &middot; Pipeline &middot; Industrial Compressors</span>
-        <span class="edge-path-arrow">&#8594;</span>
-        <span class="edge-chip">Grid &amp; Electricity Demand Intelligence</span>
-      </div>
-      <p class="edge-path-note">One AI core. We prove it where failure costs the most &mdash; utility-scale gas turbines &mdash; then carry the same model, agents, and edge pipeline to every sensor-dense machine that can't afford to fail.</p>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       DASHBOARD PREVIEW
-  ═══════════════════════════════════════ -->
-  <section id="dashboard">
-    <div class="section-container">
-      <div class="section-eyebrow">Platform</div>
-      <h2 class="section-headline">Operator Intelligence Dashboard</h2>
-      <p class="section-sub">Built for plant engineers &mdash; not data scientists. Actionable, prioritized, and explained in plain language.</p>
-      <p class="dash-interact-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Interactive demo — click on turbines, nav icons, and alerts below</p>
-    </div>
+  <!-- ═══════════ CTA ═══════════ -->
+  <section id="contact" class="section-pad">
+    <div class="wrap">
+      <div class="cta-box reveal">
+        <div class="cta-copy">
+          <h2>Bring edge AI to <em>your industry.</em></h2>
+          <p>Tell us about your assets and data — we'll show you what a purpose-built edge-AI product looks like for your operation.</p>
+          <a href="turbofan.html" class="cta-see">Or see it live · Turbofan <span class="arr">→</span></a>
+        </div>
 
-    <!-- ── Premium two-panel layout: browser + phone ── -->
-    <div class="dashboard-layout" data-animate="fade-up">
-
-      <!-- ── Browser mockup ── -->
-      <div class="browser-chrome">
-        <div class="browser-titlebar">
-          <div class="browser-dots">
-            <span class="bdot bdot-red"></span>
-            <span class="bdot bdot-yellow"></span>
-            <span class="bdot bdot-green"></span>
+        <form name="demo-request" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/?submitted=1" class="cta-form" id="demo-form">
+          <input type="hidden" name="form-name" value="demo-request">
+          <p class="hp" aria-hidden="true"><label>Leave this empty: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+          <div class="form-grid">
+            <label class="field"><span>Name</span><input type="text" name="name" required placeholder="Jane Kowalski" autocomplete="name"></label>
+            <label class="field"><span>Work email</span><input type="email" name="email" required placeholder="jane@company.com" autocomplete="email"></label>
+            <label class="field"><span>Company</span><input type="text" name="company" placeholder="Acme Power" autocomplete="organization"></label>
+            <label class="field"><span>Industry</span>
+              <select name="industry">
+                <option>Energy / Turbines</option>
+                <option>Healthcare</option>
+                <option>Heavy Industry</option>
+                <option>Agriculture</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label class="field field-full"><span>What are you trying to solve?</span><textarea name="message" rows="3" placeholder="Tell us about your assets, sensors and data sources…"></textarea></label>
           </div>
-          <!-- Active browser tab -->
-          <div class="browser-tab">
-            <svg width="13" height="13" viewBox="0 0 28 28" fill="none">
-              <circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1.2" opacity="0.55"/>
-              <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="2" stroke-linecap="round"/>
-              <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.9" transform="rotate(0 14 14)"/>
-              <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.6" transform="rotate(120 14 14)"/>
-              <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.45" transform="rotate(240 14 14)"/>
-              <circle cx="14" cy="14" r="4.5" fill="#020810"/>
-              <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/>
+          <div class="form-foot">
+            <button type="submit" class="btn btn-primary">Request a demo <span class="arr">→</span></button>
+            <span class="form-note">No commitment · Live demo within 24h</span>
+          </div>
+          <p class="form-status" role="status" hidden></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <div class="foot-logo">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="12.5" stroke="#111111" stroke-width="1" opacity="0.45"/>
+              <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#e8462a" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="14" cy="14" r="5" fill="#f4f1ea"/>
+              <circle cx="14" cy="14" r="5" stroke="#111111" stroke-width="0.8"/>
+              <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#e8462a"/>
             </svg>
-            <span class="browser-tab-name">Turbnetic.ai — Fleet Live</span>
+            Turb<span>netic</span><em>.ai</em>
           </div>
-          <div class="browser-urlbar">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <span>app.turbnetic.ai/plant/alpha/live</span>
-          </div>
-          <div class="browser-actions">
-            <div class="browser-live-badge"><span class="live-dot"></span>LIVE</div>
-          </div>
+          <p class="foot-tag">Edge-AI systems for deep-tech industries. On-prem intelligence, engineered per domain.</p>
         </div>
-
-        <div class="dash-app">
-          <!-- Sidebar nav -->
-          <div class="dash-sidenav">
-            <div class="dash-nav-logo">
-              <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/>
-                <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.88" transform="rotate(0 14 14)"/>
-                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.65" transform="rotate(90 14 14)"/>
-                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.55" transform="rotate(180 14 14)"/>
-                <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.75" transform="rotate(270 14 14)"/>
-                <circle cx="14" cy="14" r="5" fill="#060d1a"/>
-                <circle cx="14" cy="14" r="5" stroke="#6e93b3" stroke-width="0.8"/>
-                <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/>
-              </svg>
-            </div>
-            <div class="dash-nav-items">
-              <div class="dash-nav-item dash-nav-active" title="Fleet">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              </div>
-              <div class="dash-nav-item" title="Anomalies">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              </div>
-              <div class="dash-nav-item" title="Analytics">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18M7 16l4-4 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <div class="dash-nav-item" title="Maintenance">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            </div>
-            <div class="dash-nav-bottom">
-              <div class="dash-nav-item" title="Settings">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5"/></svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Main dashboard content -->
-          <div class="dash-content">
-            <!-- Topbar -->
-            <div class="dash-topbar">
-              <div class="dash-topbar-left">
-                <span class="dash-breadcrumb">Plant Alpha</span>
-                <span class="dash-sep">›</span>
-                <span class="dash-breadcrumb dash-breadcrumb-active">Fleet Overview</span>
-              </div>
-              <div class="dash-topbar-right">
-                <div class="dash-alert-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="#8fb3d0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span>2 Alerts</span>
-                </div>
-                <div class="dash-time" id="dash-clock">14:32:07 UTC</div>
-              </div>
-            </div>
-
-            <!-- KPI cards row -->
-            <div class="kpi-row">
-              <div class="kpi-card kpi-warning">
-                <div class="kpi-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#8fb3d0" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </div>
-                <div class="kpi-data">
-                  <div class="kpi-value">2</div>
-                  <div class="kpi-label">Active Anomalies</div>
-                </div>
-                <div class="kpi-trend kpi-trend-up">+1 today</div>
-              </div>
-              <div class="kpi-card kpi-ok">
-                <div class="kpi-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#6e93b3" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="#6e93b3" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </div>
-                <div class="kpi-data">
-                  <div class="kpi-value">847<span class="kpi-unit">h</span></div>
-                  <div class="kpi-label">Lowest Fleet RUL</div>
-                </div>
-                <div class="kpi-trend kpi-trend-warn">GT-07</div>
-              </div>
-              <div class="kpi-card kpi-green">
-                <div class="kpi-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <div class="kpi-data">
-                  <div class="kpi-value">$1.4<span class="kpi-unit">M</span></div>
-                  <div class="kpi-label">Failures Prevented</div>
-                </div>
-                <div class="kpi-trend kpi-trend-green">YTD</div>
-              </div>
-              <div class="kpi-card kpi-purple">
-                <div class="kpi-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#54718c" stroke-width="1.5"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#54718c" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </div>
-                <div class="kpi-data">
-                  <div class="kpi-value">Jun 12</div>
-                  <div class="kpi-label">Next Scheduled</div>
-                </div>
-                <div class="kpi-trend">GT-01 overhaul</div>
-              </div>
-            </div>
-
-            <!-- Main panels row -->
-            <div class="dash-panels-row" id="dash-view-fleet">
-              <!-- Left: Anomaly ring + fleet list -->
-              <div class="dash-panel-left">
-                <div class="panel-header">
-                  <span class="panel-title">Fleet Status</span>
-                  <span class="panel-badge panel-badge-live">LIVE</span>
-                  <span class="dash-click-hint"><span class="click-pulse-dot"></span>Click a row to inspect</span>
-                </div>
-                <div class="fleet-list">
-                  <div class="fleet-row fleet-row-active" data-turbine="GT-07">
-                    <div class="fleet-indicator ind-warning"></div>
-                    <div class="fleet-info">
-                      <div class="fleet-name">GT-07 <span class="fleet-type">Frame 7</span></div>
-                      <div class="fleet-status">Combustion anomaly · 87% conf.</div>
-                    </div>
-                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
-                      <span class="vz vz-c">C</span>
-                      <span class="hi">71<i>HI</i></span>
-                    </div>
-                    <div class="fleet-rul">
-                      <div class="rul-num">847</div>
-                      <div class="rul-unit">hrs</div>
-                    </div>
-                    <div class="fleet-sparkline">
-                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
-                        <path d="M0,14 L10,12 L20,10 L30,9 L40,7 L50,5 L60,3" fill="none" stroke="#8fb3d0" stroke-width="1.5"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="fleet-row fleet-row-critical" data-turbine="GT-01">
-                    <div class="fleet-indicator ind-critical"></div>
-                    <div class="fleet-info">
-                      <div class="fleet-name">GT-01 <span class="fleet-type">Frame 5</span></div>
-                      <div class="fleet-status">Fouling stage 5 · schedule wash</div>
-                    </div>
-                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
-                      <span class="vz vz-d">D</span>
-                      <span class="hi">48<i>HI</i></span>
-                    </div>
-                    <div class="fleet-rul">
-                      <div class="rul-num" style="color:#c08a3e">312</div>
-                      <div class="rul-unit">hrs</div>
-                    </div>
-                    <div class="fleet-sparkline">
-                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
-                        <path d="M0,6 L10,7 L20,9 L30,11 L40,13 L50,15 L60,18" fill="none" stroke="#c08a3e" stroke-width="1.5"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="fleet-row">
-                    <div class="fleet-indicator ind-ok"></div>
-                    <div class="fleet-info">
-                      <div class="fleet-name" data-turbine="GT-04">GT-04 <span class="fleet-type">LM6000</span></div>
-                      <div class="fleet-status">Normal operations</div>
-                    </div>
-                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
-                      <span class="vz vz-a">A</span>
-                      <span class="hi">96<i>HI</i></span>
-                    </div>
-                    <div class="fleet-rul">
-                      <div class="rul-num" style="color:#22c55e">2,340</div>
-                      <div class="rul-unit">hrs</div>
-                    </div>
-                    <div class="fleet-sparkline">
-                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
-                        <path d="M0,10 L10,10 L20,9 L30,10 L40,9 L50,10 L60,10" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="fleet-row">
-                    <div class="fleet-indicator ind-ok"></div>
-                    <div class="fleet-info">
-                      <div class="fleet-name" data-turbine="GT-02">GT-02 <span class="fleet-type">Frame 6</span></div>
-                      <div class="fleet-status">Normal operations</div>
-                    </div>
-                    <div class="fleet-cond" title="ISO 10816 vibration severity zone · ISO 13374 health index">
-                      <span class="vz vz-b">B</span>
-                      <span class="hi">92<i>HI</i></span>
-                    </div>
-                    <div class="fleet-rul">
-                      <div class="rul-num" style="color:#22c55e">1,920</div>
-                      <div class="rul-unit">hrs</div>
-                    </div>
-                    <div class="fleet-sparkline">
-                      <svg viewBox="0 0 60 20" preserveAspectRatio="none">
-                        <path d="M0,9 L10,10 L20,9 L30,9 L40,10 L50,9 L60,9" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right: Alerts + EGT chart -->
-              <div class="dash-panel-right">
-                <!-- Priority alert -->
-                <div class="priority-alert">
-                  <div class="alert-pillcol">
-                    <div class="alert-pill alert-pill-high" id="dash-alert-pill">HIGH</div>
-                    <div class="isa-state" id="dash-alarm-state" title="ISA-18.2 alarm priority &amp; acknowledgment state"><span class="isa-prio">P1</span><span class="isa-ack isa-unack">UNACK</span></div>
-                  </div>
-                  <div class="alert-body">
-                    <div class="alert-title2" id="dash-alert-title">Combustion Instability Precursor · GT-07</div>
-                    <div class="alert-tag" id="dash-alert-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M7 7h.01M7 3h5a2 2 0 011.41.59l7 7a2 2 0 010 2.82l-5 5a2 2 0 01-2.82 0l-7-7A2 2 0 014 9.5V5a2 2 0 012-2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> <span id="dash-tag-name">GT07.COMB.T4_AVG</span> <span class="tag-proto">OPC-UA</span></div>
-                    <div class="alert-sub" id="dash-alert-sub">T4↑ cross-correlated with ΔP dynamic pressure. 87% confidence. Detected 3h 14m ago.</div>
-                    <div class="alert-meta-row">
-                      <span class="alert-meta" id="dash-alert-time"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ~23 days to fault</span>
-                      <span class="alert-meta" id="dash-alert-ci">CI: 18–31 days</span>
-                      <span class="alert-meta wo-chip" id="dash-alert-wo">WO-2026-0418 · PLANNED</span>
-                      <span class="alert-meta alert-meta-action">Create WO →</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- EGT trend sparkline -->
-                <div class="trend-panel">
-                  <div class="trend-header">
-                    <span class="trend-label">EGT · GT-07</span>
-                    <span class="trend-unit">°C</span>
-                    <span class="trend-value trend-value-hot" id="egt-live">614°C</span>
-                    <span class="trend-delta" id="egt-delta">↑ +14°C</span>
-                  </div>
-                  <div class="trend-chart-wrap">
-                    <svg viewBox="0 0 300 56" preserveAspectRatio="none" class="trend-svg">
-                      <defs>
-                        <linearGradient id="egt-grad2" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#8fb3d0" stop-opacity="0.35"/>
-                          <stop offset="100%" stop-color="#8fb3d0" stop-opacity="0"/>
-                        </linearGradient>
-                      </defs>
-                      <path id="egt-fill-path" d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2 L300,56 L0,56 Z" fill="url(#egt-grad2)"/>
-                      <path id="egt-line-path" d="M0,48 C20,45 35,43 55,40 C75,37 90,34 110,30 C130,26 148,22 168,18 C188,14 208,11 228,8 C248,5 268,4 300,2" fill="none" stroke="#8fb3d0" stroke-width="2"/>
-                      <line x1="0" y1="12" x2="300" y2="12" stroke="#8fb3d0" stroke-width="0.8" stroke-dasharray="6,4" opacity="0.5"/>
-                      <text x="4" y="10" font-size="7" fill="#8fb3d0" opacity="0.7" font-family="monospace">THRESHOLD</text>
-                    </svg>
-                    <div class="trend-axis"><span>−24h</span><span>−18h</span><span>−12h</span><span>−6h</span><span>now</span></div>
-                  </div>
-                </div>
-
-                <!-- RUL arc gauge -->
-                <div class="rul-panel">
-                  <div class="rul-gauge-wrap">
-                    <svg viewBox="0 0 120 72" class="rul-gauge-svg">
-                      <defs>
-                        <linearGradient id="rul-arc-grad" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stop-color="#22c55e"/>
-                          <stop offset="50%" stop-color="#f59e0b"/>
-                          <stop offset="100%" stop-color="#c08a3e"/>
-                        </linearGradient>
-                      </defs>
-                      <!-- background arc -->
-                      <path d="M12,66 A54,54 0 0,1 108,66" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" stroke-linecap="round"/>
-                      <!-- filled arc (847 / 2000 ≈ 42% → angle) -->
-                      <path d="M12,66 A54,54 0 0,1 108,66" fill="none" stroke="url(#rul-arc-grad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="97" opacity="0.95"/>
-                      <!-- value text -->
-                      <text x="60" y="58" text-anchor="middle" font-size="18" font-weight="700" fill="#f8fafc" font-family="Space Grotesk, sans-serif">847</text>
-                      <text x="60" y="68" text-anchor="middle" font-size="8" fill="#64748b" font-family="monospace" letter-spacing="0.08em">HRS REMAINING</text>
-                    </svg>
-                  </div>
-                  <div class="rul-breakdown">
-                    <div class="rul-row"><span class="rul-key">Asset</span><span class="rul-val">GT-07 Frame 7</span></div>
-                    <div class="rul-row"><span class="rul-key">Confidence</span><span class="rul-val" style="color:#f59e0b">87%</span></div>
-                    <div class="rul-row"><span class="rul-key">Action</span><span class="rul-val" style="color:#8fb3d0">Inspect in 23d</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ══ ANOMALIES VIEW ══ -->
-            <div class="dash-view-panel" id="dash-view-anomalies">
-              <div class="dash-panels-row">
-                <div class="dash-panel-left">
-                  <div class="panel-header">
-                    <span class="panel-title">Active Anomalies</span>
-                    <span class="panel-badge" style="color:#c08a3e;background:rgba(192, 138, 63,0.12);border:1px solid rgba(192, 138, 63,0.25)">4 FOUND</span>
-                  </div>
-                  <div class="anom-list" id="anom-list">
-                    <div class="anom-row anom-selected" data-anom="gt07">
-                      <span class="anom-sev sev-high">HIGH</span>
-                      <div class="anom-info"><div class="anom-asset">GT-07</div><div class="anom-desc">Combustion instability</div></div>
-                      <span class="anom-conf">87%</span>
-                    </div>
-                    <div class="anom-row" data-anom="gt01">
-                      <span class="anom-sev sev-med">MED</span>
-                      <div class="anom-info"><div class="anom-asset">GT-01</div><div class="anom-desc">HPC fouling stage 5</div></div>
-                      <span class="anom-conf">91%</span>
-                    </div>
-                    <div class="anom-row" data-anom="gt04">
-                      <span class="anom-sev sev-low">LOW</span>
-                      <div class="anom-info"><div class="anom-asset">GT-04</div><div class="anom-desc">Bearing vib. slight uptick</div></div>
-                      <span class="anom-conf">72%</span>
-                    </div>
-                    <div class="anom-row" data-anom="gt02">
-                      <span class="anom-sev sev-info">INFO</span>
-                      <div class="anom-info"><div class="anom-asset">GT-02</div><div class="anom-desc">LPT efficiency −0.4%</div></div>
-                      <span class="anom-conf">68%</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="dash-panel-right">
-                  <div class="anom-detail-pane" id="anom-detail">
-                    <div class="adp-header">
-                      <span class="alert-pill alert-pill-high" id="adp-pill">HIGH</span>
-                      <span class="adp-title" id="adp-title">Combustion Instability Precursor</span>
-                    </div>
-                    <div class="adp-asset-tag" id="adp-asset">GT-07 · Frame 7 · Plant Alpha</div>
-                    <div class="adp-rows" id="adp-rows">
-                      <div class="adp-row"><span class="adp-k">Root cause</span><span class="adp-v">T4 temp rising above trend. Cross-correlated with ΔP oscillation at 200 Hz band.</span></div>
-                      <div class="adp-row"><span class="adp-k">Confidence</span><span class="adp-v" style="color:#f59e0b">87% — High</span></div>
-                      <div class="adp-row"><span class="adp-k">Predicted fault</span><span class="adp-v" style="color:#8fb3d0">~23 days (CI: 18–31d)</span></div>
-                      <div class="adp-row"><span class="adp-k">Recommended</span><span class="adp-v">Borescope inspection · hot section</span></div>
-                    </div>
-                    <div class="adp-footer">
-                      <span class="adp-action" id="adp-wo-btn">Create WO →</span>
-                      <span class="adp-action" style="color:var(--text-3)">Snooze 24h</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ══ ANALYTICS VIEW ══ -->
-            <div class="dash-view-panel" id="dash-view-analytics">
-              <div class="analytics-pane">
-                <div class="analytics-left">
-                  <div class="panel-header" style="padding:0 0 10px">
-                    <span class="panel-title">Fleet Health Score</span>
-                    <span style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-3)">Last 30 days</span>
-                  </div>
-                  <div class="analytics-bars">
-                    <div class="ab-row"><span class="ab-name">GT-04</span><div class="ab-track"><div class="ab-fill ab-ok" data-width="96"></div></div><span class="ab-val">96%</span></div>
-                    <div class="ab-row"><span class="ab-name">GT-02</span><div class="ab-track"><div class="ab-fill ab-ok" data-width="93"></div></div><span class="ab-val">93%</span></div>
-                    <div class="ab-row"><span class="ab-name">GT-07</span><div class="ab-track"><div class="ab-fill ab-warn" data-width="71"></div></div><span class="ab-val" style="color:#f59e0b">71%</span></div>
-                    <div class="ab-row"><span class="ab-name">GT-01</span><div class="ab-track"><div class="ab-fill ab-crit" data-width="44"></div></div><span class="ab-val" style="color:#c08a3e">44%</span></div>
-                  </div>
-                </div>
-                <div class="analytics-right">
-                  <div class="am-grid">
-                    <div class="am-card"><div class="am-val">94.1%</div><div class="am-lbl">Fleet Avg Efficiency</div></div>
-                    <div class="am-card"><div class="am-val" style="color:#22c55e">↑ 1.3%</div><div class="am-lbl">vs Last Month</div></div>
-                    <div class="am-card"><div class="am-val">$1.4M</div><div class="am-lbl">Savings YTD</div></div>
-                    <div class="am-card"><div class="am-val" style="color:#f59e0b">2</div><div class="am-lbl">Anomalies Active</div></div>
-                  </div>
-                  <div class="analytics-trend-wrap">
-                    <span class="panel-title">EGT Fleet Trend · 7-Day</span>
-                    <svg viewBox="0 0 220 48" class="analytics-trend-svg" preserveAspectRatio="none">
-                      <defs>
-                        <linearGradient id="at-grad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#6e93b3" stop-opacity="0.18"/>
-                          <stop offset="100%" stop-color="#6e93b3" stop-opacity="0"/>
-                        </linearGradient>
-                      </defs>
-                      <path d="M0,32 C30,30 60,28 90,26 C120,24 150,23 180,21 C200,20 212,19 220,18 L220,48 L0,48 Z" fill="url(#at-grad)"/>
-                      <path d="M0,32 C30,30 60,28 90,26 C120,24 150,23 180,21 C200,20 212,19 220,18" fill="none" stroke="#6e93b3" stroke-width="1.5"/>
-                      <path d="M120,23 C140,20 165,16 185,11 C200,7 212,4 220,2" fill="none" stroke="#8fb3d0" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.85"/>
-                      <text x="162" y="11" font-size="7" fill="#8fb3d0" font-family="monospace" opacity="0.9">GT-07 ↑</text>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ══ MAINTENANCE VIEW ══ -->
-            <div class="dash-view-panel" id="dash-view-maintenance">
-              <div class="maint-pane">
-                <div class="panel-header" style="padding:0 0 10px">
-                  <span class="panel-title">Upcoming Maintenance</span>
-                  <span class="panel-badge" style="color:#54718c;background:rgba(84, 113, 140,0.12);border:1px solid rgba(84, 113, 140,0.25)">5 EVENTS</span>
-                </div>
-                <div class="maint-table">
-                  <div class="maint-thead"><span>Asset</span><span>Work Type</span><span>Scheduled</span><span>Status</span><span>WO #</span></div>
-                  <div class="maint-row maint-urgent-row">
-                    <span class="maint-asset">GT-07</span>
-                    <span class="maint-type">Borescope · Hot section</span>
-                    <span class="maint-date">Jun 4, 2026</span>
-                    <span class="maint-tag maint-tag-urgent">Action Required</span>
-                    <span class="maint-wo maint-wo-create">Create →</span>
-                  </div>
-                  <div class="maint-row">
-                    <span class="maint-asset">GT-01</span>
-                    <span class="maint-type">Offline compressor wash</span>
-                    <span class="maint-date">Jun 8, 2026</span>
-                    <span class="maint-tag maint-tag-sched">Scheduled</span>
-                    <span class="maint-wo">WO-1847</span>
-                  </div>
-                  <div class="maint-row">
-                    <span class="maint-asset">GT-01</span>
-                    <span class="maint-type">Major overhaul (C-inspection)</span>
-                    <span class="maint-date">Jun 12, 2026</span>
-                    <span class="maint-tag maint-tag-plan">Planned</span>
-                    <span class="maint-wo">WO-1821</span>
-                  </div>
-                  <div class="maint-row">
-                    <span class="maint-asset">GT-04</span>
-                    <span class="maint-type">Annual borescope inspection</span>
-                    <span class="maint-date">Aug 19, 2026</span>
-                    <span class="maint-tag maint-tag-plan">Planned</span>
-                    <span class="maint-wo">WO-1903</span>
-                  </div>
-                  <div class="maint-row">
-                    <span class="maint-asset">GT-02</span>
-                    <span class="maint-type">Fuel nozzle inspection</span>
-                    <span class="maint-date">Sep 3, 2026</span>
-                    <span class="maint-tag maint-tag-plan">Planned</span>
-                    <span class="maint-wo">WO-1911</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
+        <div class="foot-col">
+          <h4>Projects</h4>
+          <a href="turbofan.html">Turbofan · Energy</a>
+          <a href="#projects">Hospital · Healthcare</a>
+          <a href="#projects">Heavy Industry</a>
+          <a href="#projects">Agriculture</a>
         </div>
-      </div>
-      <!-- END browser mockup -->
-
-      <!-- ── iPhone 15 Pro mockup ── -->
-      <div class="iphone-wrap">
-        <div class="iphone-frame">
-          <!-- Side buttons -->
-          <div class="iphone-vol-up"></div>
-          <div class="iphone-vol-dn"></div>
-          <div class="iphone-power"></div>
-
-          <!-- Screen -->
-          <div class="iphone-screen">
-            <!-- Dynamic Island -->
-            <div class="dynamic-island">
-              <div class="di-dot di-dot-l"></div>
-              <div class="di-pill"></div>
-              <div class="di-dot di-dot-r"></div>
-            </div>
-
-            <!-- Status bar -->
-            <div class="iphone-statusbar">
-              <span class="sb-time">9:41</span>
-              <div class="sb-icons">
-                <svg width="15" height="11" viewBox="0 0 15 11" fill="white"><rect x="0" y="3" width="3" height="8" rx="0.5" opacity="0.4"/><rect x="4" y="2" width="3" height="9" rx="0.5" opacity="0.6"/><rect x="8" y="0" width="3" height="11" rx="0.5" opacity="0.8"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
-                <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><path d="M8 1.5C5.6 1.5 3.4 2.5 1.8 4.1L0 2.3C2.1 0.8 4.9 0 8 0s5.9.8 8 2.3l-1.8 1.8C12.6 2.5 10.4 1.5 8 1.5z" opacity="0.4"/><path d="M8 4.5c-1.7 0-3.3.7-4.4 1.8L2 4.7C3.5 3.2 5.6 2.3 8 2.3s4.5.9 6 2.4L12.4 6.3C11.3 5.2 9.7 4.5 8 4.5z" opacity="0.7"/><path d="M8 7.5c-.9 0-1.8.4-2.4 1L4 6.9C5 5.7 6.4 5 8 5s3 .7 4 1.9l-1.6 1.6C9.8 7.9 8.9 7.5 8 7.5z"/><circle cx="8" cy="11" r="1.5"/></svg>
-                <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" stroke-opacity="0.35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="white"/><path d="M23 4v4a2 2 0 000-4z" fill="white" opacity="0.4"/></svg>
-              </div>
-            </div>
-
-            <!-- App content -->
-            <div class="iphone-content">
-              <div class="app-header">
-                <span class="app-logo">Turb<span style="color:#8fb3d0">netic</span></span>
-                <div class="app-alert-dot"></div>
-              </div>
-
-              <!-- Critical alert card — red glow -->
-              <div class="notif-card notif-critical">
-                <div class="notif-top-row">
-                  <div class="notif-app-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#c08a3e" stroke-width="1.5"/></svg>
-                  </div>
-                  <span class="notif-app-name">ANOMALY ALERT</span>
-                  <span class="notif-time">now</span>
-                </div>
-                <div class="notif-title">Critical: GT-07 Combustion</div>
-                <div class="notif-body">EGT +14°C above trend. 87% confidence. Estimated 23 days to fault.</div>
-                <div class="notif-actions">
-                  <button class="notif-btn notif-btn-primary">View Details</button>
-                  <button class="notif-btn notif-btn-ghost">Dismiss</button>
-                </div>
-              </div>
-
-              <!-- RUL arc gauge (phone version) -->
-              <div class="phone-rul-card">
-                <div class="phone-rul-label">GT-07 Remaining Useful Life</div>
-                <div class="phone-rul-gauge">
-                  <svg viewBox="0 0 140 85" class="phone-rul-svg">
-                    <defs>
-                      <linearGradient id="phone-rul-grad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stop-color="#22c55e"/>
-                        <stop offset="60%" stop-color="#f59e0b"/>
-                        <stop offset="100%" stop-color="#c08a3e"/>
-                      </linearGradient>
-                    </defs>
-                    <path d="M14,78 A56,56 0 0,1 126,78" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10" stroke-linecap="round"/>
-                    <path d="M14,78 A56,56 0 0,1 126,78" fill="none" stroke="url(#phone-rul-grad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="102" opacity="0.95"/>
-                    <text x="70" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="#f8fafc" font-family="Space Grotesk, sans-serif">847</text>
-                    <text x="70" y="77" text-anchor="middle" font-size="8.5" fill="#64748b" font-family="monospace">HOURS REMAINING</text>
-                  </svg>
-                </div>
-                <div class="phone-rul-stats">
-                  <div class="phone-stat"><span class="ps-val ps-warn">23d</span><span class="ps-lbl">Predicted Fault</span></div>
-                  <div class="phone-stat"><span class="ps-val">87%</span><span class="ps-lbl">Confidence</span></div>
-                  <div class="phone-stat"><span class="ps-val ps-ok">4</span><span class="ps-lbl">Fleet OK</span></div>
-                </div>
-              </div>
-
-              <!-- Secondary notification -->
-              <div class="notif-card notif-warning">
-                <div class="notif-top-row">
-                  <div class="notif-app-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>
-                  </div>
-                  <span class="notif-app-name">MAINTENANCE</span>
-                  <span class="notif-time">2h ago</span>
-                </div>
-                <div class="notif-title">GT-01 Wash Recommended</div>
-                <div class="notif-body">Stage 5 efficiency −2.1%. Schedule offline wash within 8 days.</div>
-              </div>
-
-              <!-- Home indicator -->
-              <div class="iphone-home-bar"></div>
-            </div>
-          </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <a href="#approach">Approach</a>
+          <a href="#edge">Why edge</a>
+          <a href="#contact">Contact</a>
+          <a href="mailto:service@turbnetic.ai">service@turbnetic.ai</a>
         </div>
-      </div>
-      <!-- END iPhone mockup -->
-
-    </div><!-- END dashboard-layout -->
-  </section>
-
-  <!-- ═══════════════════════════════════════
-       AI × ELECTRICITY LOOP
-  ═══════════════════════════════════════ -->
-  <section id="ai-loop">
-    <div class="section-container ai-loop-inner" data-animate="fade-up">
-      <div class="ai-loop-text">
-        <div class="section-eyebrow ai-loop-eyebrow">Why Now</div>
-        <h2 class="ai-loop-headline">AI Created the Demand.<br><span class="gradient-text">AI Keeps It Running.</span></h2>
-        <p>Data centers will draw over <strong>1,000 TWh a year</strong> &mdash; Japan's entire consumption &mdash; and US data center power demand is projected to grow <strong>160% by 2030</strong>. Gas turbines are the only dispatchable generation fast enough to follow that load. They can no longer afford to fail.</p>
-      </div>
-      <div class="ai-loop-cycle">
-        <div class="loop-step"><span>AI infrastructure</span> needs electricity</div>
-        <div class="loop-step-arrow">&#8595;</div>
-        <div class="loop-step"><span>Gas turbines</span> supply it &mdash; and must never fail</div>
-        <div class="loop-step-arrow">&#8595;</div>
-        <div class="loop-step loop-step-hl"><span>Turbnetic.ai</span> keeps them running</div>
-        <div class="loop-step-arrow">&#8595;</div>
-        <div class="loop-step">Reliable power <span>enables more AI</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════
-       CTA SECTION
-  ═══════════════════════════════════════ -->
-  <section id="cta">
-    <div class="cta-inner">
-      <div class="cta-glow"></div>
-      <div class="section-eyebrow cta-eyebrow">Get Started</div>
-      <h2 class="cta-headline">
-        Your First Anomaly Alert<br>
-        in Under <span class="gradient-text">4 Hours</span>
-      </h2>
-      <p class="cta-sub">Connect to your PI historian or SCADA system, import your tag list, and receive your first scored anomaly alert — without writing a single line of code.</p>
-
-      <form class="cta-form" id="demo-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name">Full Name</label>
-            <input type="text" id="name" placeholder="Jane Kowalski" autocomplete="name">
-          </div>
-          <div class="form-group">
-            <label for="email">Work Email</label>
-            <input type="email" id="email" placeholder="jane@powerplant.com" autocomplete="email">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="plant">Plant / Fleet Type</label>
-            <select id="plant">
-              <option value="">Select turbine type...</option>
-              <option>GE Frame 5</option>
-              <option>GE Frame 6</option>
-              <option>GE Frame 7</option>
-              <option>GE Frame 9</option>
-              <option>GE LM2500</option>
-              <option>GE LM6000</option>
-              <option>Siemens SGT Series</option>
-              <option>Mitsubishi M701</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="historian">Existing Historian / SCADA</label>
-            <select id="historian">
-              <option value="">Select system...</option>
-              <option>OSIsoft PI System</option>
-              <option>GE APM / Asset360</option>
-              <option>Honeywell Experion</option>
-              <option>ABB Symphony Plus</option>
-              <option>Emerson DeltaV</option>
-              <option>Siemens SPPA-T3000</option>
-              <option>Custom OPC-UA Server</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="btn-cta-submit">
-          <span>Book a Technical Demo</span>
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <p class="form-note">No commitment. Live demo on your actual plant data within 24 hours.</p>
-      </form>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════
-       FOOTER
-  ═══════════════════════════════════════ -->
-  <footer id="footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="footer-logo">
-          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="14" r="12.5" stroke="#6e93b3" stroke-width="1" opacity="0.45"/>
-            <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#8fb3d0" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.88" transform="rotate(0 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.72" transform="rotate(45 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.55" transform="rotate(90 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.40" transform="rotate(135 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.55" transform="rotate(180 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.70" transform="rotate(225 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.85" transform="rotate(270 14 14)"/>
-            <path d="M13 9 L15.5 9 L17 3.5 L13.5 3.5 Z" fill="#6e93b3" opacity="0.78" transform="rotate(315 14 14)"/>
-            <circle cx="14" cy="14" r="5" fill="#020810"/>
-            <circle cx="14" cy="14" r="5" stroke="#6e93b3" stroke-width="0.8"/>
-            <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/>
-          </svg>
-          Turb<span style="color:#8fb3d0">netic</span><span style="color:rgba(110, 147, 179,0.6);font-size:0.8em">.ai</span>
-        </div>
-        <p class="footer-tagline">Smart engine intelligence for gas turbine and powerplant fleets worldwide.</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <div class="footer-col-title">Platform</div>
-          <a href="#">Capabilities</a>
-          <a href="#">Integrations</a>
+        <div class="foot-col">
+          <h4>Trust</h4>
           <a href="#">Security</a>
-          <a href="#">Pricing</a>
-        </div>
-        <div class="footer-col">
-          <div class="footer-col-title">Resources</div>
-          <a href="#">Documentation</a>
-          <a href="#">API Reference</a>
-          <a href="#">Case Studies</a>
-          <a href="#">Webinars</a>
-        </div>
-        <div class="footer-col">
-          <div class="footer-col-title">Company</div>
-          <a href="#">About</a>
-          <a href="#">Blog</a>
-          <a href="#">Careers</a>
-          <a href="#">Contact</a>
-          <a href="mailto:service@turbnetic.ai" class="footer-contact-email">service@turbnetic.ai</a>
+          <a href="#">Data sovereignty</a>
+          <a href="#">SOC 2 · ISO 27001</a>
         </div>
       </div>
-    </div>
-    <div class="footer-bottom">
-      <span>&copy; 2026 Turbnetic.ai, Inc. All rights reserved.</span>
-      <span>SOC 2 Type II &nbsp;&middot;&nbsp; ISO 27001 &nbsp;&middot;&nbsp; IEC 62443</span>
+      <div class="foot-bottom">
+        <span>&copy; <span id="foot-year">2026</span> Turbnetic.ai, Inc. All rights reserved.</span>
+        <span>SOC 2 Type II&nbsp; · &nbsp;ISO 27001&nbsp; · &nbsp;IEC 62443</span>
+      </div>
     </div>
   </footer>
 
-  <!-- Mobile menu toggle -->
-  <script>
-    (function () {
-      var btn  = document.querySelector('.nav-hamburger');
-      var menu = document.getElementById('mobile-menu');
-      if (!btn || !menu) return;
-      btn.addEventListener('click', function () {
-        var open = btn.classList.toggle('open');
-        menu.classList.toggle('open');
-        btn.setAttribute('aria-expanded', open);
-      });
-      menu.querySelectorAll('a').forEach(function (a) {
-        a.addEventListener('click', function () {
-          btn.classList.remove('open');
-          menu.classList.remove('open');
-          btn.setAttribute('aria-expanded', 'false');
-        });
-      });
-    })();
-  </script>
-
-  <!-- Scripts -->
-  <script src="js/features-showcase.js?v=20260616-1"></script>
-  <script src="js/app.js?v=20260616-1"></script>
-  <script src="js/turbofan.js?v=20260616-1"></script>
-  <script src="js/dataflow.js?v=20260616-1"></script>
-  <script src="js/network.js"></script>
-  <script src="js/premium-ui.js?v=20260616-1"></script>
-
+  <script src="js/home.js?v=20260703-11"></script>
 </body>
 </html>
