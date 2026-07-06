@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Musa Aghayev — Founder & Lead Engineer, Turbnetic.ai</title>
+  <meta name="description" content="Musa Aghayev — AI/ML engineer and founder of Turbnetic.ai. LLM training, agentic AI, edge inference, computer vision, reinforcement learning, and biomedical AI.">
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <meta name="theme-color" content="#f4f1ea">
+
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&f[]=zodiak@400,500&f[]=zodiak-italic@400,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --paper:#f4f1ea; --paper-2:#ece8dd; --ink:#111110; --ink-2:#55524a; --ink-3:#8f8b7f;
+      --line:rgba(17,17,16,0.15); --line-2:rgba(17,17,16,0.28); --accent:#e8462a;
+      --head:'Switzer','Helvetica Neue',Arial,sans-serif; --mono:'JetBrains Mono',monospace; --serif:'Zodiak',Georgia,serif;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--paper); color:var(--ink); font-family:var(--head); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+    a { color:inherit; text-decoration:none; }
+    ::selection { background:var(--accent); color:var(--paper); }
+
+    .wrap { width:100%; max-width:1000px; margin:0 auto; padding:0 48px; }
+
+    /* top bar */
+    .topbar { position:sticky; top:0; z-index:10; background:rgba(244,241,234,0.86); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+    .topbar-in { max-width:1000px; margin:0 auto; padding:16px 48px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    .back { font-family:var(--mono); font-size:0.74rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-2); display:inline-flex; align-items:center; gap:9px; transition:color .3s; }
+    .back:hover { color:var(--ink); }
+    .back .a { transition:transform .3s; } .back:hover .a { transform:translateX(-3px); }
+    .topbar-tag { font-family:var(--mono); font-size:0.68rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-3); }
+
+    /* masthead */
+    .mast { padding:88px 0 56px; border-bottom:1px solid var(--ink); }
+    .eyebrow { font-family:var(--mono); font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink); display:inline-flex; align-items:center; gap:12px; }
+    .eyebrow::before { content:""; width:30px; height:1px; background:var(--ink); }
+    .name { font-family:var(--head); font-weight:600; font-size:clamp(2.8rem,7vw,5.4rem); line-height:0.95; letter-spacing:-0.045em; margin:26px 0 0; }
+    .name .dot { color:var(--accent); }
+    .role { margin-top:20px; font-size:clamp(1.05rem,1.6vw,1.32rem); color:var(--ink-2); max-width:46ch; }
+    .role em { font-family:var(--serif); font-style:italic; color:var(--accent); }
+    .contact { margin-top:30px; display:flex; flex-wrap:wrap; gap:8px 22px; font-family:var(--mono); font-size:0.78rem; letter-spacing:0.02em; color:var(--ink-2); }
+    .contact a { border-bottom:1px solid transparent; transition:border-color .3s,color .3s; }
+    .contact a:hover { color:var(--ink); border-bottom-color:var(--ink); }
+
+    /* section */
+    section { padding:60px 0; border-bottom:1px solid var(--line); }
+    .sec-head { display:flex; align-items:baseline; gap:16px; margin-bottom:36px; }
+    .sec-n { font-family:var(--mono); font-size:0.72rem; color:var(--ink-3); letter-spacing:0.1em; }
+    .sec-t { font-family:var(--head); font-weight:600; font-size:clamp(1.5rem,3vw,2.2rem); letter-spacing:-0.03em; }
+
+    /* skills */
+    .skills { border-top:1px solid var(--line); }
+    .skill { display:grid; grid-template-columns:1fr 130px; gap:24px; align-items:baseline; padding:16px 4px; border-bottom:1px solid var(--line); }
+    .skill-k { font-size:0.98rem; }
+    .skill-y { font-family:var(--mono); font-size:0.78rem; letter-spacing:0.04em; color:var(--ink-2); text-align:right; }
+
+    /* experience */
+    .job { padding:30px 0; border-bottom:1px solid var(--line); }
+    .job:last-child { border-bottom:0; }
+    .job-top { display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .job-co { font-family:var(--head); font-weight:600; font-size:1.28rem; letter-spacing:-0.02em; }
+    .job-co .loc { color:var(--ink-3); font-weight:500; font-size:0.9rem; }
+    .job-date { font-family:var(--mono); font-size:0.74rem; letter-spacing:0.04em; color:var(--ink-2); white-space:nowrap; }
+    .job-title { margin-top:6px; font-family:var(--mono); font-size:0.76rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); }
+    .job ul { margin:16px 0 0; padding:0; list-style:none; }
+    .job li { position:relative; padding-left:20px; margin-top:10px; color:var(--ink-2); font-size:0.95rem; max-width:78ch; }
+    .job li::before { content:""; position:absolute; left:2px; top:0.62em; width:6px; height:1px; background:var(--ink-3); }
+
+    /* simple lists */
+    .list { border-top:1px solid var(--line); }
+    .list-item { padding:18px 4px; border-bottom:1px solid var(--line); }
+    .list-item h3 { font-family:var(--head); font-weight:600; font-size:1.05rem; letter-spacing:-0.01em; }
+    .list-item p { margin-top:6px; color:var(--ink-2); font-size:0.94rem; max-width:80ch; }
+    .list-item .meta { font-family:var(--mono); font-size:0.72rem; color:var(--ink-3); letter-spacing:0.04em; }
+
+    /* footer */
+    footer { padding:48px 0; }
+    .foot { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; font-family:var(--mono); font-size:0.72rem; letter-spacing:0.04em; color:var(--ink-3); }
+    .foot a { color:var(--ink-2); } .foot a:hover { color:var(--accent); }
+
+    @media (max-width:640px) {
+      .wrap, .topbar-in { padding-left:22px; padding-right:22px; }
+      .mast { padding:60px 0 44px; }
+      .skill { grid-template-columns:1fr 92px; gap:14px; }
+      .job-date { font-size:0.7rem; }
+      section { padding:48px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-in">
+      <a class="back" href="index.html"><span class="a">←</span> Turbnetic.ai</a>
+      <span class="topbar-tag">Founder</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Masthead -->
+    <header class="mast">
+      <span class="eyebrow">Founder / Turbnetic.ai</span>
+      <h1 class="name">Musa Aghayev<span class="dot">.</span></h1>
+      <p class="role">AI/ML engineer building systems from <em>edge to foundation model</em> — LLM training, agentic AI, and real-time ML on constrained hardware.</p>
+      <div class="contact">
+        <a href="tel:+15184959629">+1 518 495 9629</a>
+        <a href="mailto:musa@turbnetic.ai">musa@turbnetic.ai</a>
+        <a href="https://linkedin.com/in/musagayev" target="_blank" rel="noopener">linkedin.com/in/musagayev</a>
+        <a href="https://github.com/musa92" target="_blank" rel="noopener">github.com/musa92</a>
+        <a href="https://www.turbnetic.ai/" target="_blank" rel="noopener">turbnetic.ai</a>
+      </div>
+    </header>
+
+    <!-- Skills -->
+    <section>
+      <div class="sec-head"><span class="sec-n">01</span><h2 class="sec-t">Expertise &amp; skills</h2></div>
+      <div class="skills">
+        <div class="skill"><div class="skill-k">LLM pre/post-training, agentic AI, tool-calling, model routing</div><div class="skill-y">3+ yrs</div></div>
+        <div class="skill"><div class="skill-k">Python, C++, JAX (scientific &amp; ML), TensorFlow / PyTorch</div><div class="skill-y">7+ yrs</div></div>
+        <div class="skill"><div class="skill-k">C++ for real-time and systems ML</div><div class="skill-y">10+ yrs</div></div>
+        <div class="skill"><div class="skill-k">CUDA / GPU programming</div><div class="skill-y">7+ yrs</div></div>
+        <div class="skill"><div class="skill-k">ML data infrastructure (ETL, feature stores, streaming)</div><div class="skill-y">8+ yrs</div></div>
+        <div class="skill"><div class="skill-k">ML deployment &amp; MLOps (Vertex AI, SageMaker, CI/CD)</div><div class="skill-y">8+ yrs</div></div>
+        <div class="skill"><div class="skill-k">Applied computer vision (detection, segmentation, OCR)</div><div class="skill-y">5+ yrs</div></div>
+        <div class="skill"><div class="skill-k">Reinforcement learning (policy gradient, model-based RL)</div><div class="skill-y">6+ yrs</div></div>
+        <div class="skill"><div class="skill-k">Robotics &amp; embedded ML systems</div><div class="skill-y">4+ yrs</div></div>
+        <div class="skill"><div class="skill-k">Biomedical AI (NeuroML, drug discovery, BCI)</div><div class="skill-y">3+ yrs</div></div>
+      </div>
+    </section>
+
+    <!-- Experience -->
+    <section>
+      <div class="sec-head"><span class="sec-n">02</span><h2 class="sec-t">Work experience</h2></div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">Turbnetic, Inc. <span class="loc">· turbnetic.ai</span></div><div class="job-date">2026 — Present</div></div>
+        <div class="job-title">Founder &amp; Lead Engineer</div>
+        <ul>
+          <li>Built the predictive-maintenance platform end-to-end — sensor ingestion, fault diagnosis, edge inference, and a repair-orchestration agent deployed on constrained field hardware.</li>
+          <li>Trained the edge maintenance SLM via domain-adaptive pretraining on turbofan manuals and SFT on repair-directive pairs, then applied teacher-student distillation and INT4 quantization to meet field-device memory and latency limits.</li>
+          <li>Cut MTTR ~25% with RAG grounding over service manuals and live telemetry, giving mechanics step-by-step repair directives tied to the specific fault.</li>
+          <li>Cut false-positive alerts ~30% with a Markov-chain causal model over engine sensor states that traced fault propagation to root cause.</li>
+          <li>Designed a multi-sensor pipeline (vibration, temperature, pressure, RPM) with FFT spectral features feeding a Temporal Fusion Transformer for RUL prediction and an encoder-decoder for anomaly detection.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">PayPal <span class="loc">· San Jose, CA</span></div><div class="job-date">02/2026 — Present</div></div>
+        <div class="job-title">Lead AI/ML · Agentic AI Team</div>
+        <ul>
+          <li>Built PayPal's model-trainer library in JAX and PyTorch, replacing duplicated per-model training code with one reusable framework and cutting boilerplate ~60%.</li>
+          <li>Architected and trained PayPal's agentic tool-call model — P95 tool-selection latency under 500ms, tier-routing accuracy lifted 96% → 99.8%, with episodic and continual memory for tail scenarios.</li>
+          <li>Architected PayPal's finance tokenizer for reasoning models, encoding transaction structure and financial entities to cut amount mis-parsing and reduce hallucination on finance tasks.</li>
+          <li>Architected dynamic model routing for the Superagent, dispatching each request across frontier and fine-tuned models by complexity, cost, and latency to cut serving cost at steady quality.</li>
+          <li>Cut Superagent P95 latency 12s → 6.5s with a semantic cache over tool calls, reusing results for semantically equivalent requests.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">Home Depot <span class="loc">· Atlanta, GA</span></div><div class="job-date">01/2024 — 02/2026</div></div>
+        <div class="job-title">Head of AI · Ads</div>
+        <ul>
+          <li>Led a 5-engineer team rebuilding Home Depot's ads AI stack across ranking, retrieval, personalization, and the real-time serving pipelines beneath them.</li>
+          <li>Shipped 13+ production ad models in one year on a unified multi-task objective (CTR, CVR, viewability); infrastructure consolidation drove an estimated $23M in savings.</li>
+          <li>Lifted CTR ~18% and ROAS ~7% with a sequential next-action prediction model distilled from a larger teacher, scoring live user intent at serve time.</li>
+          <li>Architected and trained a multi-gate MoE ad ranker with per-objective expert towers over a transformer clickstream encoder, scoring ~1B daily auction decisions.</li>
+          <li>Built a teacher-student distillation pipeline compressing a large behavioral transformer into low-latency GBDT and shallow neural rankers for sub-10ms serving (Meta GEM/Andromeda paradigm).</li>
+          <li>Built a control-theoretic pacing &amp; budget engine (PID controllers, sigmoid spend curves) holding budget adherence for 9,000+ campaigns under high traffic variance.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">Albany Medical Center <span class="loc">· Albany, NY</span></div><div class="job-date">09/2022 — 01/2024</div></div>
+        <div class="job-title">Staff Machine Learning Engineer</div>
+        <ul>
+          <li>Led deployment of MRI and fMRI tumor-detection models from research prototype to clinically adopted diagnostic tools — diagnostic throughput +20%, AUC improved to 0.98.</li>
+          <li>Built a V-Net pipeline for real-time brain segmentation and boundary detection, optimizing inference under 50ms for ICU and stroke-response edge hardware.</li>
+          <li>Applied 8-bit quantization and pruning to on-device detection models, cutting footprint 50% with under 1% accuracy loss.</li>
+          <li>Managed HIPAA-compliant deployment and model governance, reducing deployment time from weeks to 3 days with hospital IT and compliance.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">SUNY Robotics Lab <span class="loc">· Albany, NY</span></div><div class="job-date">07/2019 — 08/2022</div></div>
+        <div class="job-title">Machine Learning Researcher</div>
+        <ul>
+          <li>Pioneered deep-RL control for non-linear robotic systems (multi-rotor, bipedal) with hierarchical policy networks and PPO and physics-informed reward shaping — 45% less disturbance variance, 65% less degradation under perturbation.</li>
+          <li>Engineered joint-level motor policies for bipedal locomotion with a physics-informed observation space (GRF/angular momentum), cutting the sim-to-real gap 40% and improving energy efficiency 20%.</li>
+          <li>Established decentralized control for robotic swarms (50+ agents) using MARL and a GNN-based shared state embedding — mission fulfillment +25%, communication efficiency +50%.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">MobiCentrix <span class="loc">· Albany, NY · acquired</span></div><div class="job-date">02/2019 — 08/2022</div></div>
+        <div class="job-title">Founder</div>
+        <ul>
+          <li>Founded and scaled a digital-forensics practice specializing in Apple device recovery — serving law enforcement and enterprise on high-urgency data extraction across iPhone, iPad, and Mac.</li>
+          <li>Performed chip-level repair and NAND flash extraction on Apple logic boards, bypassing Secure Enclave-locked devices and recovering data from physically damaged hardware where software tools failed.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">SUNY Polytechnic Institute <span class="loc">· Utica, NY</span></div><div class="job-date">09/2017 — 07/2019</div></div>
+        <div class="job-title">Graduate Research Assistant · Applied Physics &amp; ML</div>
+        <ul>
+          <li>Designed an RL framework embedding physical conservation laws (energy, momentum) into the policy network, reducing non-physical actions 25%.</li>
+          <li>Developed physics-informed reward shaping and Lagrangian-based constraint policy learning, cutting training divergence 30% and improving stability on continuous control.</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-top"><div class="job-co">Kandilli Observatory Research Center <span class="loc">· Istanbul, Turkey</span></div><div class="job-date">08/2014 — 09/2017</div></div>
+        <div class="job-title">Machine Learning Engineer</div>
+        <ul>
+          <li>Built an ML classification model on Chandra X-ray telescope outputs — 94.1% accuracy on habitability prediction across millions of high-noise, sparse observations.</li>
+          <li>Built a multi-modal planetary classification engine combining light-reflection dynamics, atmospheric density modeling, and gas-composition features to rank exoplanets by bio-viability.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Education -->
+    <section>
+      <div class="sec-head"><span class="sec-n">03</span><h2 class="sec-t">Education</h2></div>
+      <div class="list">
+        <div class="list-item"><h3>PhD, Computer Science <span class="meta">(incomplete)</span></h3><p>SUNY at Albany — MRI processing, neuroimaging, and brain-machine interface systems.</p></div>
+        <div class="list-item"><h3>MS, Computer &amp; Information Science</h3><p class="meta">SUNY Polytechnic Institute · Utica, NY</p></div>
+        <div class="list-item"><h3>MS, Computer Science</h3><p class="meta">Ege University · Izmir, Turkey</p></div>
+        <div class="list-item"><h3>BS, Applied Mathematics</h3><p class="meta">Baku Engineering University</p></div>
+      </div>
+    </section>
+
+    <!-- Research & Projects -->
+    <section>
+      <div class="sec-head"><span class="sec-n">04</span><h2 class="sec-t">Selected research &amp; projects</h2></div>
+      <div class="list">
+        <div class="list-item"><h3>Intention Over Attention</h3><p>A framework shifting model computation from token-level attention toward intention-driven inference to improve reasoning stability and reduce hallucinations.</p></div>
+        <div class="list-item"><h3>Honda Civic Stack — Autonomous Planning</h3><p>Real-time CAN-bus control; fused IMU/GPS for sub-meter trajectory estimation; GPU-accelerated lane detection.</p></div>
+        <div class="list-item"><h3>Self-Flying Drones</h3><p>Custom hardware running fused Kalman filters and fuzzy controllers on Jetson TX1; improved waypoint accuracy 15% via MIT NanoMap.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="foot">
+        <span>© <span id="yr">2026</span> Musa Aghayev</span>
+        <span><a href="index.html">Turbnetic.ai</a> &nbsp;·&nbsp; <a href="mailto:musa@turbnetic.ai">musa@turbnetic.ai</a></span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>
