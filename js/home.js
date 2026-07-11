@@ -236,10 +236,11 @@ var lenis = null;
   var ctx = canvas.getContext('2d');
   var countEl = document.querySelector('[data-swarm-count]');
 
-  var INK = '235,232,224', ACCENT = '232,70,42';
+  var INK = '235,232,224', ACCENT = '34,211,238';
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
   var W = 0, H = 0, cx = 0, cy = 0, tick = 0;
-  var sensors = [], far = [], packets = [], rings = [], scans = [], sparks = [], processed = 0;
+  var sensors = [], far = [], packets = [], rings = [], scans = [], sparks = [], decisions = [], verdicts = [], processed = 0;
+  var chipFlash = 0, latency = 12.0, lastOut = { txt: '→ NOMINAL · CONF .97', a: 0.6 };
   var mouse = { x: 0, y: 0, on: false }, par = { x: 0, y: 0 };
   var looping = false, raf = null;
 
@@ -258,7 +259,7 @@ var lenis = null;
     if (W < 2 || H < 2) return;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cx = W * 0.64; cy = H * 0.4;
+    cx = W * 0.84; cy = H * 0.26;
     mouse.x = W / 2; mouse.y = H / 2;
 
     // near layer — the mesh
@@ -290,7 +291,7 @@ var lenis = null;
       cand[c * step].ch = { k: src.k, v: src.v, u: src.u, dec: src.dec, r: src.r.slice() };
     }
 
-    packets = []; rings = []; scans = []; sparks = [];
+    packets = []; rings = []; scans = []; sparks = []; decisions = []; verdicts = [];
     var pc = Math.min(34, Math.round(sensors.length * 1.1));
     for (var i = 0; i < pc; i++) packets.push(spawn());
   }
@@ -463,7 +464,22 @@ var lenis = null;
       m = packets[i]; m.t += m.sp;
       if (m.t >= 1) {
         rings.push({ r: 8, a: 0.55 }); processed++;
+        chipFlash = 1; latency = 9.5 + Math.random() * 4.8;
         if (sensors[m.i]) sensors[m.i].flash = 1;
+        // inference result — a decision travels back to the asset
+        if (Math.random() < 0.4 && sensors[m.i]) {
+          var alert = Math.random() < 0.1, tg = sensors[m.i];
+          decisions.push({
+            i: m.i,
+            mx: (cx + tg.x) / 2 + rand(-26, 26), my: (cy + tg.y) / 2 + rand(-26, 26),
+            t: 0, sp: rand(0.009, 0.014), alert: alert, trail: []
+          });
+          lastOut = {
+            txt: alert ? '→ ANOMALY P .9' + ((Math.random() * 8 | 0) + 1) + ' · ALERT'
+                       : '→ NOMINAL · CONF .9' + ((Math.random() * 8 | 0) + 1),
+            a: 1
+          };
+        }
         packets[i] = spawn(); continue;
       }
       if (m.t < 0) continue;
@@ -488,6 +504,42 @@ var lenis = null;
       ctx.beginPath(); ctx.arc(cx, cy, rg.r, 0, 6.2832); ctx.stroke();
     }
 
+    // outbound decisions — square heads: commands, not samples
+    for (i = decisions.length - 1; i >= 0; i--) {
+      var o = decisions[i], tgt = sensors[o.i];
+      if (!tgt) { decisions.splice(i, 1); continue; }
+      o.t += o.sp;
+      if (o.t >= 1) {
+        tgt.flash = 1;
+        verdicts.push({ i: o.i, txt: o.alert ? '⚠ ALERT · SPUN DOWN' : '✓ OK', life: 1 });
+        decisions.splice(i, 1); continue;
+      }
+      var ox = bez(cx, o.mx, tgt.x, o.t), oy = bez(cy, o.my, tgt.y, o.t);
+      o.trail.push(ox, oy);
+      if (o.trail.length > 16) o.trail.splice(0, 2);
+      for (var q3 = 0; q3 < o.trail.length - 2; q3 += 2) {
+        var sg = q3 / (o.trail.length - 2);
+        ctx.strokeStyle = 'rgba(' + ACCENT + ',' + (sg * 0.5).toFixed(3) + ')';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(o.trail[q3], o.trail[q3 + 1]); ctx.lineTo(o.trail[q3 + 2], o.trail[q3 + 3]); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(' + ACCENT + ',0.95)';
+      ctx.fillRect(ox - 2, oy - 2, 4, 4);
+    }
+
+    // verdict tags fade beside the asset that received the decision
+    for (i = verdicts.length - 1; i >= 0; i--) {
+      var vd = verdicts[i], vs = sensors[vd.i];
+      vd.life -= 0.006;
+      if (vd.life <= 0 || !vs) { verdicts.splice(i, 1); continue; }
+      var va = Math.min(1, vd.life * 3), vRight = vs.x < W * 0.62;
+      ctx.font = "600 9px 'Space Mono', monospace";
+      ctx.textAlign = vRight ? 'left' : 'right';
+      ctx.fillStyle = 'rgba(' + ACCENT + ',' + (va * 0.9).toFixed(3) + ')';
+      ctx.fillText(vd.txt, vs.x + (vRight ? 11 : -11), vs.y + 20);
+      ctx.textAlign = 'left';
+    }
+
     // ── edge model chip ──
     var ep = 1 + Math.sin(now * 2.4) * 0.14, sz = 14;
     var grd = ctx.createRadialGradient(cx, cy, 4, cx, cy, 70);
@@ -505,6 +557,11 @@ var lenis = null;
     ctx.beginPath(); ctx.arc(cx, cy, 22 * ep, 0, 6.2832); ctx.stroke();
     ctx.fillStyle = 'rgba(' + ACCENT + ',1)'; ctx.fillRect(cx - sz, cy - sz, sz * 2, sz * 2);
     ctx.fillStyle = 'rgba(6,6,7,0.95)'; ctx.fillRect(cx - 4.5, cy - 4.5, 9, 9);
+    if (chipFlash > 0.02) {
+      ctx.fillStyle = 'rgba(255,255,255,' + (chipFlash * 0.85).toFixed(3) + ')';
+      ctx.fillRect(cx - 4.5, cy - 4.5, 9, 9);
+      chipFlash *= 0.88;
+    }
     ctx.strokeStyle = 'rgba(' + ACCENT + ',0.8)'; ctx.lineWidth = 1.4;
     for (var g = -1; g <= 1; g++) {
       ctx.beginPath(); ctx.moveTo(cx + g * 7, cy - sz); ctx.lineTo(cx + g * 7, cy - sz - 5); ctx.stroke();
@@ -516,7 +573,13 @@ var lenis = null;
     ctx.font = "600 10px 'Space Mono', monospace";
     ctx.fillStyle = 'rgba(' + ACCENT + ',1)'; ctx.fillText('EDGE MODEL', cx, cy + sz + 24);
     ctx.font = "500 9px 'Space Mono', monospace";
-    ctx.fillStyle = 'rgba(' + INK + ',0.5)'; ctx.fillText('INT8 · 12 MS', cx, cy + sz + 37);
+    ctx.fillStyle = 'rgba(' + INK + ',0.5)'; ctx.fillText('INT8 · ' + latency.toFixed(1) + ' MS', cx, cy + sz + 37);
+    if (lastOut.a > 0.02) {
+      ctx.font = "600 9.5px 'Space Mono', monospace";
+      ctx.fillStyle = 'rgba(' + ACCENT + ',' + (lastOut.a * 0.95).toFixed(3) + ')';
+      ctx.fillText(lastOut.txt, cx, cy + sz + 52);
+      lastOut.a *= 0.997;
+    }
     ctx.textAlign = 'left';
 
     ctx.restore(); // near layer parallax
