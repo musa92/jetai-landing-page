@@ -1488,6 +1488,7 @@
 
     { id: "docs/federated-round.md", stage: "Overview", desc: "how one federated round works, step by step", lang: "md" },
     { id: "docs/demo-script.md", stage: "Overview", desc: "10 minute interview walkthrough", lang: "md" },
+    { id: "docs/apple-ads-privacy.md", stage: "Overview", desc: "how this maps to Apple Ads privacy by default", lang: "md" },
     { id: "data/README.md", stage: "Data", desc: "how the synthetic population works", lang: "md" },
     { id: "data/sample-devices.json", stage: "Data", desc: "real generator output: 4 simulated iPhones", lang: "json" },
     { id: "places/silicon-valley.json", stage: "Data", desc: "154 real venues (OpenStreetMap)", lang: "json" },
