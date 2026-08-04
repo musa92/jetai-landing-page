@@ -220,7 +220,7 @@
       });
       // Isoefficiency ellipses
       [{e:96,cx:0.995,cy:1.595,rx:0.028,ry:0.11},{e:95,cx:0.993,cy:1.593,rx:0.050,ry:0.19},{e:93,cx:0.988,cy:1.585,rx:0.073,ry:0.28},{e:91,cx:0.982,cy:1.570,rx:0.096,ry:0.37}]
-      .forEach((c,i)=>{
+      .forEach((c,i)=>{c
         var a=['rgba(110, 147, 179,0.52)','rgba(110, 147, 179,0.36)','rgba(0,180,255,0.22)','rgba(0,150,220,0.13)'][i];
         var ex=xOf(c.cx),ey=yOf(c.cy),erx=(c.rx/(MX-MN))*gW,ery=(c.ry/(PX-PN))*gH;
         ctx.beginPath();ctx.ellipse(ex,ey,erx,ery,0,0,PI*2);ctx.strokeStyle=a;ctx.lineWidth=1;ctx.stroke();
@@ -359,7 +359,7 @@
         ctx.fillText((mi===mj?'TRUE':'FALSE')+' '+lbl[mi],mx+cs/2,my+cs/2+10);
       }
       if(prog<1)prog=Math.min(prog+0.006,1);
-      raf=requestAnimationFrame(draw);
+      raf=requestAnimationFrame(draw); 
     }
     draw();return()=>cancelAnimationFrame(raf);
   }

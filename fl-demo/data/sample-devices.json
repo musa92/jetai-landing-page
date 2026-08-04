@@ -1,0 +1,352 @@
+{
+  "_comment": "Real output of data.js, exported verbatim. Every value below was produced by the same generator the trainer samples from at runtime; nothing here is hand-written.",
+  "generator": "buildRoundClients(cohort, k, roundSeed) in data.js",
+  "cohort": {
+    "id": "us",
+    "label": "United States",
+    "population": 812400,
+    "seed": 91010
+  },
+  "roundSeed": 20260803,
+  "generative_model": {
+    "note": "Each impression is a (user, ad) PAIR drawn from two INDEPENDENT latents, which is what makes \"a different ad for the same user\" representable.",
+    "u": "user intent for this impression, uniform [0,1]",
+    "a": "quality/relevance of the ad shown, uniform [0,1]",
+    "label": "engagement = 0.25u + 0.35a + 0.40*u*a  (+ N(0, 0.015)), clipped to [0,1]",
+    "interaction_term": "the 0.40*u*a term means a great ad shown to an unreceptive user still performs poorly"
+  },
+  "features": [
+    {
+      "name": "queryPoiRelevance",
+      "side": "ad",
+      "direction": "higher is better"
+    },
+    {
+      "name": "distanceScore",
+      "side": "user",
+      "direction": "higher is worse"
+    },
+    {
+      "name": "categoryAffinity",
+      "side": "ad",
+      "direction": "higher is better"
+    },
+    {
+      "name": "dwellTimeHistory",
+      "side": "user",
+      "direction": "higher is better"
+    },
+    {
+      "name": "priorImpressions",
+      "side": "ad",
+      "direction": "higher is better"
+    },
+    {
+      "name": "priorTaps",
+      "side": "ad",
+      "direction": "higher is better"
+    },
+    {
+      "name": "timeOfDayFit",
+      "side": "user",
+      "direction": "higher is better"
+    },
+    {
+      "name": "localPopularity",
+      "side": "ad",
+      "direction": "higher is better"
+    },
+    {
+      "name": "sessionRecency",
+      "side": "user",
+      "direction": "higher is better"
+    },
+    {
+      "name": "routeAlignment",
+      "side": "user",
+      "direction": "higher is better"
+    },
+    {
+      "name": "adFatigue",
+      "side": "ad",
+      "direction": "higher is worse"
+    },
+    {
+      "name": "budgetPacing",
+      "side": "ad",
+      "direction": "higher is better"
+    },
+    {
+      "name": "deviceEngagementScore",
+      "side": "user",
+      "direction": "higher is better"
+    },
+    {
+      "name": "searchIntentStrength",
+      "side": "user",
+      "direction": "higher is better"
+    }
+  ],
+  "devices": [
+    {
+      "deviceId": "iOS-US-147608",
+      "model": "iPhone 12",
+      "sessions": 1966,
+      "localRows": 220,
+      "sampleImpressions": [
+        {
+          "features": {
+            "queryPoiRelevance": 0.2894,
+            "distanceScore": 1.0528,
+            "categoryAffinity": 0.6779,
+            "dwellTimeHistory": 0.7788,
+            "priorImpressions": 0.4736,
+            "priorTaps": 0.411,
+            "timeOfDayFit": 0.5833,
+            "localPopularity": 0.4024,
+            "sessionRecency": 0.6381,
+            "routeAlignment": 0.426,
+            "adFatigue": 1.1211,
+            "budgetPacing": 0.4631,
+            "deviceEngagementScore": 0.5234,
+            "searchIntentStrength": 0.459
+          },
+          "engagementLabel": 0.1277
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 0.5115,
+            "distanceScore": 0.794,
+            "categoryAffinity": 0.9165,
+            "dwellTimeHistory": 1.1524,
+            "priorImpressions": 0.5263,
+            "priorTaps": 0.518,
+            "timeOfDayFit": 0.7347,
+            "localPopularity": 0.702,
+            "sessionRecency": 1.1909,
+            "routeAlignment": 0.758,
+            "adFatigue": 0.98,
+            "budgetPacing": 0.6195,
+            "deviceEngagementScore": 1.0668,
+            "searchIntentStrength": 1.1255
+          },
+          "engagementLabel": 0.4685
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 0.5632,
+            "distanceScore": 0.6826,
+            "categoryAffinity": 0.8863,
+            "dwellTimeHistory": 1.3326,
+            "priorImpressions": 0.5118,
+            "priorTaps": 0.5906,
+            "timeOfDayFit": 0.8503,
+            "localPopularity": 0.7601,
+            "sessionRecency": 1.5304,
+            "routeAlignment": 0.9608,
+            "adFatigue": 0.8677,
+            "budgetPacing": 0.6001,
+            "deviceEngagementScore": 1.4936,
+            "searchIntentStrength": 1.4191
+          },
+          "engagementLabel": 0.6081
+        }
+      ]
+    },
+    {
+      "deviceId": "iOS-US-268522",
+      "model": "iPhone 14",
+      "sessions": 659,
+      "localRows": 220,
+      "sampleImpressions": [
+        {
+          "features": {
+            "queryPoiRelevance": 0.7021,
+            "distanceScore": 0.5482,
+            "categoryAffinity": 0.3867,
+            "dwellTimeHistory": 1.0231,
+            "priorImpressions": 0.527,
+            "priorTaps": 0.4052,
+            "timeOfDayFit": 0.7759,
+            "localPopularity": 0.7869,
+            "sessionRecency": 1.2335,
+            "routeAlignment": 0.7483,
+            "adFatigue": 1.1055,
+            "budgetPacing": 0.388,
+            "deviceEngagementScore": 1.0351,
+            "searchIntentStrength": 0.8417
+          },
+          "engagementLabel": 0.2137
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 0.923,
+            "distanceScore": 0.4087,
+            "categoryAffinity": 0.5488,
+            "dwellTimeHistory": 1.5075,
+            "priorImpressions": 0.6559,
+            "priorTaps": 0.6152,
+            "timeOfDayFit": 1.2567,
+            "localPopularity": 0.951,
+            "sessionRecency": 1.8789,
+            "routeAlignment": 1.364,
+            "adFatigue": 0.8558,
+            "budgetPacing": 0.46,
+            "deviceEngagementScore": 1.5808,
+            "searchIntentStrength": 1.5324
+          },
+          "engagementLabel": 0.4372
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 1.0433,
+            "distanceScore": 0.8515,
+            "categoryAffinity": 0.6874,
+            "dwellTimeHistory": 0.9232,
+            "priorImpressions": 0.8404,
+            "priorTaps": 0.6343,
+            "timeOfDayFit": 0.5831,
+            "localPopularity": 1.0909,
+            "sessionRecency": 0.799,
+            "routeAlignment": 0.5657,
+            "adFatigue": 0.8797,
+            "budgetPacing": 0.4902,
+            "deviceEngagementScore": 0.7912,
+            "searchIntentStrength": 0.6061
+          },
+          "engagementLabel": 0.2798
+        }
+      ]
+    },
+    {
+      "deviceId": "iOS-US-288393",
+      "model": "iPhone 15",
+      "sessions": 898,
+      "localRows": 220,
+      "sampleImpressions": [
+        {
+          "features": {
+            "queryPoiRelevance": 0.7481,
+            "distanceScore": 0.7511,
+            "categoryAffinity": 0.4413,
+            "dwellTimeHistory": 0.892,
+            "priorImpressions": 0.854,
+            "priorTaps": 0.7946,
+            "timeOfDayFit": 1.1077,
+            "localPopularity": 0.7997,
+            "sessionRecency": 1.0321,
+            "routeAlignment": 0.9803,
+            "adFatigue": 0.8701,
+            "budgetPacing": 0.9177,
+            "deviceEngagementScore": 0.9087,
+            "searchIntentStrength": 1.1078
+          },
+          "engagementLabel": 0.4392
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 1.1905,
+            "distanceScore": 0.7731,
+            "categoryAffinity": 0.8001,
+            "dwellTimeHistory": 0.8877,
+            "priorImpressions": 1.2181,
+            "priorTaps": 1.2847,
+            "timeOfDayFit": 1.173,
+            "localPopularity": 1.0615,
+            "sessionRecency": 1.0248,
+            "routeAlignment": 0.9239,
+            "adFatigue": 0.6103,
+            "budgetPacing": 1.2176,
+            "deviceEngagementScore": 0.8922,
+            "searchIntentStrength": 1.2636
+          },
+          "engagementLabel": 0.6041
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 1.4623,
+            "distanceScore": 0.7064,
+            "categoryAffinity": 0.825,
+            "dwellTimeHistory": 0.9367,
+            "priorImpressions": 1.2353,
+            "priorTaps": 1.502,
+            "timeOfDayFit": 1.1053,
+            "localPopularity": 1.2124,
+            "sessionRecency": 0.9878,
+            "routeAlignment": 0.9241,
+            "adFatigue": 0.4937,
+            "budgetPacing": 1.4623,
+            "deviceEngagementScore": 0.9386,
+            "searchIntentStrength": 1.1998
+          },
+          "engagementLabel": 0.6963
+        }
+      ]
+    },
+    {
+      "deviceId": "iOS-US-467372",
+      "model": "iPhone 14 Pro",
+      "sessions": 1598,
+      "localRows": 220,
+      "sampleImpressions": [
+        {
+          "features": {
+            "queryPoiRelevance": 0.5421,
+            "distanceScore": 0.7743,
+            "categoryAffinity": 0.7544,
+            "dwellTimeHistory": 0.6324,
+            "priorImpressions": 0.4052,
+            "priorTaps": 0.3045,
+            "timeOfDayFit": 0.9284,
+            "localPopularity": 0.7134,
+            "sessionRecency": 1.6799,
+            "routeAlignment": 0.9871,
+            "adFatigue": 1.2224,
+            "budgetPacing": 0.6328,
+            "deviceEngagementScore": 1.1013,
+            "searchIntentStrength": 0.8409
+          },
+          "engagementLabel": 0.3804
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 0.4089,
+            "distanceScore": 1.4745,
+            "categoryAffinity": 0.5916,
+            "dwellTimeHistory": 0.3094,
+            "priorImpressions": 0.4382,
+            "priorTaps": 0.3011,
+            "timeOfDayFit": 0.4656,
+            "localPopularity": 0.6274,
+            "sessionRecency": 0.6991,
+            "routeAlignment": 0.2866,
+            "adFatigue": 1.7074,
+            "budgetPacing": 0.5121,
+            "deviceEngagementScore": 0.6109,
+            "searchIntentStrength": 0.4681
+          },
+          "engagementLabel": 0.0595
+        },
+        {
+          "features": {
+            "queryPoiRelevance": 0.4492,
+            "distanceScore": 0.7236,
+            "categoryAffinity": 0.594,
+            "dwellTimeHistory": 0.6789,
+            "priorImpressions": 0.4493,
+            "priorTaps": 0.3463,
+            "timeOfDayFit": 1.0084,
+            "localPopularity": 0.7166,
+            "sessionRecency": 1.8947,
+            "routeAlignment": 1.197,
+            "adFatigue": 1.5829,
+            "budgetPacing": 0.6146,
+            "deviceEngagementScore": 1.3583,
+            "searchIntentStrength": 0.7152
+          },
+          "engagementLabel": 0.3352
+        }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,14 @@
 # Local scope / planning docs — not deployed
 scope/
 
+# Interview demo — local only, never deployed/pushed
+fl-demo/node_modules/
+fl-demo/.DS_Store
+
 # OS
 .DS_Store
 
 # Editor
 .vscode/
 .idea/
+fl-demo/python/**/__pycache__/

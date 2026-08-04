@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Federated Ranker: One ML Platform, Every Stage</title>
+<link rel="stylesheet" href="style.css?v=1785821329" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-mark">Federated&nbsp;Ranker</span>
+    <nav class="nav-stages" id="nav-stages" aria-label="Lifecycle">
+      <button type="button" class="nav-stage" data-mode="train"     data-cmd="">Pre-train</button>
+      <button type="button" class="nav-stage" data-mode="train"     data-cmd="">Federate</button>
+      <button type="button" class="nav-stage" data-mode="eval"      data-cmd="">Evaluate</button>
+      <button type="button" class="nav-stage" data-mode="deploy"    data-cmd="">Post-train</button>
+      <button type="button" class="nav-stage" data-mode="deploy"    data-cmd="">Deploy</button>
+      <button type="button" class="nav-stage" data-mode="inference" data-cmd="">Serve</button>
+      <button type="button" class="nav-stage" data-mode="runs"      data-cmd="">Runs</button>
+    </nav>
+    <span class="nav-right">
+      <button type="button" class="nav-cmdk" id="nav-cmdk" title="Command palette">
+        <span class="nav-cmdk-label">Search actions</span><kbd>⌘K</kbd>
+      </button>
+      <span class="nav-badge"><span class="live-dot" id="live-dot"></span><span id="nav-badge-text">Running locally · nothing leaves this machine</span></span>
+    </span>
+  </div>
+</nav>
+
+<header class="hero" id="hero">
+  <canvas class="hero-canvas" id="hero-canvas"></canvas>
+  <div class="hero-aurora">
+    <div class="hero-glow hero-glow-a"></div>
+    <div class="hero-glow hero-glow-b"></div>
+    <div class="hero-glow hero-glow-c"></div>
+  </div>
+  <div class="hero-grain"></div>
+  <div class="hero-inner">
+    <p class="eyebrow">ML Platform · Apple Ads · pre-training to serving</p>
+    <h1>One platform.<br />Every stage of the model.</h1>
+    <p class="hero-sub">
+      Pre-train across sharded GPUs. Federate on-device with differential privacy.
+      Evaluate, compress, deploy, serve, and report. One system, one set of
+      controls, from the first gradient to the ad a person actually sees.
+    </p>
+    <a href="#demo" class="cta">Run the pipeline ↓</a>
+
+    <div class="hero-proof" id="hero-proof" hidden>
+      <div class="hero-proof-item">
+        <span class="hero-proof-value" id="proof-mae">—</span>
+        <span class="hero-proof-label">held-out MAE</span>
+      </div>
+      <div class="hero-proof-item">
+        <span class="hero-proof-value" id="proof-auc">—</span>
+        <span class="hero-proof-label">ranking AUC</span>
+      </div>
+      <div class="hero-proof-item">
+        <span class="hero-proof-value" id="proof-eps">—</span>
+        <span class="hero-proof-label">privacy spent (ε)</span>
+      </div>
+      <div class="hero-proof-item">
+        <span class="hero-proof-value" id="proof-devices">—</span>
+        <span class="hero-proof-label">devices / round</span>
+      </div>
+      <div class="hero-proof-item">
+        <span class="hero-proof-value" id="proof-backend">—</span>
+        <span class="hero-proof-label">compute backend</span>
+      </div>
+    </div>
+    <p class="hero-caveat" id="hero-caveat">
+      Numbers above are measured in this browser, not quoted.
+      <span class="hero-caveat-dim">Synthetic device data, real TensorFlow.js training and real DP.</span>
+    </p>
+  </div>
+</header>
+
+<section class="features">
+  <div class="feature reveal">
+    <div class="feature-icon">◧</div>
+    <h3>Local training</h3>
+    <p>Each iPhone trains a model on its own interactions. Raw signals never leave the device.</p>
+  </div>
+  <div class="feature reveal">
+    <div class="feature-icon">◈</div>
+    <h3>Private aggregation</h3>
+    <p>Only clipped, noise-added weight updates are sent: a Gaussian mechanism bounds what any single device can reveal.</p>
+  </div>
+  <div class="feature reveal">
+    <div class="feature-icon">◎</div>
+    <h3>One global model</h3>
+    <p>The coordinator averages updates into a single ranker that generalizes across the whole device population.</p>
+  </div>
+</section>
+
+<section id="demo" class="demo">
+  <div class="demo-header">
+    <p class="eyebrow">Live, in this browser</p>
+    <h2>The full lifecycle</h2>
+    <p class="demo-sub">Real TensorFlow.js training across simulated iPhone devices, a deployment console, and live on-device inference: the same stages a production ads ML platform ships.</p>
+  </div>
+
+  <div class="mode-switch reveal" id="mode-switch">
+    <div class="mode-thumb" id="mode-thumb"></div>
+    <button type="button" class="mode-btn active" data-mode="train">Train</button>
+    <button type="button" class="mode-btn" data-mode="eval">Eval</button>
+    <button type="button" class="mode-btn" data-mode="deploy">Deploy</button>
+    <button type="button" class="mode-btn" data-mode="inference">Inference</button>
+    <button type="button" class="mode-btn" data-mode="runs">Runs</button>
+  </div>
+
+  <!-- Persistent across every tab: the model's journey through the platform,
+       so the five views read as one pipeline rather than five demos. -->
+  <div class="pipeline" id="pipeline">
+    <div class="pipeline-rail" id="pipeline-rail"></div>
+    <div class="pipeline-actions">
+      <button type="button" class="btn btn-primary pipeline-run" id="btn-run-pipeline">Run full pipeline</button>
+      <span class="pipeline-status" id="pipeline-status">Ready</span>
+    </div>
+  </div>
+
+  <div class="mode-panel active" id="mode-train">
+    <div class="controls reveal">
+      <div class="control-section">
+        <span class="control-section-label">Cohort &amp; model</span>
+        <div class="control-row control-row-top">
+          <div class="control">
+            <label for="ctl-cohort">User segment</label>
+            <select id="ctl-cohort" class="select"></select>
+          </div>
+          <div class="control">
+            <label for="ctl-k">Devices sampled / round <input type="text" inputmode="numeric" class="value-edit" id="val-k" value="6" /></label>
+            <input type="range" id="ctl-k" min="3" max="64" value="6" step="1" />
+          </div>
+          <div class="control">
+            <label for="ctl-model">Model architecture</label>
+            <select id="ctl-model" class="select">
+              <option value="small">AdRank-Net S · 16-8-1</option>
+              <option value="medium">AdRank-Net M · 32-16-8-1</option>
+              <option value="large">AdRank-Net L · 64-32-16-1</option>
+              <option value="transformer">AdRank-Transformer · 2-head attn</option>
+              <option value="linear">Linear baseline · 1</option>
+              <option value="__import">Import model…</option>
+            </select>
+            <input type="file" id="model-file-input" accept=".json,.bin" multiple hidden />
+          </div>
+        </div>
+        <p class="cohort-status" id="cohort-status">All Maps users, 1,842,600 eligible · sampling 6 per round</p>
+        <p class="model-error" id="model-error" hidden></p>
+      </div>
+
+      <div class="control-section">
+        <span class="control-section-label">Privacy &amp; reliability</span>
+        <div class="control-row control-row-privacy">
+          <div class="control">
+            <label for="ctl-epochs">Local epochs <input type="text" inputmode="numeric" class="value-edit" id="val-epochs" value="2" /></label>
+            <input type="range" id="ctl-epochs" min="1" max="5" value="2" step="1" />
+          </div>
+          <div class="control">
+            <label for="ctl-clip">Clip norm (C) <input type="text" inputmode="decimal" class="value-edit" id="val-clip" value="0.50" /></label>
+            <input type="range" id="ctl-clip" min="0.1" max="1.5" value="0.5" step="0.05" />
+          </div>
+          <div class="control">
+            <label for="ctl-noise">Privacy noise (z) <input type="text" inputmode="decimal" class="value-edit" id="val-noise" value="1.0" /></label>
+            <input type="range" id="ctl-noise" min="0" max="10" value="1" step="0.2" />
+          </div>
+          <div class="control">
+            <label for="ctl-dropout">Device dropout <input type="text" inputmode="numeric" class="value-edit" id="val-dropout" value="0" /></label>
+            <input type="range" id="ctl-dropout" min="0" max="50" value="0" step="5" />
+          </div>
+        </div>
+        <p class="snr-hint" id="snr-hint"></p>
+      </div>
+
+      <div class="control-footer">
+        <label class="switch-label" for="ctl-secure-agg">
+          <span class="switch"><input type="checkbox" id="ctl-secure-agg" /><span class="switch-track"></span></span>
+          <span class="switch-text">
+            <span class="switch-title">Secure aggregation</span>
+            <span class="switch-note">Pairwise masking: the coordinator only recovers the sum</span>
+          </span>
+        </label>
+        <div class="control-actions">
+          <button id="btn-start" class="btn btn-primary">Start training</button>
+          <button id="btn-reset" class="btn">Reset</button>
+          <button id="btn-save-model" class="btn" disabled>Save checkpoint</button>
+        </div>
+      </div>
+
+      <p class="save-status" id="save-status"></p>
+    </div>
+
+    <div class="stage-wrap">
+      <div class="compute-strip reveal" id="compute-strip">
+        <div class="compute-tile">
+          <span class="compute-label">Compute backend</span>
+          <span class="compute-value" id="compute-backend">—</span>
+        </div>
+        <div class="compute-tile">
+          <span class="compute-label">Round time</span>
+          <span class="compute-value" id="compute-round-time">—</span>
+        </div>
+        <div class="compute-tile">
+          <span class="compute-label">Training throughput</span>
+          <span class="compute-value" id="compute-throughput">—</span>
+        </div>
+        <div class="compute-tile">
+          <span class="compute-label">Active GPU tensors</span>
+          <span class="compute-value" id="compute-memory">—</span>
+        </div>
+        <div class="compute-tile">
+          <span class="compute-label">Device coverage</span>
+          <span class="compute-value" id="compute-coverage">—</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="panel panel-dark panel-network reveal">
+          <div class="chart-head">
+            <h4>Federation</h4>
+            <span class="federation-count" id="federation-count">0 of 0</span>
+          </div>
+          <svg id="network-svg" viewBox="0 0 360 300" preserveAspectRatio="xMidYMid meet"></svg>
+          <p class="panel-note">Dots carry <em>Δw</em> only: clipped &amp; noised weight updates, never raw interaction data.</p>
+        </div>
+
+        <div class="panel panel-dark panel-chart reveal">
+          <div class="chart-head">
+            <h4>Global model accuracy</h4>
+            <div class="chart-stats">
+              <div class="chart-stat"><span class="chart-stat-label">Val loss (MSE)</span><span class="chart-stat-value" id="stat-loss">—</span></div>
+              <div class="chart-stat"><span class="chart-stat-label">Avg error</span><span class="chart-stat-value" id="stat-cycles">—</span></div>
+            </div>
+          </div>
+          <canvas id="chart-canvas" width="640" height="280"></canvas>
+          <div class="chart-legend">
+            <span class="legend-dot"></span> Validation MAE (lower is better) · <span id="round-counter">round 0</span>
+          </div>
+        </div>
+
+        <div class="panel panel-dark panel-epsilon reveal">
+          <h4>Privacy spent</h4>
+          <div class="epsilon-readout" id="epsilon-readout">ε ≈ 0.00</div>
+          <div class="epsilon-bar"><div class="epsilon-fill" id="epsilon-fill"></div></div>
+          <canvas id="epsilon-chart-canvas" width="360" height="70"></canvas>
+          <p class="panel-note" id="epsilon-note">δ = 1e-5 · naive composition, demo-scale accounting</p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="panel panel-dark panel-latency reveal">
+          <div class="chart-head">
+            <h4>Round latency</h4>
+            <span class="chart-stat-value" id="latency-current">—</span>
+          </div>
+          <canvas id="latency-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note">Wall-clock time per federated round, this session.</p>
+        </div>
+
+        <div class="panel panel-dark panel-cliprate reveal">
+          <div class="chart-head">
+            <h4>Clip rate</h4>
+            <span class="chart-stat-value" id="cliprate-current">—</span>
+          </div>
+          <canvas id="cliprate-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note" id="cliprate-note">Share of client updates exceeding the clip norm (C) before noising.</p>
+        </div>
+
+        <div class="panel panel-dark panel-lossdiv reveal">
+          <div class="chart-head">
+            <h4>Local vs. global loss</h4>
+            <span class="chart-stat-value" id="lossdiv-current">—</span>
+          </div>
+          <canvas id="lossdiv-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note">Avg. per-device local loss vs. coordinator's global validation loss.</p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="panel panel-dark panel-normdist reveal">
+          <div class="chart-head">
+            <h4>Update norms this round</h4>
+            <span class="chart-stat-value" id="normdist-current">—</span>
+          </div>
+          <canvas id="normdist-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note" id="normdist-note">Per-device ‖Δw‖₂ before clipping. Bars above the dashed line get clipped to C.</p>
+        </div>
+
+        <div class="panel panel-dark panel-throughput reveal">
+          <div class="chart-head">
+            <h4>Training throughput</h4>
+            <span class="chart-stat-value" id="throughput-current">—</span>
+          </div>
+          <canvas id="throughput-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note">Samples processed per second across all sampled devices, per round.</p>
+        </div>
+
+        <div class="panel panel-dark panel-dropout reveal">
+          <div class="chart-head">
+            <h4>Device reliability</h4>
+            <span class="chart-stat-value" id="dropout-current">—</span>
+          </div>
+          <canvas id="dropout-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note" id="dropout-note">Share of sampled devices that failed to report in time. Real cross-device FL loses devices to battery, network and timeouts every round.</p>
+        </div>
+
+        <div class="panel panel-dark panel-preddist reveal">
+          <div class="chart-head">
+            <h4>Prediction spread</h4>
+            <span class="chart-stat-value" id="preddist-current">—</span>
+          </div>
+          <canvas id="preddist-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note" id="preddist-note">Distribution of the global model's predictions over the held-out set. A healthy ranker spreads out; everything in one bin means the model collapsed and can no longer separate candidates.</p>
+        </div>
+
+        <div class="panel panel-dark panel-budget reveal">
+          <div class="chart-head">
+            <h4>Privacy budget</h4>
+            <span class="chart-stat-value" id="budget-current">—</span>
+          </div>
+          <canvas id="budget-chart-canvas" width="360" height="140"></canvas>
+          <p class="panel-note" id="budget-note">Cumulative ε against a target budget, with rounds remaining projected from the current per-round spend.</p>
+        </div>
+
+        <div class="panel panel-dark panel-devicemix reveal">
+          <div class="chart-head">
+            <h4>Device mix</h4>
+            <span class="chart-stat-value" id="devicemix-current">—</span>
+          </div>
+          <div class="devicemix-rows" id="devicemix-rows"></div>
+          <p class="panel-note">Hardware mix across every device-round sampled this session. A device re-sampled in a later round counts again.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="clients-grid-header">
+      <h4>This round's sampled devices</h4>
+      <p class="panel-note">A fresh random subset of the cohort is sampled every round, not a fixed roster. Same as production cross-device federated learning.</p>
+    </div>
+    <div class="clients-grid" id="clients-grid"></div>
+  </div>
+
+  <div class="mode-panel" id="mode-eval">
+    <div class="panel eval-summary-card reveal">
+      <div class="chart-head">
+        <h4>Evaluation report</h4>
+        <span class="eval-verdict" id="eval-verdict">Not run</span>
+      </div>
+      <div class="eval-model-row">
+        <label for="eval-model-select">Evaluating</label>
+        <select id="eval-model-select" class="select"></select>
+      </div>
+      <div class="deploy-stat-grid">
+        <div class="deploy-stat"><span class="deploy-stat-label">Val MAE</span><span class="deploy-stat-value" id="eval-mae">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Val RMSE</span><span class="deploy-stat-value" id="eval-rmse">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Val loss (MSE)</span><span class="deploy-stat-value" id="eval-loss">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Avg error (pts)</span><span class="deploy-stat-value" id="eval-cycles">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">vs. mean-baseline</span><span class="deploy-stat-value" id="eval-baseline">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Rounds trained</span><span class="deploy-stat-value" id="eval-rounds">0</span></div>
+      </div>
+      <div class="rank-metrics">
+        <div class="rank-metrics-head">
+          <h5>Ranking quality</h5>
+          <span class="rank-metrics-sub" id="rank-label-note">—</span>
+        </div>
+        <div class="deploy-stat-grid">
+          <div class="deploy-stat"><span class="deploy-stat-label">ROC AUC</span><span class="deploy-stat-value" id="eval-auc">—</span></div>
+          <div class="deploy-stat"><span class="deploy-stat-label">NDCG@5</span><span class="deploy-stat-value" id="eval-ndcg">—</span></div>
+          <div class="deploy-stat"><span class="deploy-stat-label">MRR</span><span class="deploy-stat-value" id="eval-mrr">—</span></div>
+          <div class="deploy-stat"><span class="deploy-stat-label">Calibration err (ECE)</span><span class="deploy-stat-value" id="eval-ece">—</span></div>
+        </div>
+        <canvas id="eval-calibration-canvas" width="500" height="180"></canvas>
+        <p class="panel-note">Reliability curve: predicted engagement vs. observed, per decile. The dashed line is perfect calibration; points below it mean the ranker is over-predicting, which would overprice every bid in an auction.</p>
+      </div>
+      <p class="panel-note" id="eval-note">Train a model on the Train tab first.</p>
+    </div>
+
+    <div class="deploy-grid">
+      <div class="panel eval-scatter-card reveal">
+        <h4>Predicted vs. actual engagement</h4>
+        <p class="panel-note">300 held-out devices never used in training. Diagonal = perfect prediction.</p>
+        <canvas id="eval-scatter-canvas" width="500" height="320"></canvas>
+      </div>
+
+      <div class="panel eval-buckets-card reveal">
+        <h4>Error by life stage</h4>
+        <p class="panel-note">Same held-out set, bucketed by true remaining life.</p>
+        <div class="bucket-rows" id="eval-bucket-rows"></div>
+        <button id="btn-run-eval" class="btn" style="margin-top: 16px;">Run evaluation</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mode-panel" id="mode-deploy">
+    <div class="panel deploy-model-card reveal">
+      <h4>Current global model</h4>
+      <div class="deploy-stat-grid">
+        <div class="deploy-stat"><span class="deploy-stat-label">Architecture</span><span class="deploy-stat-value" id="deploy-arch">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Training rounds</span><span class="deploy-stat-value" id="deploy-rounds">0</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Parameters</span><span class="deploy-stat-value" id="deploy-params">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Validation MAE</span><span class="deploy-stat-value" id="deploy-mae">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Privacy spent (ε)</span><span class="deploy-stat-value" id="deploy-eps">—</span></div>
+        <div class="deploy-stat"><span class="deploy-stat-label">Footprint (fp32 / int8)</span><span class="deploy-stat-value" id="deploy-size">—</span></div>
+      </div>
+    </div>
+
+    <div class="deploy-grid">
+      <div class="panel deploy-rollout-card reveal">
+        <h4>Deploy to devices</h4>
+        <label for="deploy-model-select" class="deploy-label">Model to deploy</label>
+        <select id="deploy-model-select" class="select"></select>
+        <label for="deploy-target" class="deploy-label" style="margin-top: 14px;">Deployment target</label>
+        <select id="deploy-target" class="select">
+          <option value="edge-gateway">On-device · Neural Engine ranking</option>
+          <option value="cloud-batch">iCloud · nightly ranker refresh</option>
+          <option value="edge-aircraft">On-device · background prefetch scoring</option>
+        </select>
+        <button id="btn-deploy" class="btn btn-primary deploy-btn">Deploy to devices</button>
+        <p class="panel-note" id="deploy-status">Train a model on the Train tab first.</p>
+        <div class="deploy-progress" id="deploy-progress" hidden><div class="deploy-progress-fill" id="deploy-progress-fill"></div></div>
+        <div class="rollout-rows" id="rollout-rows"></div>
+      </div>
+
+      <div class="panel deploy-config-card reveal">
+        <h4>Training configuration</h4>
+        <p class="panel-note">Framework and parallelism strategy. Memory figures are the real ZeRO formulas applied to the selected model's actual parameter count, not illustrative numbers.</p>
+        <div class="cfg-grid">
+          <div class="cfg-field">
+            <label for="cfg-framework">Framework</label>
+            <select id="cfg-framework" class="select">
+              <option value="tfjs">TensorFlow.js · browser</option>
+              <option value="pytorch">PyTorch · federated_ranker</option>
+            </select>
+          </div>
+          <div class="cfg-field">
+            <label for="cfg-strategy">Parallelism</label>
+            <select id="cfg-strategy" class="select">
+              <option value="single">Single device</option>
+              <option value="ddp">DDP · replicated</option>
+              <option value="zero1">ZeRO-1 · optimizer sharded</option>
+              <option value="zero2">ZeRO-2 · + gradients</option>
+              <option value="zero3" selected>ZeRO-3 · + parameters (FSDP)</option>
+            </select>
+          </div>
+          <div class="cfg-field">
+            <label for="cfg-world">World size (GPUs)</label>
+            <select id="cfg-world" class="select">
+              <option>1</option><option>2</option><option>4</option>
+              <option selected>8</option><option>16</option><option>64</option>
+            </select>
+          </div>
+          <div class="cfg-field">
+            <label for="cfg-precision">Precision</label>
+            <select id="cfg-precision" class="select">
+              <option value="fp32" selected>fp32</option>
+              <option value="mixed">Mixed bf16 + fp32 master</option>
+            </select>
+          </div>
+        </div>
+        <div class="cfg-readout" id="cfg-readout"></div>
+        <p class="cfg-command-label">Reproduce this run</p>
+        <pre class="cfg-command" id="cfg-command"></pre>
+      </div>
+
+      <div class="panel deploy-bench-card reveal">
+        <h4>On-device inference benchmark</h4>
+        <p class="panel-note">Measured live in this browser: the GPU/CPU rows aren't simulated. Neural Engine and iCloud rows are modeled, clearly marked.</p>
+        <button id="btn-benchmark" class="btn">Run benchmark on this device</button>
+        <div class="bench-table" id="bench-table"></div>
+      </div>
+
+      <div class="panel deploy-compress-card reveal">
+        <h4>Model compression</h4>
+        <p class="panel-note">Real int8 quantization, magnitude pruning, and teacher-to-student distillation, each re-evaluated on the held-out validation set. Not modeled numbers.</p>
+        <button id="btn-compress" class="btn">Run compression analysis</button>
+        <div class="adapter-row">
+          <span class="adapter-label">Adapter fine-tuning</span>
+          <div class="adapter-actions">
+            <select id="adapter-rank" class="select adapter-rank">
+              <option value="1" selected>rank 1</option>
+              <option value="2">rank 2</option>
+              <option value="4">rank 4</option>
+              <option value="8">rank 8</option>
+            </select>
+            <select id="adapter-cohort" class="select adapter-cohort"></select>
+            <button type="button" class="btn" id="btn-lora">LoRA</button>
+            <button type="button" class="btn" id="btn-qlora">QLoRA</button>
+          </div>
+        </div>
+        <p class="panel-note">LoRA freezes the base weights and trains a low-rank update, so only a fraction of the parameters move. QLoRA quantizes the frozen base to int8 first and keeps the adapters in fp32. Adapters are merged into the weights on save, so there is no inference cost. Fine-tune on a <strong>different</strong> cohort to see real adaptation.</p>
+        <div class="compress-table" id="compress-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mode-panel" id="mode-inference">
+    <div class="panel inference-panel reveal">
+      <div class="inference-grid">
+        <div class="inference-left">
+          <div class="inference-readout-card">
+            <h4>Predicted ad engagement</h4>
+            <div class="rul-ring-wrap">
+              <svg viewBox="0 0 120 120" class="rul-ring">
+                <circle cx="60" cy="60" r="52" class="rul-ring-bg"></circle>
+                <circle cx="60" cy="60" r="52" class="rul-ring-fg" id="rul-ring-fg"></circle>
+              </svg>
+              <div class="rul-ring-value" id="rul-value">—</div>
+            </div>
+            <p class="panel-note" id="rul-detail">—</p>
+            <button id="btn-randomize" class="btn btn-primary">Sample a new device signal</button>
+          </div>
+          <div class="personalize-card">
+            <div class="chart-head">
+              <h4>On-device personalization</h4>
+              <span class="personalize-badge">never uploaded</span>
+            </div>
+            <p class="panel-note">The global model is shared by everyone. A small private adapter trained only on <em>this</em> device's own history is kept locally and never sent anywhere, not even clipped and noised. It is the one part of the system with no privacy cost, because nothing leaves.</p>
+            <div class="personalize-stats" id="personalize-stats"></div>
+            <button type="button" class="btn btn-primary" id="btn-personalize">Personalize for this device</button>
+          </div>
+
+          <div class="inference-sensors-card">
+            <h4>Signal snapshot</h4>
+            <div class="sensor-grid" id="sensor-grid"></div>
+            <p class="panel-note" id="inference-latency">—</p>
+          </div>
+        </div>
+
+        <div class="iphone-mock">
+          <div class="iphone-frame">
+            <div class="iphone-screen">
+              <div class="maps-statusbar">
+                <span class="statusbar-time">9:41</span>
+                <div class="iphone-island"></div>
+                <div class="statusbar-icons">
+                  <svg viewBox="0 0 18 12" class="statusbar-icon"><rect x="0" y="7" width="3" height="5" rx="0.5" fill="currentColor"/><rect x="4.5" y="5" width="3" height="7" rx="0.5" fill="currentColor"/><rect x="9" y="2.5" width="3" height="9.5" rx="0.5" fill="currentColor"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 16 12" class="statusbar-icon"><path d="M8 10.3l1.6-1.7a2.3 2.3 0 00-3.2 0L8 10.3z" fill="currentColor"/><path d="M8 6.6a5 5 0 013.5 1.4l1.6-1.7a7.3 7.3 0 00-10.2 0l1.6 1.7A5 5 0 018 6.6z" fill="currentColor"/><path d="M8 2.9a9.7 9.7 0 016.9 2.8l1.6-1.7a12 12 0 00-17 0l1.6 1.7A9.7 9.7 0 018 2.9z" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 25 12" class="statusbar-icon statusbar-battery"><rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="16" height="8" rx="1.3" fill="currentColor"/><rect x="21.5" y="4" width="1.8" height="4" rx="0.9" fill="currentColor"/></svg>
+                </div>
+              </div>
+              <div class="maps-topbar">
+                <div class="maps-search-wrap">
+                  <svg class="maps-search-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M17 17L13.4 13.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <input type="text" id="maps-search-input" class="maps-search" placeholder="Search Maps" autocomplete="off" />
+                </div>
+              </div>
+              <svg class="maps-canvas" id="maps-canvas" viewBox="150 30 260 260" preserveAspectRatio="xMidYMid slice">
+                <g id="maps-world"></g>
+                <g id="maps-pins"></g>
+              </svg>
+              <div class="maps-sheet">
+                <div class="maps-sheet-handle"></div>
+                <div class="maps-sheet-title" id="maps-sheet-title">Nearby</div>
+                <div class="maps-place-list" id="maps-place-list"></div>
+              </div>
+              <div class="place-card" id="place-card" hidden></div>
+            </div>
+            <div class="iphone-home-indicator"></div>
+          </div>
+          <p class="panel-note iphone-caption">Ranked live by the model's predicted engagement score, not scripted.</p>
+        </div>
+
+        <div class="inference-right">
+          <div class="inject-card">
+            <h4>How this ad got placed</h4>
+            <div class="inject-steps" id="inject-steps"></div>
+          </div>
+
+          <div class="auction-card" id="auction-card">
+            <div class="auction-head">
+              <h4>Ad auction</h4>
+              <span class="auction-clearing" id="auction-clearing">—</span>
+            </div>
+            <div class="auction-table" id="auction-table"></div>
+            <p class="panel-note">Ranked by eCPM = bid x predicted engagement x 1000. Each candidate's pCTR is a real forward pass through the deployed model with that advertiser's ad-side features. Second-price clearing: the winner pays the minimum that would still have won, never its own bid.</p>
+          </div>
+        </div>
+      </div>
+      <div class="report-card" id="report-card">
+        <div class="chart-head">
+          <h4>Advertiser reporting</h4>
+          <div class="report-actions">
+            <span class="report-stat" id="report-stat">no impressions yet</span>
+            <button type="button" class="btn" id="btn-traffic">Run a day of traffic</button>
+          </div>
+        </div>
+        <p class="panel-note">
+          What an advertiser is allowed to learn. Three protections, applied in order:
+          <strong>delayed</strong> so a report cannot be correlated with the moment of a tap,
+          <strong>crowd-anonymity thresholded</strong> so a bucket is only released once enough
+          distinct devices share it, and <strong>aggregated</strong> so no row ever describes one person.
+        </p>
+        <div class="report-pipe" id="report-pipe"></div>
+        <div class="report-table" id="report-table"></div>
+        <p class="panel-note" id="report-note"></p>
+      </div>
+
+      <p class="panel-note inference-empty" id="inference-empty">Showing organic Maps results. Search and tap places freely: no model is needed for that. Deploy a ranker on the <strong>Deploy</strong> tab to start scoring and injecting a sponsored slot.</p>
+    </div>
+  </div>
+
+  <div class="mode-panel" id="mode-runs">
+    <div class="panel runs-panel reveal">
+      <div class="chart-head">
+        <h4>Run history</h4>
+        <div class="runs-actions">
+          <span class="runs-count" id="runs-count">no runs yet</span>
+          <button type="button" class="btn runs-clear" id="btn-clear-runs">Clear</button>
+        </div>
+      </div>
+      <p class="panel-note">Every federated training session is recorded with the exact config it ran under and the metrics it produced. Persisted locally, so runs survive a reload and stay comparable across sessions. Best value in each metric column is highlighted.</p>
+      <div class="runs-table-wrap"><div class="runs-table" id="runs-table"></div></div>
+    </div>
+  </div>
+
+  <div class="panel terminal-panel reveal" id="terminal-panel">
+    <div class="terminal-drag-handle" id="terminal-drag-handle" title="Drag to resize"><span></span></div>
+    <div class="terminal-head">
+      <h4>Coordinator log</h4>
+      <div class="terminal-head-right">
+        <span class="terminal-poll" id="terminal-poll">0 / 0 devices polling</span>
+        <button type="button" class="terminal-expand-btn" id="terminal-expand-btn" title="Expand terminal" aria-label="Expand terminal">
+          <span class="terminal-expand-icon">⤢</span><span class="terminal-expand-label">Expand</span>
+        </button>
+      </div>
+    </div>
+    <div class="terminal-body" id="terminal-body"></div>
+    <div class="terminal-input-row">
+      <span class="terminal-prompt">›</span>
+      <input type="text" id="terminal-input" class="terminal-input" placeholder="type a command, try 'help'" autocomplete="off" spellcheck="false" />
+      <div class="term-suggest" id="term-suggest" hidden></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <p>
+    Simulation only: synthetic ad-ranking feature channels, non-IID per device, sampled
+    fresh from a virtual user segment each round. Model: configurable dense net (or an
+    imported tf.js model) trained with FedAvg + per-update clipping and Gaussian noise
+    (DP-FedAvg). ε is a simplified single-mechanism bound composed naively across rounds;
+    production systems use an RDP or PLD accountant for a tighter guarantee.
+    Built with TensorFlow.js, running entirely client-side.
+  </p>
+</footer>
+
+<button type="button" class="code-toggle" id="code-toggle" title="View source" aria-label="View source">
+  <span class="code-toggle-icon">&lt;/&gt;</span>
+  <span class="code-toggle-label">Code</span>
+</button>
+
+<!-- Persistent status bar, the way Xcode and Instruments keep machine state
+     visible at all times rather than hiding it behind a tab. -->
+<div class="statusbar" id="statusbar">
+  <div class="sb-group">
+    <span class="sb-item" id="sb-state"><span class="sb-dot" id="sb-dot"></span><span id="sb-state-text">Idle</span></span>
+    <span class="sb-sep"></span>
+    <span class="sb-item" title="Model currently loaded"><span class="sb-key">Model</span><span class="sb-val" id="sb-model">—</span></span>
+    <span class="sb-item" title="Federated rounds completed"><span class="sb-key">Round</span><span class="sb-val" id="sb-round">0</span></span>
+    <span class="sb-item" title="Cumulative privacy budget spent"><span class="sb-key">ε</span><span class="sb-val" id="sb-eps">0.0</span></span>
+  </div>
+  <div class="sb-group sb-right">
+    <span class="sb-item" title="Live TensorFlow.js tensor count and memory"><span class="sb-key">Tensors</span><span class="sb-val" id="sb-tensors">—</span></span>
+    <span class="sb-item" title="Active compute backend"><span class="sb-key">Backend</span><span class="sb-val" id="sb-backend">—</span></span>
+    <span class="sb-sep"></span>
+    <button type="button" class="sb-cmd" id="sb-cmd" title="Command palette"><kbd>⌘K</kbd></button>
+  </div>
+</div>
+
+<div class="palette-backdrop" id="palette-backdrop"></div>
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <div class="palette-input-row">
+    <svg class="palette-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M17 17L13.4 13.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <input type="text" id="palette-input" class="palette-input" placeholder="Search actions, files, commands…" autocomplete="off" spellcheck="false" />
+    <kbd class="palette-esc">esc</kbd>
+  </div>
+  <div class="palette-results" id="palette-results"></div>
+  <div class="palette-foot">
+    <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+    <span><kbd>↵</kbd> run</span>
+    <span><kbd>⌘K</kbd> toggle</span>
+  </div>
+</div>
+
+<div class="code-backdrop" id="code-backdrop"></div>
+<div class="code-panel" id="code-panel" aria-hidden="true">
+  <div class="code-panel-head">
+    <div class="code-panel-title">
+      <span class="code-panel-path" id="code-panel-path">Architecture</span>
+      <span class="code-panel-meta" id="code-panel-meta">System design</span>
+    </div>
+    <button type="button" class="code-close" id="code-close" aria-label="Close code panel">✕</button>
+  </div>
+  <div class="code-body">
+    <aside class="code-sidebar" id="code-sidebar"></aside>
+    <div class="code-main">
+      <pre class="code-view"><code id="code-view-code">Loading…</code></pre>
+      <p class="code-panel-note">Fetched live from this server: exactly what's running, not a copy.</p>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/tf.min.js"></script>
+<script src="data.js?v=1785821329"></script>
+<script src="models.js?v=1785821329"></script>
+<script src="fl.js?v=1785821329"></script>
+<script src="app.js?v=1785821329"></script>
+</body>
+</html>

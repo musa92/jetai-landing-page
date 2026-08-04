@@ -1,0 +1,18 @@
+{
+  "name": "federated-ranker-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Federated learning + differential privacy demo for Apple Maps ad ranking",
+  "type": "commonjs",
+  "scripts": {
+    "serve": "python3 -m http.server 8934",
+    "test": "node --test tests/units.test.mjs",
+    "test:ui": "node --test tests/ui.test.mjs",
+    "test:all": "node --test tests/",
+    "pretrained": "node scripts/make_pretrained.js"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "jsdom": "^26.0.0"
+  }
+}

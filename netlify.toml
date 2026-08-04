@@ -2,6 +2,13 @@
   publish = "."
   command = ""
 
+# Must precede the catch-all: without it, /fl-demo/app.js and friends get
+# rewritten to the landing page and the demo loads a blank shell.
+[[redirects]]
+  from = "/fl-demo/*"
+  to   = "/fl-demo/:splat"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to   = "/index.html"
