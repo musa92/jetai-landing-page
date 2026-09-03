@@ -3,70 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Universal Ads Protocol | Turbnetic Research</title>
-<meta name="description" content="AdSense let any website earn without an ad sales team. Nothing does that for LLM inference yet. An open protocol for the turn.">
+<title>Universal Ads Protocol · Turbnetic Research</title>
+<meta name="description" content="AdSense let any website earn without an ad sales team. Nothing does that for LLM inference. A protocol for serving ads on a generated turn without corrupting the answer.">
 <link rel="canonical" href="https://turbnetic.ai/research/uap">
-<meta property="og:title" content="Universal Ads Protocol">
+<meta property="og:title" content="Who gets paid when the answer replaces the page">
 <meta property="og:description" content="AdSense let any website earn without an ad sales team. Nothing does that for LLM inference yet.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://turbnetic.ai/research/uap">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<meta name="theme-color" content="#060607">
-<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500&f[]=zodiak-italic@400&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
+<canvas id="gl" aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <div id="progress" aria-hidden="true"></div>
 
 <nav id="nav">
   <div class="nav-inner">
     <a class="nav-logo" href="/" aria-label="Turbnetic home">
-      <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-        <circle cx="14" cy="14" r="12.6" stroke="#ebe8e0" stroke-width="1.1" opacity="0.55"/>
-        <circle cx="14" cy="14" r="8.4" stroke="#ebe8e0" stroke-width="0.6" opacity="0.16"/>
-        <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
-        <g stroke="#ebe8e0" stroke-width="1.5" stroke-linecap="round">
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(180 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <circle cx="14" cy="14" r="12.6" stroke="#ededef" stroke-width="1.1" opacity=".45"/>
+        <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#6e8aff" stroke-width="1.9" stroke-linecap="round"/>
+        <g stroke="#ededef" stroke-width="1.4" stroke-linecap="round" opacity=".7">
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" transform="rotate(120 14 14)"/>
+          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" transform="rotate(240 14 14)"/>
         </g>
-        <circle cx="14" cy="14" r="4.3" fill="#060607"/>
-        <circle cx="14" cy="14" r="4.3" stroke="#ebe8e0" stroke-width="1" opacity="0.9"/>
-        <circle cx="14" cy="14" r="1.5" fill="#22d3ee"/>
+        <circle cx="14" cy="14" r="4.3" fill="#0b0b0c" stroke="#ededef" stroke-width="1" opacity=".8"/>
+        <circle cx="14" cy="14" r="1.5" fill="#6e8aff"/>
       </svg>
       <span class="logo-text">Turb<span class="accent">netic</span><span class="dot">.ai</span></span>
     </a>
-    <div class="nav-crumb"><a href="/">Home</a> &nbsp;/&nbsp; Research &nbsp;/&nbsp; UAP</div>
+    <div class="nav-crumb"><a href="/">Home</a> / Research / UAP</div>
   </div>
 </nav>
 
 <header class="hero">
-  <div class="wrap">
-    <div class="article">
-      <div class="eyebrow">Research &nbsp;·&nbsp; Protocol design &nbsp;·&nbsp; September 2026</div>
-      <h1>Who gets paid when the <em>answer</em> replaces the page</h1>
-      <p class="standfirst">
-        In 2003 AdSense let any website earn without an ad sales team. A generation
-        of independent writers followed. Nothing does that for LLM inference yet,
-        and the window to build it is open now.
-      </p>
-      <div class="byline">
-        <span>Musa Gayev</span>
-        <span>6 min read</span>
-        <a href="https://github.com/musa92/uap" rel="noopener">Specification and code</a>
-      </div>
+  <div class="paper">
+    <div class="kicker">Turbnetic Research &nbsp;·&nbsp; Note 01</div>
+    <h1 id="hd">Who gets paid when the <em>answer</em> replaces the page</h1>
+    <div class="abstract">
+      <b>Abstract</b>
+      In 2003 AdSense let any website earn without an ad sales team, and the
+      independent web followed. Nothing does that for LLM inference. Assistants
+      now carry advertising, the system selling it has one seller, and everyone
+      else serving a model pays for compute and captures none of the value. This
+      note specifies the missing layer: how a sponsored unit is selected and paid
+      for on a turn, on a node nobody trusts, without the conversation leaving
+      the machine and without the ad being able to move the answer.
+    </div>
+    <div class="meta-line">
+      Musa Aghayev &nbsp;·&nbsp; September 2026 &nbsp;·&nbsp;
+      <a href="https://github.com/musa92/uap" rel="noopener">github.com/musa92/uap</a>
     </div>
   </div>
 </header>
@@ -74,354 +74,463 @@
 <main>
 
 <section>
-  <div class="wrap"><div class="article">
-    <h2><span class="num">01</span>June 2003</h2>
+  <div class="paper">
+    <div class="marginal"><span class="n">01</span>Precedent</div>
+    <h2>June 2003</h2>
     <p class="lede">
-      Before AdSense, earning from a website meant having an ad sales team. You
-      called advertisers. You negotiated. Only publishers with scale could do it, so
-      only publishers with scale existed.
+      Before AdSense, earning from a website meant having an ad sales team. Only
+      publishers with scale could do it, so only publishers with scale existed.
     </p>
     <p>
-      AdSense launched on 18 June 2003. Paste a snippet, get paid. No advertiser
-      relationship, no sales call, no minimum traffic. Sergey Brin said at the time
-      that it "strengthens the long-term business viability of content creation on
-      the web." That turned out to be an understatement.
-    </p>
-    <p>
-      What followed was the independent web. Blogs, niche sites, forums, one-person
-      publications that paid rent. Not because anyone subsidised them, but because a
-      page could finally convert attention into money without permission.
+      AdSense launched on 18 June 2003.<sup class="ref">1</sup> Paste a snippet,
+      get paid. No advertiser relationship, no traffic minimum. It did not make
+      writers rich. It made publishing cheap enough to keep doing, and the
+      independent web followed.
     </p>
     <div class="pull">
-      Today, earning from an LLM answer means being OpenAI. That is 1999 again.
+      The same trade is available now, and it is not that model providers get
+      paid. It is that serving cost falls toward zero.
     </div>
-  </div></div>
+    <p>
+      ChatGPT began serving sponsored links under answers in February 2026:
+      roughly $100M annualised inside two months, at about a $60
+      CPM.<sup class="ref">2</sup> A conversational turn prices like paid search,
+      because the user has just stated an intent in their own words. That
+      inventory has one seller. Everyone else pays for the compute out of pocket.
+    </p>
+  </div>
 </section>
 
 <section>
-  <div class="wrap"><div class="article">
-    <h2><span class="num">02</span>The inventory is real. The market is one seller.</h2>
+  <div class="paper">
+    <div class="marginal"><span class="n">02</span>The unit</div>
+    <h2>What a sponsored turn looks like</h2>
     <p>
-      ChatGPT started serving sponsored links under answers in February 2026. Roughly
-      $100M annualised inside two months, at about a $60 CPM. Open-web display clears
-      in low single digits. A conversational turn is closer to paid search, which
-      makes sense: the user just stated an intent in their own words.
+      The unit is deliberately unremarkable: the answer, a hard separator, then a
+      labelled block the model never saw. Everything interesting is in what cannot
+      happen, not in what is rendered.
     </p>
-    <p>
-      That inventory has one seller. OpenAI's advertiser stack is a platform API in
-      the shape of Google Ads. It sells one surface. Nobody else sells into it and no
-      demand-side system buys through it.
-    </p>
-    <p>
-      Everyone else serving a model pays for GPUs and captures none of it. Not
-      because the value is not there, but because there is no wire to carry it.
-    </p>
-  </div></div>
-</section>
 
-<section>
-  <div class="wrap"><div class="wide">
-    <h2 style="max-width:33rem;margin:0 auto"><span class="num">03</span>Why fifteen percent</h2>
-    <div class="article">
-      <p style="margin-top:22px">
-        Global digital advertising is around $800B in 2026. Search alone is $268B.
-        Assistants are absorbing the queries that money follows.
-      </p>
-      <p>
-        Fifteen percent of that market moving through open inference is roughly $120B.
-        At the protocol's default split, about $78B a year reaches whoever actually
-        serves the model. That is the number that decides whether independent serving
-        is a business or a hobby.
-      </p>
-    </div>
-
-    <figure>
-      <div class="canvas">
-        <div id="chart" data-palette="#22d3ee,#6b6960"></div>
+    <figure class="bleed">
+      <div class="fig-head"><b>Figure 1</b><span>A served placement, and the guarantees around it</span></div>
+      <div class="frame">
+        <div class="chat">
+          <div class="msg">
+            <span class="who u">YOU</span>
+            <div class="body">I want to book a ryokan in Kyoto in November. What should I expect to pay?</div>
+          </div>
+          <div class="msg">
+            <span class="who a">AI</span>
+            <div class="body">
+              Kyoto ryokan rates peak in November for the autumn foliage. Expect
+              ¥25,000–¥60,000 per person per night with dinner and breakfast
+              included. Book two to three months ahead; the well-known machiya
+              inns in Gion sell out first.
+            </div>
+          </div>
+          <div class="sep">Sponsored</div>
+          <div class="spon">
+            <div class="spon-k">Sponsored · Acme Travel</div>
+            <h4>Kyoto ryokan, free cancellation</h4>
+            <p>Traditional inns from $180 a night, cancel up to 24 hours before arrival.</p>
+            <a class="cta" href="#" onclick="return false">See rooms</a>
+          </div>
+        </div>
+        <div class="annot">
+          <div class="an"><i>1</i><div><b>The answer finished first.</b> Its bytes were hashed and the digest sent to the exchange before the auction ran. At that moment no winner existed, so the answer cannot have depended on one.</div></div>
+          <div class="an"><i>2</i><div><b>The creative was never in the model's context.</b> It arrives as structured fields, is escaped to inert text, and is stripped before any summarisation or re-feed.</div></div>
+          <div class="an"><i>3</i><div><b>The separator is not decoration.</b> Disclosure is a billing precondition. An unrendered label makes the impression non-billable, not merely non-compliant.</div></div>
+          <div class="an"><i>4</i><div><b>Nothing about the conversation left the machine.</b> Targeting was derived on the node and reduced to a closed taxonomy. No free-text field, no identifier stable across sessions.</div></div>
+        </div>
       </div>
       <figcaption>
-        Global digital ad spend, 2026. The highlighted share is the threshold at
-        which advertising revenue covers open-weights inference at scale rather than
-        subsidising a fraction of it. Hover for detail.
+        The composer that joined answer and creative is a deterministic function
+        with no access to a model. Anyone holding the answer, the decision and
+        this output can recompute the bytes and verify it concatenated rather
+        than rewrote.
       </figcaption>
     </figure>
 
-    <div class="article">
-      <p>
-        Below that line the economics do not close. GPU time is the cost, and an
-        H100 runs about $17,000 a year. $78B funds roughly four and a half million
-        H100-years. Five percent funds a rounding error and open-weights serving
-        stays a loss leader run by people who can afford one.
-      </p>
-      <p>
-        There is a second payee with no equivalent on the web. The model author gets
-        a declared share, enforced by the exchange, on traffic they never see. An
-        open-weights model is a public good with no revenue mechanism today. This is
-        one.
-      </p>
-    </div>
-  </div></div>
+    <figure class="bleed">
+      <div class="fig-head"><b>Figure 2</b><span>How one turn becomes one settled impression</span></div>
+      <div class="frame">
+        <svg viewBox="0 0 880 520" role="img" aria-label="The lifecycle of a turn under local decisioning: a scheduled bundle and allocation, a zero-network turn on the node, a receipt from the surface, and verification and settlement at the exchange">
+          <defs>
+            <marker id="fa" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#6e8aff"/></marker>
+            <marker id="fb" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="rgba(237,237,239,.3)"/></marker>
+          </defs>
+
+          <!-- lanes -->
+          <text class="d-tag" x="24" y="30">EXCHANGE</text>
+          <text class="d-tag" x="24" y="212">SERVING NODE</text>
+          <text class="d-tag" x="24" y="404">SURFACE</text>
+          <line x1="24" y1="40" x2="856" y2="40" class="d-line" opacity=".5"/>
+          <line x1="24" y1="222" x2="856" y2="222" class="d-line" opacity=".5"/>
+          <line x1="24" y1="414" x2="856" y2="414" class="d-line" opacity=".5"/>
+
+          <!-- time header -->
+          <text class="d-sub" x="140" y="18" text-anchor="middle">HOURLY</text>
+          <text class="d-sub" x="500" y="18" text-anchor="middle">PER TURN · ZERO NETWORK CALLS</text>
+          <text class="d-sub" x="800" y="18" text-anchor="middle">LATER</text>
+          <line x1="292" y1="8" x2="292" y2="510" class="d-barrier" opacity=".35"/>
+          <line x1="708" y1="8" x2="708" y2="510" class="d-barrier" opacity=".35"/>
+
+          <!-- exchange lane -->
+          <rect class="d-box-a" x="40" y="56" width="200" height="60" rx="6"/>
+          <text class="d-label" x="56" y="79">Sign bundle</text>
+          <text class="d-sub" x="56" y="95">identical for every node</text>
+          <text class="d-sub" x="56" y="108">targeting · creatives · prices</text>
+
+          <rect class="d-box-a" x="40" y="132" width="200" height="60" rx="6"/>
+          <text class="d-label" x="56" y="155">Sign allocation</text>
+          <text class="d-sub" x="56" y="171">this node's slice per line item</text>
+          <text class="d-sub" x="56" y="184">sum over nodes ≤ budget</text>
+
+          <rect class="d-box-a" x="724" y="56" width="132" height="136" rx="6"/>
+          <text class="d-label" x="740" y="79">Verify</text>
+          <text class="d-sub" x="740" y="97">signature</text>
+          <text class="d-sub" x="740" y="111">nonce derives</text>
+          <text class="d-sub" x="740" y="125">digest matches</text>
+          <text class="d-sub" x="740" y="139">index &lt; slice</text>
+          <text class="d-sub" x="740" y="153">trace replays</text>
+          <text class="d-sub" x="740" y="167">price derived</text>
+          <text class="d-sub" x="740" y="181">then settle</text>
+
+          <!-- node lane -->
+          <rect class="d-box" x="40" y="236" width="200" height="60" rx="6"/>
+          <text class="d-label" x="56" y="259">Cache and compile</text>
+          <text class="d-sub" x="56" y="275">predicates compiled once</text>
+          <text class="d-sub" x="56" y="288">served for the hour</text>
+
+          <rect class="d-box" x="310" y="236" width="118" height="60" rx="6"/>
+          <text class="d-label" x="324" y="259">Generate</text>
+          <text class="d-sub" x="324" y="276">to completion</text>
+
+          <rect class="d-box-a" x="444" y="236" width="118" height="60" rx="6"/>
+          <text class="d-tag" x="458" y="255">COMMIT</text>
+          <text class="d-label" x="458" y="272" style="font-size:11.5px">hash answer</text>
+          <text class="d-sub" x="458" y="287">before selection</text>
+
+          <rect class="d-box" x="578" y="236" width="118" height="60" rx="6"/>
+          <text class="d-label" x="592" y="259">Auction</text>
+          <text class="d-sub" x="592" y="275">local, from cache</text>
+          <text class="d-sub" x="592" y="288">0.66 ms / 1,000</text>
+
+          <rect class="d-box" x="310" y="322" width="386" height="50" rx="6"/>
+          <text class="d-label" x="324" y="342">Compose</text>
+          <text class="d-sub" x="324" y="359">answer ‖ separator ‖ creative · deterministic · never a model</text>
+
+          <!-- surface lane -->
+          <rect class="d-box" x="310" y="428" width="386" height="60" rx="6"/>
+          <text class="d-label" x="324" y="450">Render, measure, sign receipt</text>
+          <text class="d-sub" x="324" y="467">MRC viewability · disclosure is a billing precondition</text>
+          <text class="d-sub" x="324" y="480">nonce derived from bundle, node, line item and index</text>
+
+          <!-- arrows -->
+          <path class="d-line-a" d="M140 116 L140 132" marker-end="url(#fa)"/>
+          <path class="d-line-a" d="M140 192 L140 236" marker-end="url(#fa)"/>
+          <path class="d-line" d="M240 266 L310 266" marker-end="url(#fb)"/>
+          <path class="d-line-a" d="M428 266 L444 266" marker-end="url(#fa)"/>
+          <path class="d-line" d="M562 266 L578 266" marker-end="url(#fb)"/>
+          <path class="d-line" d="M503 296 L503 322" marker-end="url(#fb)"/>
+          <path class="d-line" d="M637 296 L637 322" marker-end="url(#fb)"/>
+          <path class="d-line-a" d="M503 372 L503 428" marker-end="url(#fa)"/>
+          <path class="d-line" d="M696 458 Q790 458 790 230 L790 192" marker-end="url(#fb)"/>
+          <text class="d-sub" x="800" y="330" transform="rotate(90 800 330)" text-anchor="middle">batched · delayed · shuffled</text>
+
+          <!-- what crosses the network -->
+          <text class="d-sub" x="140" y="505" text-anchor="middle" style="fill:#6e8aff">two signed objects down</text>
+          <text class="d-sub" x="500" y="505" text-anchor="middle" style="fill:#6e8aff">nothing leaves</text>
+          <text class="d-sub" x="800" y="505" text-anchor="middle" style="fill:#6e8aff">receipts up, no context</text>
+        </svg>
+      </div>
+      <figcaption>
+        Local decisioning. Two signed objects arrive on a schedule: a bundle that
+        is identical for every node, and an allocation that is not. The turn
+        itself makes no network call. What goes back is a receipt the surface
+        signed, and the exchange recomputes every claim in it from what it
+        issued rather than trusting a number the node wrote. A node inside its
+        slice is always paid; an allocation the exchange got wrong is the
+        exchange's loss.
+      </figcaption>
+    </figure>
+  </div>
 </section>
 
 <section>
-  <div class="wrap"><div class="wide">
-    <h2 style="max-width:33rem;margin:0 auto"><span class="num">04</span>The failure mode that has to be designed out</h2>
-    <div class="article">
-      <p style="margin-top:22px">
-        An ad that pays per click, placed beside text a model generates on demand, creates
-        direct pressure to bend the text. This is not hypothetical. In retail media, the
-        closest structural analogue, studies attribute <strong>30 to 40 percent of
-        sponsored-product sales</strong> to purchases that would have happened organically.
-        Commercial ranking bleeds into organic ranking, and a large share of the revenue is
-        not incremental at all.
-      </p>
-      <p>
-        Users can tell. Ipsos found roughly two thirds of US adults say ads in AI answers
-        make them trust the answers less. That is the decay curve for the whole category: a
-        surface that bends its answers converges on display CPMs.
-      </p>
-      <div class="pull">
-        The integrity boundary is not an ethics section. It is the mechanism that defends a
-        $60 CPM from becoming a $6 one.
-      </div>
-      <p>
-        So the protocol draws a line the ad cannot cross in either direction. Creative never
-        enters the model's context. Bid values never reach sampling, logit bias, model
-        routing, or the ranking of candidate answers. The answer finishes before selection
-        begins, and what joins them afterwards is a function that concatenates and cannot
-        rewrite.
-      </p>
+  <div class="paper">
+    <div class="marginal"><span class="n">03</span>Unit economics</div>
+    <h2>What a turn costs, and what it earns</h2>
+    <p>
+      Both sides of this are calculable from the hardware up, so there is no
+      reason to argue about it.
+    </p>
+    <p>
+      <strong>Cost.</strong> A 70B-class open model, fp8, batched, on an H100 at
+      about $2 an hour, sustains roughly 3,000 output tokens per second. A turn
+      of ~400 output tokens costs $0.000074 to decode; ~1,200 input tokens add
+      about a quarter of that in prefill. Call it
+      <strong>$0.000093 a turn</strong>, or nine cents per thousand turns.
+    </p>
+    <p>
+      <strong>Revenue.</strong> At a CPM of <em>p</em>, one ad every
+      <em>L</em> turns, and the node keeping 65 percent, revenue is
+      <code>0.65p / 1000L</code> per turn. Setting that equal to cost gives a
+      break-even CPM of <code>0.143 × L</code>: <strong>$0.43</strong> at one ad
+      every three turns, <strong>$1.42</strong> at one in ten,
+      <strong>$2.85</strong> at one in twenty.
+    </p>
+    <p>
+      The market pays about $60.
+    </p>
+
+    <figure class="bleed">
+      <div class="fig-head"><b>Figure 3</b><span>How far ad revenue covers the cost of serving a turn</span></div>
+      <div class="frame"><div id="chart" data-palette="#6e8aff,#6a6a73"></div></div>
+      <figcaption>
+        Log scale, because the answer spans two orders of magnitude. At one ad
+        every twenty turns and a CPM a twentieth of what the market pays,
+        serving is already free. The curves cross break-even below $3 in every
+        case.
+      </figcaption>
+    </figure>
+
+    <div class="pull">
+      It was never whether advertising can pay for inference. It is whether the
+      revenue can reach the person running the hardware.
     </div>
 
-    <figure>
-      <div class="canvas">
-        <svg viewBox="0 0 880 470" role="img" aria-label="The integrity boundary: the model path on the left, the advertising path on the right, separated by a barrier, joined only by a deterministic composer">
-          <text class="d-tag" x="60" y="20">MODEL PATH</text>
-          <text class="d-tag" x="530" y="20" style="fill:#c08a3e">ADVERTISING PATH</text>
+    <p>
+      Which is worth stating plainly, because it changes what the problem is. A
+      serving operator does not need a large share of the ad market. They need
+      roughly two orders of magnitude less than the unit economics already
+      support, and they need it without building an ad sales business, a
+      billing system, a fraud team, and a demand relationship. That is a
+      plumbing problem, and plumbing is what a protocol is for.
+    </p>
 
-          <rect class="d-box" x="60" y="34" width="310" height="74" rx="8"/>
-          <text class="d-label" x="80" y="58">Model context</text>
-          <text class="d-sub" x="80" y="76">system prompt · history · user turn</text>
-          <text class="d-sub" x="80" y="92">nothing purchased is ever placed here</text>
+    <h3>The second payee</h3>
+    <p>
+      An open-weights model is a public good with no revenue mechanism, and every
+      downstream node captures the value today. Here the model's own manifest at
+      <code>/.well-known/uap-model</code> declares its advertising policy and
+      revenue share, and the exchange enforces it because the exchange holds the
+      money. An author who wants none of it sets <code>permitted: false</code> and
+      no conformant exchange will clear an auction on those weights.
+    </p>
 
-          <path class="d-line-accent" d="M215 108 L215 146" marker-end="url(#ar)"/>
-          <text class="d-sub" x="225" y="132">generate to completion</text>
+    <div class="calc">
+      <div class="calc-grid">
+        <div class="calc-f"><label for="dau">Daily users</label><input id="dau" type="number" value="10000" min="1" step="1000"></div>
+        <div class="calc-f"><label for="turns">Turns per user</label><input id="turns" type="number" value="5" min="1" step="1"></div>
+        <div class="calc-f"><label for="load">Ad on 1 turn in</label><input id="load" type="number" value="3" min="1" step="1"></div>
+        <div class="calc-f"><label for="cpm">CPM, USD</label><input id="cpm" type="number" value="40" min="1" step="5"></div>
+      </div>
+      <div class="calc-out">
+        <div class="calc-o"><div class="v" id="o-node">$13k</div><div class="l">node / month</div></div>
+        <div class="calc-o"><div class="v dim" id="o-steward">$3k</div><div class="l">model steward</div></div>
+        <div class="calc-o"><div class="v dim" id="o-imps">500k</div><div class="l">impressions</div></div>
+        <div class="calc-o"><div class="v dim" id="o-gpu">9</div><div class="l">H100 months</div></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-          <rect class="d-box" x="60" y="146" width="310" height="60" rx="8"/>
-          <text class="d-label" x="80" y="170">Organic answer</text>
-          <text class="d-sub" x="80" y="188">verbatim bytes, final</text>
+<section>
+  <div class="paper">
+    <div class="marginal"><span class="n">04</span>Integrity</div>
+    <h2>The failure mode that has to be designed out</h2>
+    <p>
+      An ad that pays per click, beside text a model generates on demand, creates
+      direct pressure to bend the text. In retail media, the closest structural
+      analogue, studies attribute <strong>30 to 40 percent of sponsored-product
+      sales</strong> to purchases that would have happened anyway.<sup class="ref">4</sup>
+      Commercial ranking bleeds into organic ranking and much of the revenue is
+      not incremental.
+    </p>
+    <p>
+      Users notice. Ipsos found roughly two thirds of US adults say ads in AI
+      answers make them trust the answers less. That is the decay curve for the
+      category: a surface that bends its answers converges on display CPMs.
+    </p>
+    <div class="pull">The integrity boundary is not an ethics section. It is what defends a $60 CPM from becoming a $6 one.</div>
 
-          <path class="d-line-accent" d="M215 206 L215 244" marker-end="url(#ar)"/>
+    <figure class="bleed">
+      <div class="fig-head"><b>Figure 4</b><span>The boundary, and the one function permitted to cross it</span></div>
+      <div class="frame">
+        <svg viewBox="0 0 840 452" role="img" aria-label="The model path on the left and the advertising path on the right, separated by a barrier, joined only by a deterministic composer that feeds the surface">
+          <text class="d-tag" x="40" y="14">MODEL PATH</text>
+          <text class="d-tag" x="500" y="14">ADVERTISING PATH</text>
 
-          <rect class="d-box-accent" x="60" y="244" width="310" height="64" rx="8"/>
-          <text class="d-tag" x="80" y="266">COMMITMENT</text>
-          <text class="d-label" x="80" y="286" style="font-size:11.5px">SHA-256 of the answer bytes</text>
-          <text class="d-sub" x="80" y="301">sent to the exchange before any auction runs</text>
+          <rect class="d-box" x="40" y="26" width="300" height="64" rx="6"/>
+          <text class="d-label" x="58" y="49">Model context</text>
+          <text class="d-sub" x="58" y="66">system · history · user turn</text>
+          <text class="d-sub" x="58" y="80">nothing purchased is ever placed here</text>
 
-          <path class="d-barrier" d="M440 24 L440 330"/>
-          <text class="d-sub" x="446" y="120" style="fill:#c08a3e" transform="rotate(90 446 120)">ads may not cross, in either direction</text>
+          <path class="d-line-a" d="M190 90 L190 122" marker-end="url(#a)"/>
+          <text class="d-sub" x="200" y="111">generate to completion</text>
 
-          <rect class="d-box" x="530" y="34" width="290" height="74" rx="8"/>
-          <text class="d-label" x="550" y="58">ContextSignal</text>
-          <text class="d-sub" x="550" y="76">closed enumerations, bounded numerics</text>
-          <text class="d-sub" x="550" y="92">no free text, no stable identifier</text>
+          <rect class="d-box" x="40" y="122" width="300" height="50" rx="6"/>
+          <text class="d-label" x="58" y="143">Organic answer</text>
+          <text class="d-sub" x="58" y="160">verbatim bytes, final</text>
 
-          <path class="d-line" d="M675 108 L675 146" marker-end="url(#ard)"/>
+          <path class="d-line-a" d="M190 172 L190 204" marker-end="url(#a)"/>
 
-          <rect class="d-box" x="530" y="146" width="290" height="60" rx="8"/>
-          <text class="d-label" x="550" y="170">Auction</text>
-          <text class="d-sub" x="550" y="188">bids never reach decoding or routing</text>
+          <rect class="d-box-a" x="40" y="204" width="300" height="56" rx="6"/>
+          <text class="d-tag" x="58" y="223">COMMITMENT</text>
+          <text class="d-label" x="58" y="240" style="font-size:11.5px">SHA-256 of the answer bytes</text>
+          <text class="d-sub" x="58" y="254">recorded before any auction runs</text>
 
-          <path class="d-line" d="M675 206 L675 244" marker-end="url(#ard)"/>
+          <path class="d-barrier" d="M420 18 L420 300"/>
+          <text class="d-tag" x="428" y="92" transform="rotate(90 428 92)">ADS MAY NOT CROSS</text>
 
-          <rect class="d-box" x="530" y="244" width="290" height="64" rx="8"/>
-          <text class="d-label" x="550" y="268">Creative</text>
-          <text class="d-sub" x="550" y="286">structured data, escaped to inert text</text>
-          <text class="d-sub" x="550" y="301">no markup, no template, no prompt fragment</text>
+          <rect class="d-box" x="500" y="26" width="300" height="64" rx="6"/>
+          <text class="d-label" x="518" y="49">ContextSignal</text>
+          <text class="d-sub" x="518" y="66">closed enumerations, bounded numerics</text>
+          <text class="d-sub" x="518" y="80">no free text, no stable identifier</text>
 
-          <path class="d-line-accent" d="M215 308 L215 356 L400 356"/>
-          <path class="d-line" d="M675 308 L675 356 L480 356"/>
+          <path class="d-line" d="M650 90 L650 122" marker-end="url(#b)"/>
 
-          <rect class="d-box-accent" x="60" y="366" width="760" height="58" rx="8"/>
-          <text class="d-tag" x="80" y="388">COMPOSER</text>
-          <text class="d-label" x="80" y="408" style="font-size:11.5px">deterministic · never a language model · concatenates, does not rewrite</text>
+          <rect class="d-box" x="500" y="122" width="300" height="50" rx="6"/>
+          <text class="d-label" x="518" y="143">Auction</text>
+          <text class="d-sub" x="518" y="160">bids never reach decoding or routing</text>
 
-          <path class="d-line-accent" d="M440 424 L440 452" marker-end="url(#ar)"/>
-          <text class="d-sub" x="452" y="446">surface renders, measures, signs</text>
+          <path class="d-line" d="M650 172 L650 204" marker-end="url(#b)"/>
+
+          <rect class="d-box" x="500" y="204" width="300" height="56" rx="6"/>
+          <text class="d-label" x="518" y="227">Creative</text>
+          <text class="d-sub" x="518" y="245">structured data, escaped to inert text</text>
+
+          <path class="d-line-a" d="M190 260 L190 292 Q190 302 200 302 L420 302"/>
+          <path class="d-line"   d="M650 260 L650 292 Q650 302 640 302 L420 302"/>
+          <path class="d-line-a" d="M420 302 L420 322" marker-end="url(#a)"/>
+
+          <rect class="d-box-a" x="40" y="322" width="760" height="52" rx="6"/>
+          <text class="d-tag" x="58" y="342">COMPOSER</text>
+          <text class="d-label" x="58" y="360" style="font-size:11.5px">deterministic · never a language model · concatenates, does not rewrite</text>
+
+          <path class="d-line-a" d="M420 374 L420 404" marker-end="url(#a)"/>
+
+          <rect class="d-box" x="40" y="404" width="760" height="40" rx="6"/>
+          <text class="d-label" x="58" y="423" style="font-size:11.5px">Surface</text>
+          <text class="d-sub" x="128" y="423">renders · measures viewability · signs the receipt the exchange bills against</text>
 
           <defs>
-            <marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 z" fill="#22d3ee"/>
-            </marker>
-            <marker id="ard" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 z" fill="rgba(235,232,224,0.26)"/>
-            </marker>
+            <marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#6e8aff"/></marker>
+            <marker id="b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="rgba(237,237,239,.28)"/></marker>
           </defs>
         </svg>
       </div>
       <figcaption>
-        The two paths meet once, in a function with no access to a model. An ad slot is
-        otherwise the cheapest prompt-injection vector available, and one the publisher is
-        paid to host.
+        An ad slot is otherwise the cheapest prompt-injection vector available,
+        and one the publisher is paid to host.
       </figcaption>
     </figure>
 
-    <div class="article">
-      <h3>Making it checkable</h3>
-      <p>
-        A digest in a receipt proves nothing by itself. The node computes it afterwards
-        and can compute it over anything. So the node commits to the answer digest
-        inside the ad request, and the exchange records it before running the auction.
-        At that moment no winner exists. An answer matching the digest could not have
-        depended on the outcome.
-      </p>
-      <p>
-        The composer is deterministic, so anyone holding the answer, the decision and
-        the rendered output can recompute the bytes. No key, no cooperation from the node:
-      </p>
-      <pre><span class="k">from</span> uap <span class="k">import</span> verify_composition, verify_answer_commitment
+    <h3>Making it checkable</h3>
+    <p>
+      A digest in a receipt proves nothing alone, because the node computes it
+      afterwards. So the node commits to the digest inside the ad request and the
+      exchange records it before the auction. The composer being deterministic
+      means anyone can recompute the bytes, with no key and no cooperation from
+      the node:
+    </p>
+    <pre><span class="k">from</span> uap <span class="k">import</span> verify_composition, verify_answer_commitment
 
 verify_composition(rendered, answer, decision)
-<span class="c">#  (True, 'composition is exact')</span>
-
-verify_answer_commitment(rendered, committed_digest)
-<span class="c">#  (True, 'answer matches the pre-selection commitment')</span></pre>
-      <p>
-        The exchange also holds out a fraction of requests. Same path, no ad served,
-        digest still reported. Divergence between the served and held-out answers is
-        evidence no per-turn check can produce.
-      </p>
-      <h3>And the conversation stays put</h3>
-      <p>
-        Targeting is derived on the node and reduced to a published taxonomy before
-        anything is sent. Every field that leaves is a closed enumeration or a bounded
-        number. There is no free-text field in the signal schema and no identifier
-        stable across sessions, which rules out retargeting permanently. In the local
-        profile the auction runs on the machine against the full private context and
-        nothing derived from the conversation leaves at all.
-      </p>
-    </div>
-  </div></div>
+<span class="c">#  (True, 'composition is exact')</span></pre>
+    <p>
+      The exchange also holds out a deterministic fraction of requests: same path,
+      no ad served, digest still reported. Divergence between the served and
+      held-out arms is evidence no per-turn check can produce.
+    </p>
+  </div>
 </section>
 
 <section>
-  <div class="wrap"><div class="wide">
-    <h2 style="max-width:33rem;margin:0 auto"><span class="num">05</span>What a provider earns</h2>
-    <div class="article">
-      <p style="margin-top:22px">
-        The reason to build any of this is that self-hosted inference currently carries GPU
-        cost and captures none of the value. Adjust the inputs; the split is 65 percent to
-        the node, 20 to the exchange, 15 to the model steward.
-      </p>
-    </div>
-
-    <div class="calc">
-      <div class="calc-grid">
-        <div class="calc-f">
-          <label for="dau">Daily active users</label>
-          <input id="dau" type="number" value="10000" min="1" step="1000">
-        </div>
-        <div class="calc-f">
-          <label for="turns">Turns per user per day</label>
-          <input id="turns" type="number" value="5" min="1" step="1">
-        </div>
-        <div class="calc-f">
-          <label for="load">Ad on one turn in</label>
-          <input id="load" type="number" value="3" min="1" step="1">
-        </div>
-        <div class="calc-f">
-          <label for="cpm">Clearing CPM, USD</label>
-          <input id="cpm" type="number" value="40" min="1" step="5">
-        </div>
-      </div>
-      <div class="calc-out">
-        <div class="calc-o"><div class="v" id="o-node">$13,000</div><div class="l">node, per month</div></div>
-        <div class="calc-o"><div class="v dim" id="o-steward">$3,000</div><div class="l">model steward</div></div>
-        <div class="calc-o"><div class="v dim" id="o-imps">500k</div><div class="l">impressions / month</div></div>
-        <div class="calc-o"><div class="v dim" id="o-gpu">9</div><div class="l">H100 months covered</div></div>
-      </div>
-    </div>
-
-    <div class="article">
-      <p>
-        The steward figure is the part with no precedent. An open-weights model is a public
-        good with no revenue mechanism, and every downstream serving node currently captures
-        the value. Here the model's own manifest at <code>/.well-known/uap-model</code> declares
-        its advertising policy and revenue share, and the exchange enforces it because the
-        exchange is the only party holding money. An author who wants none of this sets
-        <code>permitted: false</code> and no conformant exchange will clear an auction on
-        those weights.
-      </p>
-      <p>
-        That is a veto and a royalty on traffic the author never sees and cannot audit
-        directly. Nothing equivalent exists today.
-      </p>
-    </div>
-  </div></div>
-</section>
-
-<section>
-  <div class="wrap"><div class="article">
-    <h2><span class="num">06</span>What is built, and what is not</h2>
-    <p style="margin-top:22px">
-      Draft, with the reference implementation in the same repository. Canonical JSON,
-      Ed25519 signing, the targeting language, the auction, the integrity boundary,
-      receipt verification, supply-chain resolution, MRC measurement, settlement splits.
-      210 checks, 57 tests, and a negative vector suite whose job is to make specific
-      commercially motivated lies impossible to express.
+  <div class="paper">
+    <div class="marginal"><span class="n">05</span>Roadmap</div>
+    <h2>Where it goes next</h2>
+    <p>
+      Draft-01 covers the serve-time path end to end: canonical JSON, Ed25519
+      signing, the targeting language, the auction, the integrity boundary,
+      receipt verification, supply-chain resolution, MRC measurement, and
+      settlement splits. The conformance suite is mostly negative vectors. Its
+      job is to make specific commercially motivated lies impossible to express.
+    </p>
+    <p>
+      What comes next is the buy side, in roughly this order. Each is a tracked
+      milestone rather than a gap discovered later.
     </p>
 
     <table class="tbl">
-      <thead><tr><th>Not built</th><th>Consequence</th></tr></thead>
+      <thead><tr><th>Next</th><th>What it unblocks</th></tr></thead>
       <tbody>
-        <tr><td><strong>Forecasting</strong></td><td>A buyer cannot size a campaign before committing budget</td></tr>
-        <tr><td><strong>Campaign and creative review APIs</strong></td><td>No way to create a campaign or approve a creative</td></tr>
-        <tr><td><strong>Reporting endpoint</strong></td><td>Privacy rules are specified; the interface is not</td></tr>
-        <tr><td><strong>Billing lifecycle</strong></td><td>No invoicing, disputes, make-goods, or invalid-traffic chargebacks</td></tr>
-        <tr><td><strong>Production classifier</strong></td><td>Shipped as fail-closed, so it monetises nothing until someone builds one</td></tr>
+        <tr><td><strong>Forecast endpoint</strong></td><td>Sizing a campaign before committing budget, which is the first thing a buyer asks for</td></tr>
+        <tr><td><strong>Campaign &amp; creative review</strong></td><td>Creating a campaign and getting a creative approved without a private arrangement</td></tr>
+        <tr><td><strong>Reporting API</strong></td><td>Delivery and performance under the aggregation floors the spec already defines</td></tr>
+        <tr><td><strong>Billing lifecycle</strong></td><td>Invoicing, disputes, make-goods and invalid-traffic chargebacks</td></tr>
+        <tr><td><strong>Reference classifier</strong></td><td>Replaces the fail-closed stub, so a deployment can actually serve</td></tr>
+        <tr><td><strong>RFC 9421 signing</strong></td><td>Transport-level message signatures alongside the object signatures that exist</td></tr>
       </tbody>
     </table>
 
     <p>
-      Two design problems are in the README rather than hidden. Frequency capping works
-      only within one node, because capping across a network needs an identifier the
-      protocol forbids. And local pacing can strand revenue, because a node cannot see
-      that a campaign exhausted elsewhere between syncs.
+      Two design problems are tracked openly rather than hidden. Frequency capping
+      works only within one node, because capping across a network needs an
+      identifier the protocol forbids. And local pacing can strand revenue,
+      because a node cannot see that a campaign exhausted elsewhere between syncs.
+      Both need a design, not a patch.
     </p>
 
-    <div class="note warn">
-      <span class="note-k">The honest obstacle</span>
+    <div class="note">
+      <b>The honest obstacle</b>
       <p>
-        Nobody runs an exchange. Supply will not integrate without demand, demand will not
-        integrate without supply, and a specification does not solve that. The realistic first
-        move is one party operating all three roles in a narrow vertical until there is
-        inventory worth bidding on, which is how every ad network started, including the
-        closed one this is a response to.
+        Nobody runs an exchange. Supply will not integrate without demand, demand
+        will not integrate without supply, and a specification does not solve
+        that. The realistic first move is one party operating all three roles in a
+        narrow vertical until there is inventory worth bidding on, which is how
+        every ad network started, including the closed one this responds to.
       </p>
     </div>
 
     <p>
       Worth attacking: the k-anonymity floor, whether bundle fetch leaks a node's
-      audience, and whether the unattested tier has any honest demand. Criticism there
-      is more useful than agreement.
+      audience, and whether the unattested tier has any honest demand. Criticism
+      there is more useful than agreement.
     </p>
 
     <div class="cta-row">
       <a class="btn solid" href="https://github.com/musa92/uap" rel="noopener">Read the specification</a>
       <a class="btn" href="https://github.com/musa92/uap#run-it" rel="noopener">Run the demo</a>
     </div>
-  </div></div>
+  </div>
+</section>
+
+<section>
+  <div class="paper">
+    <div class="marginal">References</div>
+    <ol class="refs">
+      <li>Google, <a href="https://googlepress.blogspot.com/2003/06/google-expands-advertising-monetization.html" rel="noopener">"Google Expands Advertising Monetization Program for Websites"</a>, 18 June 2003.</li>
+      <li>Reported ChatGPT advertising revenue and CPM, February–April 2026. See <a href="https://www.stackmatix.com/blog/advertising-on-ai-platforms-2026-landscape" rel="noopener">Advertising on AI Platforms, 2026</a>.</li>
+      <li>Global digital ad spend 2026. See <a href="https://ppcchief.com/digital-ad-spend-statistics" rel="noopener">Digital Ad Spend Statistics 2026</a>.</li>
+      <li>Retail media sponsored-product cannibalisation estimates. See <a href="https://www.emarketer.com/content/faq-on-amazon-advertising--retail-media-dominance--prime-video-scale--agentic-ad-tools" rel="noopener">eMarketer, Amazon advertising FAQ</a>.</li>
+      <li><a href="https://adcontextprotocol.org/" rel="noopener">AdCP</a> and IAB Tech Lab AAMP operate above real-time bidding, at the campaign management layer. UAP is the serve-time layer beneath both.</li>
+    </ol>
+  </div>
 </section>
 
 </main>
 
 <footer>
-  <div class="wrap"><div class="foot">
-    <span>Turbnetic Research &nbsp;·&nbsp; September 2026</span>
-    <span><a href="/">turbnetic.ai</a> &nbsp;·&nbsp; <a href="https://github.com/musa92/uap" rel="noopener">github.com/musa92/uap</a></span>
-  </div></div>
+  <div class="paper">
+    <div class="foot">
+      <span>Turbnetic Research · Note 01 · September 2026</span>
+      <span><a href="/">turbnetic.ai</a> · <a href="https://github.com/musa92/uap" rel="noopener">github.com/musa92/uap</a></span>
+    </div>
+  </div>
 </footer>
 
-<script src="app.js?v=1"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
