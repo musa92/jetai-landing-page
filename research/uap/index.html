@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Universal Ads Protocol · Turbnetic Research</title>
+<title>The LLM economy needs its own AdSense · Turbnetic Research</title>
 <meta name="description" content="AdSense let any website earn without an ad sales team. Nothing does that for LLM inference. A protocol for serving ads on a generated turn without corrupting the answer.">
 <link rel="canonical" href="https://turbnetic.ai/research/uap">
-<meta property="og:title" content="Who gets paid when the answer replaces the page">
-<meta property="og:description" content="AdSense let any website earn without an ad sales team. Nothing does that for LLM inference yet.">
+<meta property="og:title" content="The LLM economy needs its own AdSense">
+<meta property="og:description" content="Ads made YouTube free and a generation learned to code on it. An open protocol to do the same for LLM inference.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://turbnetic.ai/research/uap">
 <meta name="twitter:card" content="summary_large_image">
@@ -53,16 +53,18 @@
 <header class="hero">
   <div class="paper">
     <div class="kicker">Turbnetic Research &nbsp;·&nbsp; Note 01</div>
-    <h1 id="hd">Who gets paid when the <em>answer</em> replaces the page</h1>
+    <h1 id="hd">The LLM economy needs its own <em>AdSense</em></h1>
     <div class="abstract">
       <b>Abstract</b>
-      In 2003 AdSense let any website earn without an ad sales team, and the
-      independent web followed. Nothing does that for LLM inference. Assistants
-      now carry advertising, the system selling it has one seller, and everyone
-      else serving a model pays for compute and captures none of the value. This
-      note specifies the missing layer: how a sponsored unit is selected and paid
-      for on a turn, on a node nobody trusts, without the conversation leaving
-      the machine and without the ad being able to move the answer.
+      I think most people will never pay for a frontier model directly, the
+      same way most people never paid for YouTube. A lot of them learned to
+      code on the free version. If we want the same thing for AI, someone has
+      to fund the free tier, and right now the only party that can is the one
+      company running its own closed ad system. This note is my attempt at the
+      open version: how an ad gets picked and paid for on an LLM turn, on
+      hardware nobody trusts, without the conversation leaving the machine and
+      without the ad being able to change the answer. There is a working
+      reference implementation; the link is below.
     </div>
     <div class="meta-line">
       Musa Aghayev &nbsp;·&nbsp; September 2026 &nbsp;·&nbsp;
@@ -75,40 +77,74 @@
 
 <section>
   <div class="paper">
-    <div class="marginal"><span class="n">01</span>Precedent</div>
-    <h2>June 2003</h2>
+    <div class="marginal"><span class="n">01</span>The economy</div>
+    <h2>Where the humans are</h2>
     <p class="lede">
-      Before AdSense, earning from a website meant having an ad sales team. Only
-      publishers with scale could do it, so only publishers with scale existed.
+      The LLM economy is settling into layers. At the top is question and
+      answer: a person types, a model answers. Below that, agents do the actual
+      work, calling tools, hitting APIs, talking to other agents. At the bottom,
+      renderers turn all of it into something a human looks at.
     </p>
     <p>
-      AdSense launched on 18 June 2003.<sup class="ref">1</sup> Paste a snippet,
-      get paid. No advertiser relationship, no traffic minimum. It did not make
-      writers rich. It made publishing cheap enough to keep doing, and the
-      independent web followed.
+      Humans only touch the QA layer directly. Everything under it is bots
+      talking to bots. That matters for advertising, because it tells you where
+      an ad can honestly live. At the QA layer it looks like what ChatGPT already
+      ships: a labelled sponsored unit under the answer. At the agent layer it
+      looks different. An agent booking travel or picking a database is going to
+      choose a vendor, and a vendor can pay to be one of the options, as long as
+      it is disclosed and the organic options are still there untouched.
     </p>
-    <div class="pull">
-      The same trade is available now, and it is not that model providers get
-      paid. It is that serving cost falls toward zero.
-    </div>
     <p>
-      ChatGPT began serving sponsored links under answers in February 2026:
-      roughly $100M annualised inside two months, at about a $60
-      CPM.<sup class="ref">2</sup> A conversational turn prices like paid search,
-      because the user has just stated an intent in their own words. That
-      inventory has one seller. Everyone else pays for the compute out of pocket.
+      Both of those are real inventory. Today both belong to one seller.
+    </p>
+    <p>
+      ChatGPT started serving sponsored links under answers in February 2026:
+      about $100M annualised inside two months, at roughly a $60
+      CPM.<sup class="ref">2</sup> An LLM turn prices like paid search, because
+      the person just told you what they want in their own words. Everyone else
+      running a model gets none of that and pays for the GPUs anyway.
     </p>
   </div>
 </section>
 
 <section>
   <div class="paper">
-    <div class="marginal"><span class="n">02</span>The unit</div>
-    <h2>What a sponsored turn looks like</h2>
+    <div class="marginal"><span class="n">02</span>Why free</div>
+    <h2>The YouTube argument</h2>
     <p>
-      The unit is deliberately unremarkable: the answer, a hard separator, then a
-      labelled block the model never saw. Everything interesting is in what cannot
-      happen, not in what is rendered.
+      I keep coming back to YouTube. Nobody paid to learn coding there. The ads
+      paid, and a generation of engineers came out of it. AdSense did the same
+      thing for the written web in 2003:<sup class="ref">1</sup> paste a snippet,
+      get paid, no sales team. It did not make bloggers rich. It made publishing
+      cheap enough that people kept doing it.
+    </p>
+    <p>
+      That is the trade I want for models. Not that providers get rich off ads.
+      That ad revenue covers the compute, so the consumer side of a frontier
+      model can be free, and the people who most need it, students, people in
+      countries where $20 a month is real money, get the same model everyone
+      else gets.
+    </p>
+    <div class="pull">
+      Free on the consumer side is not charity. It is what the ad revenue is for.
+    </div>
+    <p>
+      The provider side is the part that has to be motivated. If you run an
+      open-weights model on your own hardware today there is no way for the
+      value of a turn to reach you. Fix that, and serving open models stops
+      being something you do at a loss until you get tired of it.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="paper">
+    <div class="marginal"><span class="n">03</span>The unit</div>
+    <h2>What it looks like, and how it gets paid</h2>
+    <p>
+      The unit is boring on purpose: the answer, a hard line, then a labelled
+      block the model never saw. All the interesting parts are the things that
+      cannot happen.
     </p>
 
     <figure class="bleed">
@@ -144,12 +180,20 @@
         </div>
       </div>
       <figcaption>
-        The composer that joined answer and creative is a deterministic function
-        with no access to a model. Anyone holding the answer, the decision and
-        this output can recompute the bytes and verify it concatenated rather
-        than rewrote.
+        The thing that joined the answer and the ad is a plain function. It is
+        not a model and it cannot rewrite anything. If you have the answer, the
+        decision and this output, you can recompute the bytes yourself and check
+        nothing was touched.
       </figcaption>
     </figure>
+
+    <p>
+      Underneath, one turn becomes one settled impression like this. The part I
+      spent the most time on is the allocation: the exchange promises you a
+      slice up front, and if you serve inside it you are paid. No more serving
+      in good faith and finding out at settlement that the campaign ran out
+      somewhere else.
+    </p>
 
     <figure class="bleed">
       <div class="fig-head"><b>Figure 2</b><span>How one turn becomes one settled impression</span></div>
@@ -245,13 +289,13 @@
         </svg>
       </div>
       <figcaption>
-        Local decisioning. Two signed objects arrive on a schedule: a bundle that
-        is identical for every node, and an allocation that is not. The turn
-        itself makes no network call. What goes back is a receipt the surface
-        signed, and the exchange recomputes every claim in it from what it
-        issued rather than trusting a number the node wrote. A node inside its
-        slice is always paid; an allocation the exchange got wrong is the
-        exchange's loss.
+        This is the local mode, the one I care about for self-hosted models.
+        Two signed files arrive on a schedule. The turn itself makes no network
+        call at all. What goes back is a receipt the surface signed, and the
+        exchange recomputes every number in it from what it issued instead of
+        trusting the node. If you serve inside your allocation you get paid,
+        full stop. If the exchange allocated wrong, that is the exchange's loss,
+        not yours.
       </figcaption>
     </figure>
   </div>
@@ -259,65 +303,54 @@
 
 <section>
   <div class="paper">
-    <div class="marginal"><span class="n">03</span>Unit economics</div>
-    <h2>What a turn costs, and what it earns</h2>
+    <div class="marginal"><span class="n">04</span>The math</div>
+    <h2>Does it actually cover the compute?</h2>
     <p>
-      Both sides of this are calculable from the hardware up, so there is no
-      reason to argue about it.
+      I did not want to argue about this, so I worked it out from the hardware.
     </p>
     <p>
       <strong>Cost.</strong> A 70B-class open model, fp8, batched, on an H100 at
-      about $2 an hour, sustains roughly 3,000 output tokens per second. A turn
-      of ~400 output tokens costs $0.000074 to decode; ~1,200 input tokens add
-      about a quarter of that in prefill. Call it
-      <strong>$0.000093 a turn</strong>, or nine cents per thousand turns.
+      about $2 an hour, does roughly 3,000 output tokens a second. A turn of
+      around 400 output tokens costs $0.000074 to decode; 1,200 input tokens add
+      about a quarter of that in prefill. Call it <strong>$0.000093 a turn</strong>,
+      nine cents per thousand.
     </p>
     <p>
-      <strong>Revenue.</strong> At a CPM of <em>p</em>, one ad every
-      <em>L</em> turns, and the node keeping 65 percent, revenue is
-      <code>0.65p / 1000L</code> per turn. Setting that equal to cost gives a
-      break-even CPM of <code>0.143 × L</code>: <strong>$0.43</strong> at one ad
-      every three turns, <strong>$1.42</strong> at one in ten,
-      <strong>$2.85</strong> at one in twenty.
+      <strong>Revenue.</strong> At a CPM of <em>p</em>, one ad every <em>L</em>
+      turns, and the node keeping 65 percent, you get <code>0.65p / 1000L</code>
+      per turn. Set that equal to cost and the break-even CPM is
+      <code>0.143 × L</code>: <strong>$0.43</strong> with an ad every three turns,
+      <strong>$1.42</strong> every ten, <strong>$2.85</strong> every twenty.
     </p>
     <p>
-      The market pays about $60.
+      The market pays about $60. So this was never a question of whether ads can
+      pay for inference. They pay for it a hundred times over. The question is
+      whether the money can reach the person running the hardware without them
+      having to build an ad business first.
     </p>
 
     <figure class="bleed">
       <div class="fig-head"><b>Figure 3</b><span>How far ad revenue covers the cost of serving a turn</span></div>
       <div class="frame"><div id="chart" data-palette="#6e8aff,#6a6a73"></div></div>
       <figcaption>
-        Log scale, because the answer spans two orders of magnitude. At one ad
-        every twenty turns and a CPM a twentieth of what the market pays,
-        serving is already free. The curves cross break-even below $3 in every
-        case.
+        Log scale because the gap is two orders of magnitude. One ad every
+        twenty turns at a twentieth of today's CPM already covers the compute.
+        Every curve crosses break-even under $3.
       </figcaption>
     </figure>
 
-    <div class="pull">
-      It was never whether advertising can pay for inference. It is whether the
-      revenue can reach the person running the hardware.
-    </div>
-
+    <h3>The model author gets a cut too</h3>
     <p>
-      Which is worth stating plainly, because it changes what the problem is. A
-      serving operator does not need a large share of the ad market. They need
-      roughly two orders of magnitude less than the unit economics already
-      support, and they need it without building an ad sales business, a
-      billing system, a fraud team, and a demand relationship. That is a
-      plumbing problem, and plumbing is what a protocol is for.
+      Open-weights models are a public good with no revenue behind them. Every
+      node downstream captures the value. In this design the model's own manifest
+      at <code>/.well-known/uap-model</code> says what ads it allows and what
+      share it wants, and the exchange enforces it because the exchange is the
+      one holding the money. An author who wants none of it sets
+      <code>permitted: false</code> and no conformant exchange will clear an
+      auction on those weights. That is a veto and a royalty on traffic they
+      never see.
     </p>
-
-    <h3>The second payee</h3>
-    <p>
-      An open-weights model is a public good with no revenue mechanism, and every
-      downstream node captures the value today. Here the model's own manifest at
-      <code>/.well-known/uap-model</code> declares its advertising policy and
-      revenue share, and the exchange enforces it because the exchange holds the
-      money. An author who wants none of it sets <code>permitted: false</code> and
-      no conformant exchange will clear an auction on those weights.
-    </p>
+    <p>Plug in your own numbers:</p>
 
     <div class="calc">
       <div class="calc-grid">
@@ -338,22 +371,28 @@
 
 <section>
   <div class="paper">
-    <div class="marginal"><span class="n">04</span>Integrity</div>
-    <h2>The failure mode that has to be designed out</h2>
+    <div class="marginal"><span class="n">05</span>The one rule</div>
+    <h2>The ad cannot touch the answer</h2>
     <p>
-      An ad that pays per click, beside text a model generates on demand, creates
-      direct pressure to bend the text. In retail media, the closest structural
-      analogue, studies attribute <strong>30 to 40 percent of sponsored-product
-      sales</strong> to purchases that would have happened anyway.<sup class="ref">4</sup>
-      Commercial ranking bleeds into organic ranking and much of the revenue is
-      not incremental.
+      An ad that pays per click, sitting next to text a model generates on the
+      spot, is pressure to bend the text. Retail media already shows what
+      happens: studies put <strong>30 to 40 percent of sponsored-product
+      sales</strong> down to purchases that would have happened
+      anyway.<sup class="ref">4</sup> Ipsos found about two thirds of US adults
+      trust AI answers less when there are ads in them. A surface that bends its
+      answers ends up at display CPMs.
     </p>
     <p>
-      Users notice. Ipsos found roughly two thirds of US adults say ads in AI
-      answers make them trust the answers less. That is the decay curve for the
-      category: a surface that bends its answers converges on display CPMs.
+      So the protocol draws a line and makes it checkable, not just promised.
+      The node hashes the answer and sends the digest to the exchange before
+      the auction runs. At that moment no winner exists, so the answer cannot
+      have depended on one. The composer that joins answer and ad is a plain
+      function, so anyone can recompute the bytes:
     </p>
-    <div class="pull">The integrity boundary is not an ethics section. It is what defends a $60 CPM from becoming a $6 one.</div>
+    <pre><span class="k">from</span> uap <span class="k">import</span> verify_composition, verify_answer_commitment
+
+verify_composition(rendered, answer, decision)
+<span class="c">#  (True, 'composition is exact')</span></pre>
 
     <figure class="bleed">
       <div class="fig-head"><b>Figure 4</b><span>The boundary, and the one function permitted to cross it</span></div>
@@ -422,82 +461,66 @@
         </svg>
       </div>
       <figcaption>
-        An ad slot is otherwise the cheapest prompt-injection vector available,
-        and one the publisher is paid to host.
+        Without this line, an ad slot is the cheapest prompt injection there is,
+        and the publisher gets paid to host it.
       </figcaption>
     </figure>
 
-    <h3>Making it checkable</h3>
     <p>
-      A digest in a receipt proves nothing alone, because the node computes it
-      afterwards. So the node commits to the digest inside the ad request and the
-      exchange records it before the auction. The composer being deterministic
-      means anyone can recompute the bytes, with no key and no cooperation from
-      the node:
-    </p>
-    <pre><span class="k">from</span> uap <span class="k">import</span> verify_composition, verify_answer_commitment
-
-verify_composition(rendered, answer, decision)
-<span class="c">#  (True, 'composition is exact')</span></pre>
-    <p>
-      The exchange also holds out a deterministic fraction of requests: same path,
-      no ad served, digest still reported. Divergence between the served and
-      held-out arms is evidence no per-turn check can produce.
+      The exchange also holds out a slice of requests: same path, no ad served,
+      digest still reported. If the served answers drift from the held-out ones,
+      something is bending them. No single receipt can show that; the holdout
+      can.
     </p>
   </div>
 </section>
 
 <section>
   <div class="paper">
-    <div class="marginal"><span class="n">05</span>Roadmap</div>
-    <h2>Where it goes next</h2>
+    <div class="marginal"><span class="n">06</span>Stability</div>
+    <h2>Making it something providers can rely on</h2>
     <p>
-      Draft-01 covers the serve-time path end to end: canonical JSON, Ed25519
-      signing, the targeting language, the auction, the integrity boundary,
-      receipt verification, supply-chain resolution, MRC measurement, and
-      settlement splits. The conformance suite is mostly negative vectors. Its
-      job is to make specific commercially motivated lies impossible to express.
-    </p>
-    <p>
-      What comes next is the buy side, in roughly this order. Each is a tracked
-      milestone rather than a gap discovered later.
+      Motivation is not enough on its own. Providers will only plan around this
+      if payment is predictable, so the parts I built first are the ones that
+      make it stable.
     </p>
 
     <table class="tbl">
-      <thead><tr><th>Next</th><th>What it unblocks</th></tr></thead>
+      <thead><tr><th>Built</th><th>What it guarantees</th></tr></thead>
       <tbody>
-        <tr><td><strong>Forecast endpoint</strong></td><td>Sizing a campaign before committing budget, which is the first thing a buyer asks for</td></tr>
-        <tr><td><strong>Campaign &amp; creative review</strong></td><td>Creating a campaign and getting a creative approved without a private arrangement</td></tr>
-        <tr><td><strong>Reporting API</strong></td><td>Delivery and performance under the aggregation floors the spec already defines</td></tr>
-        <tr><td><strong>Billing lifecycle</strong></td><td>Invoicing, disputes, make-goods and invalid-traffic chargebacks</td></tr>
-        <tr><td><strong>Reference classifier</strong></td><td>Replaces the fail-closed stub, so a deployment can actually serve</td></tr>
-        <tr><td><strong>RFC 9421 signing</strong></td><td>Transport-level message signatures alongside the object signatures that exist</td></tr>
+        <tr><td><strong>Signed allocations</strong></td><td>Serve inside your slice and you are paid. Slices across all nodes cannot exceed the budget, so over-allocation is the exchange's loss.</td></tr>
+        <tr><td><strong>Receipts recomputed, not trusted</strong></td><td>Nonce, digest, price and pacing are all rederived at the exchange from what it issued.</td></tr>
+        <tr><td><strong>Steward share enforced</strong></td><td>The model author's cut cannot be reduced by the node or the exchange.</td></tr>
+        <tr><td><strong>Buy side</strong></td><td>Campaigns, creative review, forecasting, conversions, aggregate reporting. Agencies can spend without a private arrangement.</td></tr>
+        <tr><td><strong>Integrity, provable</strong></td><td>Answer digest committed before the auction; composition anyone can recompute; a holdout arm.</td></tr>
       </tbody>
     </table>
 
     <p>
-      Two design problems are tracked openly rather than hidden. Frequency capping
-      works only within one node, because capping across a network needs an
-      identifier the protocol forbids. And local pacing can strand revenue,
-      because a node cannot see that a campaign exhausted elsewhere between syncs.
-      Both need a design, not a patch.
+      Still open: the billing lifecycle, invoicing and disputes and make-goods.
+      A production classifier; the one that ships fails closed on purpose, so it
+      serves nothing until someone replaces it. And frequency capping across
+      nodes, which I do not have a design for yet, because doing it network-wide
+      needs an identifier the protocol forbids on purpose.
     </p>
 
     <div class="note">
-      <b>The honest obstacle</b>
+      <b>The honest part</b>
       <p>
-        Nobody runs an exchange. Supply will not integrate without demand, demand
-        will not integrate without supply, and a specification does not solve
-        that. The realistic first move is one party operating all three roles in a
-        narrow vertical until there is inventory worth bidding on, which is how
-        every ad network started, including the closed one this responds to.
+        Nobody runs an exchange yet. Supply will not show up without demand and
+        demand will not show up without supply, and a spec does not solve that.
+        Somebody has to run all three roles in one narrow vertical until there is
+        inventory worth bidding on. That is how every ad network started,
+        including the closed one this is a response to. I would like that to be
+        an open one.
       </p>
     </div>
 
     <p>
-      Worth attacking: the k-anonymity floor, whether bundle fetch leaks a node's
-      audience, and whether the unattested tier has any honest demand. Criticism
-      there is more useful than agreement.
+      If you want to attack something, attack the k-anonymity floor, whether the
+      bundle fetch leaks anything about a node's audience, and whether the
+      unattested tier has any honest demand. Those are the parts I am least sure
+      about.
     </p>
 
     <div class="cta-row">
@@ -512,10 +535,10 @@ verify_composition(rendered, answer, decision)
     <div class="marginal">References</div>
     <ol class="refs">
       <li>Google, <a href="https://googlepress.blogspot.com/2003/06/google-expands-advertising-monetization.html" rel="noopener">"Google Expands Advertising Monetization Program for Websites"</a>, 18 June 2003.</li>
-      <li>Reported ChatGPT advertising revenue and CPM, February–April 2026. See <a href="https://www.stackmatix.com/blog/advertising-on-ai-platforms-2026-landscape" rel="noopener">Advertising on AI Platforms, 2026</a>.</li>
+      <li>Reported ChatGPT advertising revenue and CPM, February to April 2026. See <a href="https://www.stackmatix.com/blog/advertising-on-ai-platforms-2026-landscape" rel="noopener">Advertising on AI Platforms, 2026</a>.</li>
       <li>Global digital ad spend 2026. See <a href="https://ppcchief.com/digital-ad-spend-statistics" rel="noopener">Digital Ad Spend Statistics 2026</a>.</li>
       <li>Retail media sponsored-product cannibalisation estimates. See <a href="https://www.emarketer.com/content/faq-on-amazon-advertising--retail-media-dominance--prime-video-scale--agentic-ad-tools" rel="noopener">eMarketer, Amazon advertising FAQ</a>.</li>
-      <li><a href="https://adcontextprotocol.org/" rel="noopener">AdCP</a> and IAB Tech Lab AAMP operate above real-time bidding, at the campaign management layer. UAP is the serve-time layer beneath both.</li>
+      <li><a href="https://adcontextprotocol.org/" rel="noopener">AdCP</a> and IAB Tech Lab AAMP work above real-time bidding, at the campaign layer. UAP is the serve-time layer under both.</li>
     </ol>
   </div>
 </section>
