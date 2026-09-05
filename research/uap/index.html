@@ -10,7 +10,12 @@
 <meta property="og:description" content="Ads made YouTube free and a generation learned to code on it. An open protocol to do the same for LLM inference.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://turbnetic.ai/research/uap">
+<meta property="og:image" content="https://turbnetic.ai/research/uap/card.png">
+<meta property="og:image:width" content="3000">
+<meta property="og:image:height" content="1200">
+<meta property="og:image:alt" content="Two swarms of dots: an unbroken stream spanning the full width, and a second stream gathering below it, separated by an empty gap.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://turbnetic.ai/research/uap/card.png">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <meta name="theme-color" content="#0b0b0c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,7 +51,11 @@
       </svg>
       <span class="logo-text">Turb<span class="accent">netic</span><span class="dot">.ai</span></span>
     </a>
-    <div class="nav-crumb"><a href="/">Home</a> / Research / UAP</div>
+    <ul class="nav-links">
+      <li><a href="/turbofan.html">Turbofan</a></li>
+      <li><a href="/research/uap/" aria-current="page" class="is-current">Research</a></li>
+      <li><a href="/upcoming.html">Upcoming</a></li>
+    </ul>
   </div>
 </nav>
 
@@ -56,16 +65,18 @@
     <h1 id="hd">The LLM economy needs its own <em>AdSense</em></h1>
     <div class="abstract">
       <b>Abstract</b>
-      I think most people will never pay for a frontier model directly, the
-      same way most people never paid for YouTube. A lot of them learned to
-      code on the free version. If we want the same thing for AI, someone has
-      to fund the free tier, and right now the only party that can is the one
-      company running its own closed ad system. This note is my attempt at the
-      open version: how an ad gets picked and paid for on an LLM turn, on
-      hardware nobody trusts, without the conversation leaving the machine and
-      without the ad being able to change the answer. There is a working
-      reference implementation; the link is below.
-    </div>
+      <p>
+      I think most people will never pay for a frontier model directly, the same
+      way most people never paid for YouTube. A lot of them learned to code on
+      the free version. If we want the same thing for AI, someone has to fund the
+      free tier, and right now the only party that can is the one company running
+      its own closed ad system. This note is my attempt at the open version: how
+      an ad gets picked and paid for on an LLM turn, on hardware nobody trusts,
+      without the conversation leaving the machine and without the ad being able
+      to change the answer. There is a working reference implementation; the link
+      is below.
+      </p>
+</div>
     <div class="meta-line">
       Musa Aghayev &nbsp;·&nbsp; September 2026 &nbsp;·&nbsp;
       <a href="https://github.com/musa92/uap" rel="noopener">github.com/musa92/uap</a>

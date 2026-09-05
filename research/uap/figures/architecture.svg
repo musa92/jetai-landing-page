@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 880" width="1600" height="880"
+     font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9A9284"/>
+    </marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B6193"/>
+    </marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#875208"/>
+    </marker>
+    <marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#269C88"/>
+    </marker>
+    <style>
+      .bx   { fill:#FBF9F4; stroke:#CFC8B9; stroke-width:1.5; rx:7 }
+      .bxa  { fill:#E7ECF2; stroke:#1B6193; stroke-width:1.5; rx:7 }
+      .bxk  { fill:#F4EBDA; stroke:#875208; stroke-width:1.5; rx:7 }
+      .t    { fill:#1A1714; font-size:15px }
+      .t2   { fill:#57514A; font-size:12.5px }
+      .t3   { fill:#8A8379; font-size:11.5px }
+      .mono { font-family:Menlo, ui-monospace, monospace }
+      .band { fill:#EDE8DB; stroke:#DDD6C6; stroke-width:1; rx:10 }
+      .ln   { stroke:#9A9284; stroke-width:1.6; fill:none }
+      .lnb  { stroke:#1B6193; stroke-width:1.6; fill:none }
+      .lno  { stroke:#875208; stroke-width:1.6; fill:none }
+      .lnt  { stroke:#269C88; stroke-width:1.6; fill:none }
+      .lbl  { fill:#8A8379; font-size:11px; letter-spacing:.10em }
+      .ser  { font-family:Iowan Old Style, Palatino, Georgia, serif }
+    </style>
+  </defs>
+
+  <rect width="1600" height="880" fill="#F4F1EA"/>
+
+  <!-- ============ OFFLINE ============ -->
+  <rect class="band" x="40" y="52" width="1150" height="126"/>
+  <text class="lbl" x="60" y="76">ON A SCHEDULE  ·  NOTHING ABOUT THE TURN</text>
+
+  <rect class="bx" x="60" y="90" width="150" height="66"/>
+  <text class="t" x="135" y="118" text-anchor="middle">exchange</text>
+  <text class="t3" x="135" y="137" text-anchor="middle">holds the money</text>
+
+  <rect class="bxa" x="270" y="90" width="250" height="66"/>
+  <text class="t" x="395" y="116" text-anchor="middle">CampaignBundle</text>
+  <text class="t3" x="395" y="136" text-anchor="middle">signed · identical for every node</text>
+
+  <rect class="bxa" x="580" y="90" width="250" height="66"/>
+  <text class="t" x="705" y="116" text-anchor="middle">Allocation</text>
+  <text class="t3" x="705" y="136" text-anchor="middle">signed · your slice, per node</text>
+
+  <path class="ln" d="M210,123 H262" marker-end="url(#a)"/>
+  <path class="ln" d="M520,123 H572" marker-end="url(#a)"/>
+  <text class="t3" x="880" y="112">Serve inside the allocation and you are paid.</text>
+  <text class="t3" x="880" y="132">Over-delivery is the exchange's loss, not yours.</text>
+
+  <!-- ============ THE TURN ============ -->
+  <rect class="band" x="40" y="212" width="1520" height="446"/>
+  <text class="lbl" x="60" y="238">ONE TURN  ·  ZERO NETWORK CALLS  ·  NOTHING LEAVES THE MACHINE</text>
+
+  <!-- upper lane: the answer -->
+  <text class="lbl" x="60" y="272" fill="#57514A">THE ANSWER</text>
+  <rect class="bx" x="60" y="286" width="140" height="76"/>
+  <text class="t" x="130" y="322" text-anchor="middle">user turn</text>
+  <text class="t3" x="130" y="341" text-anchor="middle">the conversation</text>
+
+  <rect class="bxk" x="240" y="286" width="270" height="76"/>
+  <text class="t ser" x="375" y="316" text-anchor="middle">MODEL CONTEXT</text>
+  <text class="t3" x="375" y="336" text-anchor="middle">system + history + user</text>
+  <text class="t3" x="375" y="352" text-anchor="middle" fill="#875208">no ad may enter here</text>
+
+  <rect class="bx" x="550" y="286" width="200" height="76"/>
+  <text class="t" x="650" y="316" text-anchor="middle">organic answer</text>
+  <text class="t3" x="650" y="336" text-anchor="middle">generated to completion,</text>
+  <text class="t3" x="650" y="352" text-anchor="middle">verbatim bytes</text>
+
+  <rect class="bx" x="790" y="286" width="180" height="76"/>
+  <text class="t" x="880" y="316" text-anchor="middle">SHA-256 digest</text>
+  <text class="t3 mono" x="880" y="337" text-anchor="middle">organic_answer_digest</text>
+  <text class="t3" x="880" y="353" text-anchor="middle">committed to the exchange</text>
+
+  <path class="ln" d="M200,324 H232" marker-end="url(#a)"/>
+  <path class="ln" d="M510,324 H542" marker-end="url(#a)"/>
+  <path class="ln" d="M750,324 H782" marker-end="url(#a)"/>
+
+  <!-- the boundary -->
+  <path class="lno" d="M60,412 H1180" stroke-dasharray="7 6"/>
+  <text class="t2" x="60" y="403" fill="#875208">THE INTEGRITY BOUNDARY</text>
+  <text class="t3" x="290" y="403" fill="#9A6A2E">ads may not cross, in either direction</text>
+
+  <!-- the ordering proof -->
+  <path class="lno" d="M880,362 V440" marker-end="url(#ao)"/>
+  <text class="t3" x="898" y="398" fill="#875208">committed first</text>
+
+  <!-- lower lane: the ad -->
+  <text class="lbl" x="60" y="452" fill="#1B6193">THE AD</text>
+  <rect class="bxa" x="240" y="466" width="270" height="76"/>
+  <text class="t" x="375" y="496" text-anchor="middle">ContextSignal</text>
+  <text class="t3" x="375" y="516" text-anchor="middle">derived on this machine</text>
+  <text class="t3" x="375" y="532" text-anchor="middle">coarse intent, never raw text</text>
+
+  <rect class="bxa" x="550" y="466" width="200" height="76"/>
+  <text class="t" x="650" y="496" text-anchor="middle">predicate match</text>
+  <text class="t3" x="650" y="516" text-anchor="middle">compiled closures,</text>
+  <text class="t3 mono" x="650" y="532" text-anchor="middle">0.66 ms / 10³ items</text>
+
+  <rect class="bxa" x="790" y="466" width="180" height="76"/>
+  <text class="t" x="880" y="496" text-anchor="middle">sealed auction</text>
+  <text class="t3" x="880" y="516" text-anchor="middle">runs locally against</text>
+  <text class="t3" x="880" y="532" text-anchor="middle">the cached bundle</text>
+
+  <path class="lnb" d="M375,466 V380" marker-end="url(#ab)" stroke-dasharray="4 4" opacity=".45"/>
+  <text class="t3" x="150" y="510" fill="#1B6193">the conversation is read</text>
+  <text class="t3" x="150" y="526" fill="#1B6193">here and never sent</text>
+  <path class="lnb" d="M510,504 H542" marker-end="url(#ab)"/>
+  <path class="lnb" d="M750,504 H782" marker-end="url(#ab)"/>
+  <path class="lnb" d="M395,156 V200 H528 V466" marker-end="url(#ab)" opacity=".5"/>
+  <path class="lnb" d="M705,156 V222 H770 V466" marker-end="url(#ab)" opacity=".5"/>
+
+  <!-- composer -->
+  <rect class="bx" x="1010" y="286" width="170" height="256"/>
+  <text class="t ser" x="1095" y="374" text-anchor="middle">COMPOSER</text>
+  <text class="t3" x="1095" y="396" text-anchor="middle">a plain function</text>
+  <text class="t3" x="1095" y="412" text-anchor="middle">not a model</text>
+  <text class="t3" x="1095" y="428" text-anchor="middle">it concatenates,</text>
+  <text class="t3" x="1095" y="444" text-anchor="middle">it cannot rewrite</text>
+  <text class="t3 mono" x="1095" y="470" text-anchor="middle" fill="#57514A">answer ‖ rule ‖ ad</text>
+
+  <path class="ln" d="M970,324 H1002" marker-end="url(#a)"/>
+  <path class="lnb" d="M970,504 H1002" marker-end="url(#ab)"/>
+
+  <rect class="bx" x="1250" y="346" width="150" height="136"/>
+  <text class="t" x="1325" y="404" text-anchor="middle">surface</text>
+  <text class="t" x="1325" y="424" text-anchor="middle">renders</text>
+  <text class="t3" x="1325" y="446" text-anchor="middle">answer, a rule,</text>
+  <text class="t3" x="1325" y="462" text-anchor="middle">a labelled block</text>
+  <path class="ln" d="M1180,414 H1242" marker-end="url(#a)"/>
+
+  <text class="t2" x="240" y="596" fill="#875208">The ordering is the proof.</text>
+  <text class="t3" x="240" y="616" fill="#9A6A2E">The digest is committed before the auction runs, so no winner</text>
+  <text class="t3" x="240" y="632" fill="#9A6A2E">exists yet and the answer cannot have depended on one.</text>
+  <text class="t2" x="900" y="596">Anyone can check it.</text>
+  <text class="t3" x="900" y="616" fill="#57514A">Given the answer, the decision and this output you recompute</text>
+  <text class="t3" x="900" y="632" fill="#57514A">the bytes yourself and see that nothing moved.</text>
+
+  <!-- ============ AFTER ============ -->
+  <rect class="band" x="40" y="692" width="1520" height="146"/>
+  <text class="lbl" x="60" y="716">AFTER  ·  RECEIPTS UP, NO CONTEXT</text>
+
+  <rect class="bx" x="240" y="730" width="270" height="76"/>
+  <text class="t" x="375" y="760" text-anchor="middle">ImpressionReceipt</text>
+  <text class="t3" x="375" y="780" text-anchor="middle">signed by the surface</text>
+  <text class="t3" x="375" y="796" text-anchor="middle">batched · delayed · shuffled</text>
+
+  <rect class="bx" x="580" y="730" width="290" height="76"/>
+  <text class="t" x="725" y="760" text-anchor="middle">exchange re-verifies</text>
+  <text class="t3" x="725" y="780" text-anchor="middle">recomputes every number from</text>
+  <text class="t3" x="725" y="796" text-anchor="middle">what it issued, not from the node</text>
+
+  <rect class="bx" x="940" y="730" width="240" height="76"/>
+  <text class="t" x="1060" y="760" text-anchor="middle">settlement split</text>
+  <text class="t3" x="1060" y="780" text-anchor="middle">node · exchange · steward</text>
+  <text class="t3" x="1060" y="796" text-anchor="middle">a credit claws back too</text>
+
+  <path class="lnt" d="M1325,482 V675 H375 V722" marker-end="url(#at)"/>
+  <path class="lnt" d="M510,768 H572" marker-end="url(#at)"/>
+  <path class="lnt" d="M870,768 H932" marker-end="url(#at)"/>
+  <text class="t3" x="1200" y="762" fill="#207F70">a held-out slice serves no ad</text>
+  <text class="t3" x="1200" y="778" fill="#207F70">and still reports its digest, so</text>
+  <text class="t3" x="1200" y="794" fill="#207F70">drift between the two is visible</text>
+</svg>
