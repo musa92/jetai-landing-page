@@ -2,524 +2,244 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Turbnetic.ai | Edge AI for Deep-Tech Industries</title>
-  <meta name="description" content="Turbnetic builds edge-AI systems that turn raw sensor data into real-time decisions on-prem, where the data lives. One foundation, engineered per industry: energy, healthcare, heavy industry and beyond.">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Turbnetic | Edge AI for deep-tech industries</title>
+  <meta name="description" content="Edge Intelligence runs AI next to the machine, not in someone else's cloud. Turbofan Intelligence for gas turbines is live; Hospital, Plant & Process and Agriculture products are in development.">
+  <meta name="theme-color" content="#ffffff">
+  <meta property="og:title" content="Turbnetic: Edge Intelligence">
+  <meta property="og:description" content="AI that runs next to the machine, not in someone else's cloud.">
+  <meta property="og:image" content="https://turbnetic.ai/assets/shots/engine-exterior.webp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="icon" type="image/png" href="assets/turbnetic-logo.png">
   <link rel="apple-touch-icon" href="assets/turbnetic-logo.png">
-  <meta name="theme-color" content="#060607">
-
-  <!-- Fonts — Cabinet Grotesk (display heds) · Supreme (body) · Zodiak (manifesto serif) · Space Mono (labels) -->
-  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500&f[]=zodiak-italic@400,500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=IBM+Plex+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-  <!-- Premium libs -->
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
-  <script src="https://unpkg.com/split-type@0.3.4/umd/index.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-
-  <link rel="stylesheet" href="css/home.css?v=20260711-2">
+  <link rel="preload" as="image" href="assets/shots/edge-console.webp">
+  <link rel="stylesheet" href="css/apple.css?v=20261019-8">
+  <link rel="stylesheet" href="css/devices.css?v=20261019-3">
 </head>
 <body>
 
-  <!-- Paper grain overlay -->
-  <div class="grain" aria-hidden="true"></div>
-
-  <!-- Preloader -->
-  <div id="preloader">
-    <div class="pre-inner">
-      <svg width="64" height="64" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="12.6" stroke="#ebe8e0" stroke-width="1.1" opacity="0.55"/>
-        <circle cx="14" cy="14" r="8.4" stroke="#ebe8e0" stroke-width="0.6" opacity="0.16"/>
-        <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
-        <g stroke="#ebe8e0" stroke-width="1.5" stroke-linecap="round">
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(0 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(180 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
-          <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
-        </g>
-        <circle cx="14" cy="14" r="4.3" fill="#060607"/>
-        <circle cx="14" cy="14" r="4.3" stroke="#ebe8e0" stroke-width="1" opacity="0.9"/>
-        <circle cx="14" cy="14" r="1.5" fill="#22d3ee"/>
-      </svg>
-      <div class="pre-word">Turb<span>netic</span><em>.ai</em></div>
-      <div class="pre-bar"><div class="pre-fill"></div></div>
-    </div>
-  </div>
-
-  <!-- Nav -->
-  <nav id="nav">
-    <div class="nav-inner">
-      <a class="nav-logo" href="#" aria-label="Turbnetic home">
-        <svg width="30" height="30" viewBox="0 0 28 28" fill="none">
-          <circle cx="14" cy="14" r="12.6" stroke="#ebe8e0" stroke-width="1.1" opacity="0.55"/>
-          <circle cx="14" cy="14" r="8.4" stroke="#ebe8e0" stroke-width="0.6" opacity="0.16"/>
-          <path d="M14 1.4 A12.6,12.6 0 0,1 26.6 14" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
-          <g stroke="#ebe8e0" stroke-width="1.5" stroke-linecap="round">
-            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(0 14 14)"/>
-            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(60 14 14)"/>
-            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(120 14 14)"/>
-            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.95" transform="rotate(180 14 14)"/>
-            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.80" transform="rotate(240 14 14)"/>
-            <path d="M14,9.5 Q11.3,5.6 8.3,4.2" opacity="0.66" transform="rotate(300 14 14)"/>
+  <!-- ═════════ GLOBAL NAV ═════════ -->
+  <header class="gn" id="gn">
+    <nav class="gn-inner" aria-label="Main">
+      <a class="gn-logo" href="/" aria-label="Turbnetic home">
+        <svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <circle cx="14" cy="14" r="12.4" stroke="currentColor" stroke-width="1.3" opacity=".4"/>
+          <path d="M14 1.6A12.4 12.4 0 0 1 26.4 14" stroke="#2997ff" stroke-width="2.2" stroke-linecap="round"/>
+          <g stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+            <path d="M14 9.5Q11.3 5.6 8.3 4.2"/>
+            <path d="M14 9.5Q11.3 5.6 8.3 4.2" transform="rotate(60 14 14)"/>
+            <path d="M14 9.5Q11.3 5.6 8.3 4.2" transform="rotate(120 14 14)"/>
+            <path d="M14 9.5Q11.3 5.6 8.3 4.2" transform="rotate(180 14 14)"/>
+            <path d="M14 9.5Q11.3 5.6 8.3 4.2" transform="rotate(240 14 14)"/>
+            <path d="M14 9.5Q11.3 5.6 8.3 4.2" transform="rotate(300 14 14)"/>
           </g>
-          <circle cx="14" cy="14" r="4.3" fill="#060607"/>
-          <circle cx="14" cy="14" r="4.3" stroke="#ebe8e0" stroke-width="1" opacity="0.9"/>
-          <circle cx="14" cy="14" r="1.5" fill="#22d3ee"/>
+          <circle cx="14" cy="14" r="2.2" fill="currentColor"/>
         </svg>
-        <span class="logo-text">Turb<span class="accent">netic</span><span class="dot">.ai</span></span>
+        Turbnetic
       </a>
-      <ul class="nav-links">
-        <li><a href="#projects">Projects</a></li>
-        <li><a href="#approach">Approach</a></li>
-        <li><a href="#stack">Edge stack</a></li>
-        <li><a href="turbofan.html">Turbofan</a></li>
+      <ul class="gn-links">
+        <li><a href="#edge">Edge Intelligence</a></li>
+        <li><a href="#turbofan">Turbofan</a></li>
+        <li><a href="#hospital">Hospital</a></li>
+        <li><a href="#plant">Plant</a></li>
+        <li><a href="#agriculture">Agriculture</a></li>
+        <li><a href="research/uap/">Research</a></li>
       </ul>
-      <div class="nav-cta">
-        <a href="#contact" class="btn-nav">Request Demo</a>
-      </div>
-      <button class="nav-burger" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
+      <a class="gn-cta" href="#contact">Request a demo</a>
+      <button class="gn-burger" id="gn-burger" aria-label="Menu" aria-expanded="false" aria-controls="gn-menu"><span></span><span></span></button>
+    </nav>
+    <div class="gn-menu" id="gn-menu" hidden>
+      <a href="#edge">Edge Intelligence</a>
+      <a href="#turbofan">Turbofan</a>
+      <a href="#hospital">Hospital</a>
+      <a href="#plant">Plant &amp; Process</a>
+      <a href="#agriculture">Agriculture</a>
+      <a href="research/uap/">Research</a>
+      <a href="#contact" class="cta">Request a demo</a>
     </div>
-    <div class="mobile-menu" id="mobile-menu">
-      <a href="#projects">Projects</a>
-      <a href="#approach">Approach</a>
-      <a href="#stack">Edge stack</a>
-      <a href="#edge">Why edge</a>
-      <a href="turbofan.html">Turbofan</a>
-      <a href="#contact" class="cta">Request Demo</a>
-    </div>
-  </nav>
+  </header>
 
-  <!-- ═══════════ HERO — full-bleed swarm, monumental headline ═══════════ -->
-  <section id="hero">
-    <div class="liquid" aria-hidden="true">
-      <span class="blob blob-a"></span>
-      <span class="blob blob-b"></span>
-      <span class="blob blob-c"></span>
-    </div>
-    <canvas id="edge-canvas" aria-hidden="true"></canvas>
-    <div class="hero-veil" aria-hidden="true"></div>
-
-    <div class="credo-band" data-reveal>
-      <div class="wrap credo">
-        <span class="credo-mark">After Picasso&rsquo;s <em>Bull</em>, 1945</span>
-        <span class="credo-line">We eliminate, relentlessly, until only the essential remains.</span>
-      </div>
-    </div>
-
-    <div class="wrap hero-inner">
-      <div class="hero-glass">
-        <span class="eyebrow" data-reveal>Edge AI / Deep Tech</span>
-        <h1 class="hero-h1" data-split>Deep-tech intelligence, deployed <em>at the edge.</em></h1>
-        <p class="hero-sub" data-reveal>
-          Raw sensor data becomes real-time decisions on-prem, where the data lives.
-          One foundation, engineered per industry.
-        </p>
-        <div class="hero-actions" data-reveal>
-          <a href="#projects" class="btn btn-primary" data-magnetic>Explore projects <span class="arr">→</span></a>
-          <a href="#contact" class="btn btn-ghost" data-magnetic>Request a demo</a>
+  <main>
+    <!-- ═════════ 1 · EDGE INTELLIGENCE (the platform) ═════════ -->
+    <section class="hero center" data-nav="light" id="edge">
+      <div class="wrap stack-md">
+        <p class="eyebrow" style="justify-content:center;color:var(--ink-2)">Turbnetic</p>
+        <h1 class="h-hero">Edge Intelligence</h1>
+        <p class="lede">AI that runs next to the machine, not in someone else's cloud.</p>
+        <div class="ctas">
+          <a class="btn" href="#contact">Request a demo</a>
+          <a class="link" href="#stack">Learn more</a>
         </div>
       </div>
-    </div>
-
-    <div class="hero-foot wrap" data-reveal>
-      <div class="hero-stats">
-        <div class="hero-stat"><div class="n" data-count="100" data-suffix="%">0%</div><div class="l">On-prem · data stays on site</div></div>
-        <div class="hero-stat"><div class="n">Real-time</div><div class="l">Inference at the edge</div></div>
-        <div class="hero-stat"><div class="n" data-count="4" data-suffix="+">0</div><div class="l">Deep-tech verticals</div></div>
-        <div class="hero-stat live-stat"><div class="n"><b data-swarm-count>0</b></div><div class="l">Packets · live on-device</div></div>
+      <div class="hero-stage">
+        <div class="ui-fit app-window solo" id="hero-window" data-app="edge-console" data-w="1200"><img class="ui-fallback" src="assets/shots/edge-console.webp" width="2560" height="1172" alt="Edge Console for Mac: 128 edge devices across turbines, a pilot hospital, a mill and a field, each running its model on site at a median 12 ms" fetchpriority="high"></div>
       </div>
-      <a href="#projects" class="scroll-cue" aria-label="Scroll to projects">
-        <span>Scroll</span>
-        <span class="scroll-track"><span class="scroll-dot"></span></span>
-      </a>
-    </div>
-  </section>
+    </section>
 
-  <!-- vertical marquee -->
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-row">
-      <span>Energy</span><i>·</i><span>Healthcare</span><i>·</i><span>Heavy Industry</span><i>·</i><span>Agriculture</span><i>·</i>
-      <span>Predictive Maintenance</span><i>·</i><span>Anomaly Detection</span><i>·</i><span>On-Prem AI</span><i>·</i>
-      <span>Energy</span><i>·</i><span>Healthcare</span><i>·</i><span>Heavy Industry</span><i>·</i><span>Agriculture</span><i>·</i>
-      <span>Predictive Maintenance</span><i>·</i><span>Anomaly Detection</span><i>·</i><span>On-Prem AI</span><i>·</i>
-    </div>
-  </div>
-
-  <!-- ═══════════ WHY EDGE ═══════════ -->
-  <section id="edge" class="section-pad manifesto">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">01 / The thesis</span>
-        <h2 class="section-title">The cloud is a detour. Intelligence belongs <em>where the data is born</em>: welded to the machine, deciding in milliseconds.</h2>
-        <p class="section-lead">
-          Deep-tech operations generate more sensor data than any team can read, and the most critical
-          decisions can't wait on a round-trip to a data center. Turbnetic puts the model next to the
-          machine: low latency, full data sovereignty, and resilience even when the network drops.
-        </p>
+    <!-- ═════════ 2 · TURBOFAN INTELLIGENCE (live) ═════════ -->
+    <section class="product dark center" data-nav="dark" id="turbofan">
+      <div class="wrap stack-sm">
+        <p class="eyebrow new" style="justify-content:center">Now live</p>
+        <h2 class="h-chapter" data-wipe>Turbofan Intelligence</h2>
+        <p class="lede">Stop turbine failures before they start.</p>
+        <div class="ctas" style="margin-top:10px">
+          <a class="link" href="turbofan.html">Learn more</a>
+          <a class="link" href="https://turbneticai.floot.app" target="_blank" rel="noopener">See the live demo</a>
+        </div>
+        <p class="scroll-hint">Scroll to go inside the turbine</p>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ═══════════ PROJECTS ═══════════ -->
-  <section id="projects" class="section-pad">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">02 / Projects</span>
-        <h2 class="section-title">One edge-AI foundation, <em>engineered per industry.</em></h2>
-        <p class="section-lead">
-          Each vertical is a purpose-built product on the same core: physics-aware models running
-          on the operator's own infrastructure. Start with energy, expand into every deep-tech domain.
-        </p>
+    <!-- the dive: scroll flies the camera into the engine, then x-rays it -->
+    <section class="dive" id="dive" data-nav="dark" aria-label="Inside the turbine">
+      <div class="dive-stage">
+        <div class="dive-view">
+          <canvas id="dive-canvas" aria-hidden="true"></canvas>
+          <img class="dive-fallback" src="assets/shots/engine-exterior.webp" width="2800" height="1255" alt="Gas turbine package rendered in Turbofan Intelligence: inlet silencer, turbine core and alternator on one skid" loading="lazy" decoding="async">
+        </div>
+        <div class="dive-captions">
+          <div class="cap" data-from="0" data-to="0.18"><h3>A 38 MW gas turbine package.</h3><p>Inlet silencer, gas turbine and alternator on one skid.</p></div>
+          <div class="cap" data-from="0.18" data-to="0.36"><h3>Open the casing.</h3><p>Turbofan Intelligence models the machine stage by stage.</p></div>
+          <div class="cap" data-from="0.36" data-to="0.52"><h3>Down to each compressor stage.</h3><p>Fouling shows up as lost efficiency, weeks before it costs you heat rate.</p></div>
+          <div class="cap" data-from="0.52" data-to="0.68"><h3>Through the combustor.</h3><p>Dynamic pressure and exhaust temperature flag instability before it becomes a trip.</p></div>
+          <div class="cap" data-from="0.68" data-to="0.86"><h3>Every inner line, in view.</h3><p>Rotor, blades, fuel and oil lines, each watched by the sensors mapped to it.</p></div>
+          <div class="cap" data-from="0.86" data-to="1.01"><h3>One model of the whole machine.</h3><p>Running on site, right next to it.</p></div>
+        </div>
+        <div class="dive-progress" aria-hidden="true"><i id="dive-bar"></i></div>
       </div>
+    </section>
 
-      <div class="proj-index">
+    <section class="dark center" data-nav="dark">
+      <div class="wrap">
+        <div class="stats">
+          <div class="stat" data-reveal><b>23 weeks</b><span>Average early detection lead time</span></div>
+          <div class="stat" data-reveal><b>99.2%</b><span>Anomaly detection precision</span></div>
+          <div class="stat" data-reveal><b>Zero</b><span>Hardware changes to your plant</span></div>
+        </div>
+      </div>
+    </section>
 
-        <!-- Turbofan / Energy — LIVE -->
-        <a class="proj-row is-live" href="turbofan.html" data-reveal>
-          <div class="proj-num">01</div>
-          <div class="proj-main">
-            <div class="proj-name">Turbofan Intelligence</div>
-            <p class="proj-desc">Predictive maintenance &amp; fleet intelligence for gas-turbine and powerplant operators. Connects to existing SCADA &amp; historians and detects failures weeks before they happen.</p>
+    <!-- ═════════ 3 · TURBOFAN APPS ═════════ -->
+    <section class="ptile grey center" data-nav="light" id="apps">
+      <div class="wrap">
+        <h2 class="h-section" data-wipe>Your fleet.<br><span class="soft">On every screen.</span></h2>
+        <p class="lede" style="max-width:34ch;margin:18px auto 0;color:var(--ink-2)">Turbofan Intelligence for Mac and iPhone. Alerts, remaining life and the maintenance plan, wherever your team is.</p>
+        <div class="ctas" style="margin-top:22px"><a class="link" href="turbofan.html">Learn more</a><a class="link" href="#contact">Request a demo</a></div>
+      </div>
+      <div class="hero-stage" style="margin-top:48px">
+        <div class="ui-fit app-window" data-app="turbofan-mac" data-w="1200"><img class="ui-fallback" src="assets/shots/app-mac.webp" width="2560" height="1220" alt="Turbofan Intelligence for Mac: fleet overview with a critical combustion alert on GT-07, an exhaust gas temperature chart and four turbines" loading="lazy" decoding="async"></div>
+        <div class="ui-fit app-phone" data-app="turbofan-ios" data-w="433"><img class="ui-fallback" src="assets/shots/app-iphone.webp" width="866" height="1784" alt="Turbofan Intelligence for iPhone: critical alert for GT-07 and 552 hours of remaining useful life" loading="lazy" decoding="async"></div>
+      </div>
+    </section>
+
+    <!-- ═════════ 4 · PRODUCT GRID ═════════ -->
+    <section class="pgrid" aria-label="Products" data-nav="light">
+      <article class="gtile" id="hospital" data-reveal>
+        <p class="status">In development</p>
+        <h2>Hospital Intelligence</h2>
+        <p class="tag">Early warning at the bedside.</p>
+        <div class="ctas"><a class="link" href="#contact">Join the pilot</a></div>
+        <div class="ui-fit gshot phone" data-app="hospital-ios" data-w="433"><img class="ui-fallback" src="assets/shots/hospital-iphone.webp" width="866" height="1784" alt="Concept: Ward 4B app with an early-warning alert for rising breathing rate at bed 7" loading="lazy" decoding="async"></div>
+      </article>
+
+      <article class="gtile" id="agriculture" data-reveal>
+        <p class="status">Exploring</p>
+        <h2>Precision Ag Intelligence</h2>
+        <p class="tag">Field decisions, no connection needed.</p>
+        <div class="ctas"><a class="link" href="#contact">Talk to us</a></div>
+        <div class="ui-fit gshot phone" data-app="ag-ios" data-w="433"><img class="ui-fallback" src="assets/shots/ag-iphone.webp" width="866" height="1784" alt="Concept: Field 7 app with a soil-moisture map, working offline, recommending irrigation for zone C3" loading="lazy" decoding="async"></div>
+      </article>
+
+      <article class="gtile wide" id="plant" data-reveal>
+        <p class="status">In development</p>
+        <h2>Plant &amp; Process Intelligence</h2>
+        <p class="tag">Find the failing bearing before the line stops.</p>
+        <div class="ctas"><a class="link" href="#contact">Join the pilot</a></div>
+        <div class="ui-fit gshot mac" data-app="plant-mac" data-w="1200"><img class="ui-fallback" src="assets/shots/plant-mac.webp" width="2560" height="1200" alt="Concept: Line 3 overview for a mill, flagging outboard bearing wear on pump P-204 nine days before its alarm threshold" loading="lazy" decoding="async"></div>
+      </article>
+
+
+      <article class="gtile wide next" data-reveal>
+        <p class="status">Next</p>
+        <h2>Your industry.</h2>
+        <p class="tag">We adapt the foundation anywhere sensor data outpaces the people reading it.</p>
+        <div class="ctas"><a class="link" href="#contact">Talk to us</a></div>
+      </article>
+    </section>
+
+    <!-- ═════════ EDGE STACK ═════════ -->
+    <section class="pad center" data-nav="light" id="stack">
+      <div class="wrap wide">
+        <h2 class="h-section" data-wipe>The edge stack.<br><span class="soft">Everything a model needs to live on a machine.</span></h2>
+        <div class="bento" style="text-align:left">
+          <div class="card ink c2 r2" data-reveal>
+            <span class="label">On-device inference</span>
+            <div><div class="big">12 ms</div><p style="margin-top:12px;max-width:28ch">Predictions right at the machine. No cloud round trip, no downtime when the link drops.</p></div>
           </div>
-          <div class="proj-meta">
-            <span class="proj-sector">Energy</span>
-            <span class="badge live"><span class="dot"></span>Live</span>
+          <div class="card c2" data-reveal><span class="label">Model compression</span><div><div class="big">8×</div><p>Smaller models through INT8 quantization and pruning, so they run on low-power edge NPUs without losing accuracy.</p></div></div>
+          <div class="card" data-reveal><span class="label">Sensor fusion</span><div><div class="big">24</div><p>Channels fused into one health state.</p></div></div>
+          <div class="card" data-reveal><span class="label">Uptime</span><div><div class="big">99.9%</div><p>Independent of the network.</p></div></div>
+          <div class="card c2" data-reveal><span class="label">AutoML</span><div><p class="t">Auto-model selection</p><p style="margin-top:8px">Picks and tunes the right model for each machine's signature. No data-science team required.</p></div></div>
+          <div class="card c2" data-reveal><span class="label">Private by design</span><div><p class="t">Federated retraining</p><p style="margin-top:8px">Models retrain nightly on site. Raw data never leaves.</p></div></div>
+          <div class="card c4" data-reveal>
+            <div><p class="t">Runs on ARM, x86 and NPU accelerators. Installs in hours.</p><p style="margin-top:8px">Connects to what you already run:</p></div>
+            <div class="integrations"><span>OSIsoft PI</span><span>GE Digital APM</span><span>ABB Ability</span><span>Siemens MindSphere</span><span>Honeywell Forge</span><span>SAP PM</span></div>
           </div>
-          <div class="proj-go"><span class="proj-go-label">View</span><span class="arr">→</span></div>
-        </a>
-
-        <!-- Hospital / Healthcare — IN DEV -->
-        <div class="proj-row" data-reveal>
-          <div class="proj-num">02</div>
-          <div class="proj-main">
-            <div class="proj-name">Hospital Intelligence</div>
-            <p class="proj-desc">Edge AI for clinical monitoring and medical-device intelligence. Anomaly detection at the bedside. Patient data stays inside the building, fully compliant.</p>
-          </div>
-          <div class="proj-meta">
-            <span class="proj-sector">Healthcare</span>
-            <span class="badge dev"><span class="dot"></span>In development</span>
-          </div>
-          <div class="proj-go"><span class="proj-go-label">Soon</span></div>
-        </div>
-
-        <!-- Heavy Industry — IN DEV -->
-        <div class="proj-row" data-reveal>
-          <div class="proj-num">03</div>
-          <div class="proj-main">
-            <div class="proj-name">Plant &amp; Process Intelligence</div>
-            <p class="proj-desc">Anomaly detection and process optimization for manufacturing, mining and plant machinery, turning legacy sensor networks into a live decision layer.</p>
-          </div>
-          <div class="proj-meta">
-            <span class="proj-sector">Heavy Industry</span>
-            <span class="badge dev"><span class="dot"></span>In development</span>
-          </div>
-          <div class="proj-go"><span class="proj-go-label">Soon</span></div>
-        </div>
-
-        <!-- Agriculture — EXPLORING -->
-        <div class="proj-row" data-reveal>
-          <div class="proj-num">04</div>
-          <div class="proj-main">
-            <div class="proj-name">Precision Ag Intelligence</div>
-            <p class="proj-desc">Autonomous sensing and yield intelligence for precision agriculture. Edge inference in the field, no connectivity required.</p>
-          </div>
-          <div class="proj-meta">
-            <span class="proj-sector">Agriculture</span>
-            <span class="badge explore"><span class="dot"></span>Exploring</span>
-          </div>
-          <div class="proj-go"><span class="proj-go-label">Soon</span></div>
-        </div>
-
-      </div>
-
-      <a class="proj-more reveal" href="#contact" data-reveal data-magnetic>
-        <div>
-          <div class="proj-more-t">Have a deep-tech domain in mind?</div>
-          <p class="proj-more-d">We adapt the edge-AI foundation to new industries, anywhere sensor data outpaces the humans reading it.</p>
-        </div>
-        <span class="proj-more-cta">Talk to us <span class="arr">→</span></span>
-      </a>
-    </div>
-  </section>
-
-  <!-- ═══════════ APPROACH ═══════════ -->
-  <section id="approach" class="section-pad">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">03 / Approach</span>
-        <h2 class="section-title">How we build.</h2>
-      </div>
-      <div class="appro-grid">
-        <div class="appro reveal">
-          <div class="appro-n">01</div>
-          <div class="appro-t">Runs at the edge</div>
-          <div class="appro-d">Models run on the operator's own hardware. Raw data never leaves the site: private, compliant, always available.</div>
-        </div>
-        <div class="appro reveal">
-          <div class="appro-n">02</div>
-          <div class="appro-t">Physics-aware</div>
-          <div class="appro-d">Deep-tech native. We combine domain physics with machine learning, so the model understands the asset, not just the numbers.</div>
-        </div>
-        <div class="appro reveal">
-          <div class="appro-n">03</div>
-          <div class="appro-t">One foundation</div>
-          <div class="appro-d">A shared core adapts per industry. Each vertical ships faster because the hard edge-AI plumbing is already solved.</div>
-        </div>
-        <div class="appro reveal">
-          <div class="appro-n">04</div>
-          <div class="appro-t">Deploy in hours</div>
-          <div class="appro-d">Connect to existing sensors, historians and control systems. First insight in hours. No rip-and-replace, no new hardware.</div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ═══════════ EDGE STACK ═══════════ -->
-  <section id="stack" class="section-pad">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">04 / The edge stack</span>
-        <h2 class="section-title">Everything an edge device needs, <em>in one runtime.</em></h2>
-        <p class="section-lead">
-          From auto-selected models to on-device compression: the full pipeline that lets a
-          physics-aware model run next to the machine. Offline, private, in milliseconds.
-        </p>
-      </div>
-
-      <!-- live spec strip -->
-      <div class="spec-strip reveal">
-        <div class="spec">
-          <div class="spec-n" data-count="12" data-suffix=" ms">0</div>
-          <div class="spec-l">Inference latency · on-device</div>
-        </div>
-        <div class="spec">
-          <div class="spec-n" data-count="8" data-suffix="×">0</div>
-          <div class="spec-l">Model compression · INT8</div>
-        </div>
-        <div class="spec">
-          <div class="spec-n" data-count="24" data-suffix="">0</div>
-          <div class="spec-l">Sensor channels fused</div>
-        </div>
-        <div class="spec">
-          <div class="spec-n">99.9<span class="spec-sub">%</span></div>
-          <div class="spec-l">Uptime · network-independent</div>
-        </div>
-      </div>
-
-      <!-- component grid -->
-      <div class="stack-grid">
-        <div class="stack-cell reveal">
-          <div class="stack-top"><span class="stack-i">01</span><span class="stack-tag">AutoML</span></div>
-          <h3 class="stack-t">Auto-model selection</h3>
-          <p class="stack-d">Per-asset AutoML picks and tunes the right model for each machine's signature. No data-science team required.</p>
-        </div>
-        <div class="stack-cell reveal">
-          <div class="stack-top"><span class="stack-i">02</span><span class="stack-tag">INT8 · Prune</span></div>
-          <h3 class="stack-t">Model compression</h3>
-          <p class="stack-d">Quantization and pruning shrink models up to 8x so they run on low-power edge NPUs without losing accuracy.</p>
-        </div>
-        <div class="stack-cell reveal">
-          <div class="stack-top"><span class="stack-i">03</span><span class="stack-tag">Multi-channel</span></div>
-          <h3 class="stack-t">Sensor fusion</h3>
-          <p class="stack-d">Cross-correlates vibration, thermal, acoustic, pressure and electrical channels into one health state.</p>
-        </div>
-        <div class="stack-cell reveal">
-          <div class="stack-top"><span class="stack-i">04</span><span class="stack-tag">&lt; 15 ms</span></div>
-          <h3 class="stack-t">On-device inference</h3>
-          <p class="stack-d">Sub-15 ms predictions right at the machine. No cloud round-trip, no downtime when the link drops.</p>
-        </div>
-        <div class="stack-cell reveal">
-          <div class="stack-top"><span class="stack-i">05</span><span class="stack-tag">Private</span></div>
-          <h3 class="stack-t">Federated retraining</h3>
-          <p class="stack-d">Nightly on-prem retraining keeps every model sharp; raw data never leaves the site.</p>
-        </div>
-        <div class="stack-cell reveal">
-          <div class="stack-top"><span class="stack-i">06</span><span class="stack-tag">ARM · x86 · NPU</span></div>
-          <h3 class="stack-t">Portable runtime</h3>
-          <p class="stack-d">One deployable runtime spanning ARM, x86 and dedicated NPU accelerators. Install in hours.</p>
-        </div>
-      </div>
-
-      <!-- integrations strip -->
-      <div class="integ reveal">
-        <span class="integ-l">Connects to</span>
-        <span class="integ-list">OSIsoft PI &nbsp;·&nbsp; GE Digital APM &nbsp;·&nbsp; ABB Ability &nbsp;·&nbsp; Siemens MindSphere &nbsp;·&nbsp; Honeywell Forge &nbsp;·&nbsp; SAP PM</span>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ═══════════ CTA ═══════════ -->
-  <!-- ═══════════ INSPIRATION — the Bull ═══════════ -->
-  <section id="inspiration" class="section-pad inspo">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">05 / Inspiration</span>
-        <h2 class="section-title">Eliminate until <em>essential.</em></h2>
-        <p class="section-lead">
-          In 1945 Picasso drew the same bull eleven times, removing more with each pass: muscle,
-          then mass, then detail, until a single unbroken line remained. We build the same way:
-          models distilled, interfaces stripped, systems reduced until only the signal is left.
-        </p>
-      </div>
-
-      <div class="states" aria-label="Eleven states of reduction, abstracted">
-        <figure class="state reveal">
-          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M12 66 26 38 44 52 60 24 78 44 96 30 108 58"/>
-            <path d="M18 74 40 60 58 70 80 58 102 70"/>
-            <path d="M26 38 40 60M60 24 58 70M78 44 80 58M44 52 40 60M96 30 102 70"/>
-            <circle cx="26" cy="38" r="2" fill="currentColor"/><circle cx="60" cy="24" r="2" fill="currentColor"/>
-            <circle cx="44" cy="52" r="2" fill="currentColor"/><circle cx="78" cy="44" r="2" fill="currentColor"/>
-            <circle cx="96" cy="30" r="2" fill="currentColor"/><circle cx="40" cy="60" r="2" fill="currentColor"/>
-            <circle cx="58" cy="70" r="2" fill="currentColor"/><circle cx="80" cy="58" r="2" fill="currentColor"/>
-          </svg>
-          <figcaption><b>State I</b><span>Raw data in</span></figcaption>
-        </figure>
-        <figure class="state reveal">
-          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M14 64 34 36 58 54 82 32 106 56"/>
-            <path d="M22 72 58 62 96 68"/>
-            <path d="M34 36 58 62M82 32 96 68"/>
-            <circle cx="34" cy="36" r="2" fill="currentColor"/><circle cx="82" cy="32" r="2" fill="currentColor"/>
-            <circle cx="58" cy="54" r="2" fill="currentColor"/><circle cx="58" cy="62" r="2" fill="currentColor"/>
-          </svg>
-          <figcaption><b>State III</b><span>Denoised</span></figcaption>
-        </figure>
-        <figure class="state reveal">
-          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M14 62 40 38 70 52 106 40"/>
-            <path d="M28 70 70 62"/>
-            <circle cx="40" cy="38" r="2" fill="currentColor"/><circle cx="70" cy="52" r="2" fill="currentColor"/>
-          </svg>
-          <figcaption><b>State V</b><span>Features</span></figcaption>
-        </figure>
-        <figure class="state reveal">
-          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M14 32 82 44M14 48 82 46M14 64 82 48"/>
-            <path d="M82 46 106 46"/>
-            <circle cx="82" cy="46" r="2.4" fill="currentColor"/>
-          </svg>
-          <figcaption><b>State VII</b><span>Fusion</span></figcaption>
-        </figure>
-        <figure class="state reveal">
-          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M14 38 C36 38 44 46 58 47"/>
-            <path d="M14 60 C36 60 44 50 58 47"/>
-            <path d="M58 47 106 47"/>
-            <circle cx="58" cy="47" r="2.6" fill="currentColor"/>
-          </svg>
-          <figcaption><b>State IX</b><span>Intelligence</span></figcaption>
-        </figure>
-        <figure class="state reveal">
-          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M14 49 52 49" />
-            <path d="M52 49 58 32 64 62 70 49" stroke="#22d3ee" stroke-width="1.4"/>
-            <path d="M70 49 100 49"/>
-            <circle cx="103" cy="49" r="2.8" fill="#22d3ee" stroke="none"/>
-          </svg>
-          <figcaption><b>State XI</b><span>Signal out</span></figcaption>
-        </figure>
-      </div>
-      <p class="states-cap reveal">Eleven passes. Raw data in, one signal out. The decision that remains is the product.</p>
-    </div>
-  </section>
-
-  <section id="contact" class="section-pad">
-    <div class="wrap">
-      <div class="cta-box reveal">
-        <div class="cta-copy">
-          <h2>Bring edge AI to <em>your industry.</em></h2>
-          <p>Tell us about your assets and data, and we'll show you what a purpose-built edge-AI product looks like for your operation.</p>
-          <a href="turbofan.html" class="cta-see">Or see it live · Turbofan <span class="arr">→</span></a>
-        </div>
-
-        <form name="demo-request" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/?submitted=1" class="cta-form" id="demo-form">
+    <!-- ═════════ CONTACT ═════════ -->
+    <section class="contact grey pad center" data-nav="light" id="contact">
+      <div class="wrap">
+        <h2 class="h-section" data-wipe>Bring edge AI<br>to your industry.</h2>
+        <p class="lede">Tell us about your assets and data. We'll show you what a purpose-built edge-AI product looks like for your operation.</p>
+        <form class="form" name="demo-request" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/?submitted=1" id="demo-form">
           <input type="hidden" name="form-name" value="demo-request">
           <p class="hp" aria-hidden="true"><label>Leave this empty: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
           <div class="form-grid">
-            <label class="field"><span>Name</span><input type="text" name="name" required placeholder="Jane Kowalski" autocomplete="name"></label>
-            <label class="field"><span>Work email</span><input type="email" name="email" required placeholder="jane@company.com" autocomplete="email"></label>
-            <label class="field"><span>Company</span><input type="text" name="company" placeholder="Acme Power" autocomplete="organization"></label>
-            <label class="field"><span>Industry</span>
-              <select name="industry">
-                <option>Energy / Turbines</option>
-                <option>Healthcare</option>
-                <option>Heavy Industry</option>
-                <option>Agriculture</option>
-                <option>Other</option>
+            <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" name="name" required autocomplete="name" placeholder="Jane Kowalski"></div>
+            <div class="field"><label for="f-email">Work email</label><input id="f-email" type="email" name="email" required autocomplete="email" placeholder="jane@company.com"></div>
+            <div class="field"><label for="f-company">Company</label><input id="f-company" type="text" name="company" autocomplete="organization" placeholder="Acme Power"></div>
+            <div class="field"><label for="f-industry">Product</label>
+              <select id="f-industry" name="industry">
+                <option>Turbofan Intelligence (energy)</option>
+                <option>Hospital Intelligence</option>
+                <option>Plant &amp; Process Intelligence</option>
+                <option>Precision Ag Intelligence</option>
+                <option>Edge Intelligence, another industry</option>
               </select>
-            </label>
-            <label class="field field-full"><span>What are you trying to solve?</span><textarea name="message" rows="3" placeholder="Tell us about your assets, sensors and data sources…"></textarea></label>
+            </div>
+            <div class="field full"><label for="f-message">What are you trying to solve?</label><textarea id="f-message" name="message" rows="4" placeholder="Your assets, sensors and data sources"></textarea></div>
           </div>
           <div class="form-foot">
-            <button type="submit" class="btn btn-primary">Request a demo <span class="arr">→</span></button>
-            <span class="form-note">No commitment · Live demo within 24h</span>
+            <span class="fine">No commitment. Live demo within 24 hours.</span>
+            <button type="submit" class="btn">Request a demo</button>
           </div>
           <p class="form-status" role="status" hidden></p>
         </form>
       </div>
-    </div>
-  </section>
+    </section>
+  </main>
 
-  <!-- ═══════════ FOOTER ═══════════ -->
-  <footer>
-    <div class="wrap">
-      <div class="foot-grid">
-        <div>
-          <div class="foot-logo">
-            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-              <circle cx="14" cy="14" r="12.5" stroke="#ebe8e0" stroke-width="1" opacity="0.45"/>
-              <path d="M14 1.5 A12.5,12.5 0 0,1 26.5 14" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
-              <circle cx="14" cy="14" r="5" fill="#060607"/>
-              <circle cx="14" cy="14" r="5" stroke="#ebe8e0" stroke-width="0.8"/>
-              <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#22d3ee"/>
-            </svg>
-            Turb<span>netic</span><em>.ai</em>
-          </div>
-          <p class="foot-tag">Edge-AI systems for deep-tech industries. On-prem intelligence, engineered per domain.</p>
-        </div>
-        <div class="foot-col">
-          <h4>Projects</h4>
-          <a href="turbofan.html">Turbofan · Energy</a>
-          <a href="#projects">Hospital · Healthcare</a>
-          <a href="#projects">Heavy Industry</a>
-          <a href="#projects">Agriculture</a>
-        </div>
-        <div class="foot-col">
-          <h4>Company</h4>
-          <a href="#approach">Approach</a>
-          <a href="#edge">Why edge</a>
-          <a href="#contact">Contact</a>
-          <a href="mailto:service@turbnetic.ai">service@turbnetic.ai</a>
-        </div>
-        <div class="foot-col">
-          <h4>Trust</h4>
-          <a href="#">Security</a>
-          <a href="#">Data sovereignty</a>
-          <a href="#">SOC 2 · ISO 27001</a>
-        </div>
+  <!-- ═════════ FOOTER ═════════ -->
+  <footer class="footer">
+    <div class="wrap wide">
+      <p class="note">Hospital, Plant &amp; Process and Agriculture screens are concepts of products in development.</p>
+      <div class="footer-cols">
+        <div><h4>Products</h4><a href="#edge">Edge Intelligence</a><a href="turbofan.html">Turbofan Intelligence</a><a href="#hospital">Hospital Intelligence</a><a href="#plant">Plant &amp; Process</a><a href="#agriculture">Precision Ag</a></div>
+        <div><h4>Platform</h4><a href="#stack">Edge stack</a><a href="#apps">Mac and iPhone</a><a href="upcoming.html">Upcoming</a></div>
+        <div><h4>Research</h4><a href="research/uap/">Universal Ads Protocol</a></div>
+        <div><h4>Company</h4><a href="#contact">Contact</a><a href="mailto:service@turbnetic.ai">service@turbnetic.ai</a></div>
       </div>
-      <div class="foot-bottom">
-        <span>&copy; <span id="foot-year">2026</span> Turbnetic.ai, Inc. All rights reserved.</span>
-        <span>SOC 2 Type II&nbsp; · &nbsp;ISO 27001&nbsp; · &nbsp;IEC 62443</span>
+      <div class="footer-bottom">
+        <span>Copyright © <span id="year">2026</span> Turbnetic.ai, Inc. All rights reserved.</span>
+        <span>Edge AI for deep-tech industries</span>
       </div>
     </div>
   </footer>
 
-  <script src="js/home.js?v=20260711-3"></script>
+  <script src="js/devices.js?v=20261019-2" defer></script>
+  <script src="js/apple.js?v=20261019-6" defer></script>
 </body>
 </html>

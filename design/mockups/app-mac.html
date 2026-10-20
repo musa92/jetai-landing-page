@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  :root {
+    --label: #1d1d1f; --label2: #86868b; --label3: #aeaeb2;
+    --sep: #e5e5ea; --fill: #f2f2f7; --sidebar: #ececee;
+    --blue: #007aff; --orange: #ff9500; --red: #ff3b30; --green: #34c759; --yellow: #ffcc00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; }
+  body { font-family: -apple-system, "SF Pro Text", BlinkMacSystemFont, sans-serif; color: var(--label); -webkit-font-smoothing: antialiased; font-size: 13px; letter-spacing: -0.08px; }
+  .win { width: 1280px; height: auto; display: flex; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 0 0 0.5px rgba(0,0,0,.22); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* sidebar */
+  .side { width: 228px; flex-shrink: 0; background: var(--sidebar); border-right: 0.5px solid #d8d8dc; padding: 14px 10px; display: flex; flex-direction: column; gap: 18px; }
+  .lights { display: flex; gap: 8px; padding: 4px 8px 6px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,.12); }
+  .sec h6 { font-size: 11px; font-weight: 600; color: var(--label2); padding: 0 10px 4px; letter-spacing: 0; }
+  .item { display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 10px; border-radius: 6px; font-size: 13px; }
+  .item.on { background: rgba(0,0,0,.08); }
+  .item .g { width: 16px; height: 16px; display: grid; place-items: center; color: var(--blue); }
+  .item .count { margin-left: auto; color: var(--label2); font-size: 12px; }
+  .item .badge { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--orange); color: #fff; font-size: 11px; font-weight: 600; display: grid; place-items: center; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* main */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .toolbar { height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 0.5px solid var(--sep); }
+  .toolbar .title b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+  .toolbar .title span { font-size: 11px; color: var(--label2); }
+  .seg { margin-left: auto; display: flex; background: var(--fill); border-radius: 7px; padding: 2px; }
+  .seg span { padding: 3px 12px; border-radius: 5px; font-size: 12px; color: var(--label); }
+  .seg span.on { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 0 0 0.5px rgba(0,0,0,.06); font-weight: 500; }
+  .search { width: 190px; height: 28px; border-radius: 7px; background: var(--fill); display: flex; align-items: center; gap: 6px; padding: 0 9px; color: var(--label3); font-size: 13px; }
+  .tb-btn { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; color: var(--label2); }
+
+  .content { flex: 1; padding: 20px 22px; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; gap: 14px; background: #fff; padding-bottom: 22px; }
+  .card { border-radius: 12px; background: var(--fill); padding: 14px 16px; }
+  .kpi .l { font-size: 11px; font-weight: 600; color: var(--label2); display: flex; align-items: center; gap: 6px; }
+  .kpi .v { margin-top: 8px; font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+  .kpi .v small { font-size: 15px; font-weight: 500; color: var(--label2); margin-left: 2px; }
+  .kpi .s { margin-top: 2px; font-size: 11px; color: var(--label2); }
+
+  .alert { grid-column: span 2; background: #fff; box-shadow: 0 0 0 0.5px var(--sep), 0 4px 16px rgba(0,0,0,.05); display: flex; flex-direction: column; gap: 8px; }
+  .alert .top { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: var(--orange); }
+  .alert .top time { margin-left: auto; color: var(--label2); font-weight: 400; }
+  .alert h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .alert p { color: var(--label2); font-size: 13px; line-height: 1.38; }
+  .alert .meta { display: flex; gap: 22px; margin-top: 4px; }
+  .alert .meta b { display: block; font-size: 17px; font-weight: 600; }
+  .alert .meta span { font-size: 11px; color: var(--label2); }
+  .btns { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+  .btn { height: 26px; padding: 0 14px; border-radius: 6px; display: grid; place-items: center; font-size: 13px; font-weight: 500; }
+  .btn.p { background: var(--blue); color: #fff; }
+  .btn.s { background: var(--fill); }
+
+  .chart { grid-column: span 2; background: #fff; box-shadow: 0 0 0 0.5px var(--sep), 0 4px 16px rgba(0,0,0,.05); }
+  .chart header { display: flex; align-items: baseline; justify-content: space-between; }
+  .chart header b { font-size: 13px; font-weight: 600; }
+  .chart header span { font-size: 11px; color: var(--label2); }
+  .chart .big { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-top: 2px; }
+  .chart .big em { font-style: normal; font-size: 13px; color: var(--red); font-weight: 500; margin-left: 6px; }
+
+  .table { grid-column: 1 / -1; background: #fff; box-shadow: 0 0 0 0.5px var(--sep); padding: 0; overflow: hidden; }
+  .row { display: grid; grid-template-columns: 1.1fr 1.3fr 0.8fr 1fr 1.2fr; align-items: center; height: 38px; padding: 0 16px; font-size: 13px; border-top: 0.5px solid var(--sep); }
+  .row.h { height: 30px; border-top: 0; font-size: 11px; font-weight: 600; color: var(--label2); background: #fafafa; }
+  .row .st { display: flex; align-items: center; gap: 7px; }
+  .row .sub { color: var(--label2); }
+</style></head>
+<body>
+<div class="win">
+  <aside class="side">
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="sec">
+      <h6>Fleet</h6>
+      <div class="item on"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.6"/><rect x="9" y="1" width="6" height="6" rx="1.6"/><rect x="1" y="9" width="6" height="6" rx="1.6"/><rect x="9" y="9" width="6" height="6" rx="1.6"/></svg></span>Overview<span class="count">4</span></div>
+      <div class="item"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.2 15.2 14H.8z"/><rect x="7.2" y="5.6" width="1.6" height="4.6" fill="#ececee"/><circle cx="8" cy="11.9" r=".9" fill="#ececee"/></svg></span>Alerts<span class="badge">2</span></div>
+      <div class="item"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1.5" y="2.5" width="13" height="12" rx="2.2"/><path d="M1.5 6.5h13M5 1v3M11 1v3"/></svg></span>Maintenance<span class="count">3</span></div>
+      <div class="item"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 13.5 5.5 8l3 3 6-8"/></svg></span>Reports</div>
+    </div>
+    <div class="sec">
+      <h6>Units</h6>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--orange)"></i></span>GT-07<span class="count">Frame 7</span></div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--yellow)"></i></span>GT-01<span class="count">Frame 7</span></div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--green)"></i></span>GT-04<span class="count">LM6000</span></div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--green)"></i></span>GT-02<span class="count">LM6000</span></div>
+    </div>
+    <div class="sec">
+      <h6>Sites</h6>
+      <div class="item"><span class="g" style="color:var(--label2)"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a5 5 0 0 0-5 5c0 3.6 5 9 5 9s5-5.4 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></span>Plant Alpha</div>
+      <div class="item"><span class="g" style="color:var(--label2)"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a5 5 0 0 0-5 5c0 3.6 5 9 5 9s5-5.4 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></span>Plant Beta</div>
+    </div>
+  </aside>
+
+  <section class="main">
+    <div class="toolbar">
+      <div class="title"><b>Overview</b><span>Plant Alpha · 4 turbines · Updated just now</span></div>
+      <div class="seg"><span>Day</span><span class="on">Week</span><span>Month</span></div>
+      <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5" stroke-linecap="round"/></svg>Search</div>
+      <div class="tb-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 10V1.5M5 4.5 8 1.5l3 3M3.5 7v6.5h9V7"/></svg></div>
+    </div>
+
+    <div class="content">
+      <div class="card kpi"><div class="l">Active alerts</div><div class="v tnum">2</div><div class="s">1 critical · 1 advisory</div></div>
+      <div class="card kpi"><div class="l">Lowest remaining life</div><div class="v tnum">552<small>h</small></div><div class="s">GT-07</div></div>
+      <div class="card kpi"><div class="l">Failures prevented</div><div class="v tnum">$1.4<small>M</small></div><div class="s">Year to date</div></div>
+      <div class="card kpi"><div class="l">Next service</div><div class="v">Jun 12</div><div class="s">GT-01 compressor wash</div></div>
+
+      <div class="card alert">
+        <div class="top"><svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#ff9500"/><rect x="7.1" y="3.6" width="1.8" height="5.6" rx=".9" fill="#fff"/><circle cx="8" cy="11.6" r="1.05" fill="#fff"/></svg>Critical alert · GT-07<time>3h ago</time></div>
+        <h3>Combustion instability precursor</h3>
+        <p>T4 is rising with dynamic pressure on cans 3 and 7. The pattern matches lean blowout precursors seen before past outages.</p>
+        <div class="meta"><div><b class="tnum">87%</b><span>Confidence</span></div><div><b class="tnum">23 days</b><span>To predicted fault</span></div><div><b class="tnum">+14 °C</b><span>EGT above trend</span></div></div>
+        <div class="btns"><span class="btn p">Create Work Order</span><span class="btn s">View Procedure</span></div>
+      </div>
+
+      <div class="card chart">
+        <header><b>Exhaust gas temperature</b><span>GT-07 · Last 24 hours</span></header>
+        <div class="big tnum">614 °C<em>Above trend</em></div>
+        <svg width="100%" height="120" viewBox="0 0 560 120" preserveAspectRatio="none" style="margin-top:6px;display:block">
+          <defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9500" stop-opacity=".22"/><stop offset="1" stop-color="#ff9500" stop-opacity="0"/></linearGradient></defs>
+          <g stroke="#ececf0" stroke-width="1"><path d="M0 20H530M0 55H530M0 90H530"/></g>
+          <path d="M0 22H530" stroke="#ff3b30" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <path d="M0 86C40 84 70 88 110 83S180 80 220 78 290 74 330 66 400 56 440 46 500 34 530 30V110H0Z" fill="url(#a)"/>
+          <path d="M0 86C40 84 70 88 110 83S180 80 220 78 290 74 330 66 400 56 440 46 500 34 530 30" fill="none" stroke="#ff9500" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M0 92C60 93 120 91 180 92S300 90 360 91 470 90 530 91" fill="none" stroke="#c7c7cc" stroke-width="1.6"/>
+          <circle cx="530" cy="30" r="4.5" fill="#fff" stroke="#ff9500" stroke-width="2.2"/>
+          <g fill="#86868b" style="font: 10px -apple-system, system-ui, sans-serif"><text x="534" y="24" text-anchor="end" dy="-6">Limit 620 °C</text></g>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#86868b;margin-top:2px" class="tnum"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>Now</span></div>
+      </div>
+
+      <div class="card table">
+        <div class="row h"><span>Unit</span><span>Status</span><span>Health</span><span>Remaining life</span><span>Heat rate</span></div>
+        <div class="row"><span><b style="font-weight:600">GT-07</b> <span class="sub">Frame 7</span></span><span class="st"><i class="dot" style="background:var(--orange)"></i>Combustion watch</span><span class="tnum">71</span><span class="tnum">552 h</span><span class="tnum sub">+1.2%</span></div>
+        <div class="row"><span><b style="font-weight:600">GT-01</b> <span class="sub">Frame 7</span></span><span class="st"><i class="dot" style="background:var(--yellow)"></i>Compressor fouling</span><span class="tnum">78</span><span class="tnum">1,240 h</span><span class="tnum sub">+2.1%</span></div>
+        <div class="row"><span><b style="font-weight:600">GT-04</b> <span class="sub">LM6000</span></span><span class="st"><i class="dot" style="background:var(--green)"></i>Normal</span><span class="tnum">96</span><span class="tnum">2,340 h</span><span class="tnum sub">+0.2%</span></div>
+        <div class="row"><span><b style="font-weight:600">GT-02</b> <span class="sub">LM6000</span></span><span class="st"><i class="dot" style="background:var(--green)"></i>Normal</span><span class="tnum">92</span><span class="tnum">1,920 h</span><span class="tnum sub">+0.4%</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+</body></html>

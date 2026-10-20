@@ -110,8 +110,10 @@ var lenis = null;
     tl.from(heroBits, { y: 24, opacity: 0, duration: 0.8, stagger: 0.09 }, 0.28);
   }
 
-  if (document.body.classList.contains('loaded')) playHero();
-  else window.addEventListener('tn:loaded', playHero, { once: true });
+  var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  function start() { fontsReady.then(playHero); }
+  if (document.body.classList.contains('loaded')) start();
+  else window.addEventListener('tn:loaded', start, { once: true });
   // safety: never leave hero hidden
   setTimeout(function () {
     if (h1 && !h1.classList.contains('in')) playHero();
@@ -185,6 +187,10 @@ var lenis = null;
 (function headingReveal() {
   if (REDUCED || typeof gsap === 'undefined' || typeof SplitType === 'undefined') return;
   if (!('IntersectionObserver' in window) || window.innerWidth <= 720) return;
+  // Split only after web fonts land: SplitType freezes line breaks, and measuring
+  // with the fallback serif leaves orphaned words once Zodiak swaps in.
+  var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  fontsReady.then(function () {
   var heads = document.querySelectorAll('.section-title, .cta-copy h2');
   heads.forEach(function (h) {
     var split;
@@ -200,6 +206,7 @@ var lenis = null;
       });
     }, { threshold: 0.25 });
     io.observe(h);
+  });
   });
 })();
 
@@ -236,7 +243,7 @@ var lenis = null;
   var ctx = canvas.getContext('2d');
   var countEl = document.querySelector('[data-swarm-count]');
 
-  var INK = '235,232,224', ACCENT = '34,211,238';
+  var INK = '235,232,224', ACCENT = '143,208,226';
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
   var W = 0, H = 0, cx = 0, cy = 0, tick = 0;
   var sensors = [], far = [], packets = [], rings = [], scans = [], sparks = [], decisions = [], verdicts = [], processed = 0;
@@ -310,10 +317,10 @@ var lenis = null;
   function label(s) {
     var right = s.x < W * 0.62, lx = s.x + (right ? 11 : -11);
     ctx.textAlign = right ? 'left' : 'right'; ctx.textBaseline = 'alphabetic';
-    ctx.font = "500 9px 'Space Mono', monospace";
+    ctx.font = "500 9px 'JetBrains Mono', monospace";
     ctx.fillStyle = 'rgba(' + INK + ',0.4)';
     ctx.fillText(s.ch.k, lx, s.y - 7);
-    ctx.font = "600 10.5px 'Space Mono', monospace";
+    ctx.font = "600 10.5px 'JetBrains Mono', monospace";
     ctx.fillStyle = 'rgba(' + INK + ',0.85)';
     ctx.fillText(s.ch.v.toFixed(s.ch.dec) + s.ch.u, lx, s.y + 7);
     ctx.textAlign = 'left';
@@ -533,7 +540,7 @@ var lenis = null;
       vd.life -= 0.006;
       if (vd.life <= 0 || !vs) { verdicts.splice(i, 1); continue; }
       var va = Math.min(1, vd.life * 3), vRight = vs.x < W * 0.62;
-      ctx.font = "600 9px 'Space Mono', monospace";
+      ctx.font = "600 9px 'JetBrains Mono', monospace";
       ctx.textAlign = vRight ? 'left' : 'right';
       ctx.fillStyle = 'rgba(' + ACCENT + ',' + (va * 0.9).toFixed(3) + ')';
       ctx.fillText(vd.txt, vs.x + (vRight ? 11 : -11), vs.y + 20);
@@ -570,12 +577,12 @@ var lenis = null;
       ctx.beginPath(); ctx.moveTo(cx + sz, cy + g * 7); ctx.lineTo(cx + sz + 5, cy + g * 7); ctx.stroke();
     }
     ctx.textAlign = 'center';
-    ctx.font = "600 10px 'Space Mono', monospace";
+    ctx.font = "600 10px 'JetBrains Mono', monospace";
     ctx.fillStyle = 'rgba(' + ACCENT + ',1)'; ctx.fillText('EDGE MODEL', cx, cy + sz + 24);
-    ctx.font = "500 9px 'Space Mono', monospace";
+    ctx.font = "500 9px 'JetBrains Mono', monospace";
     ctx.fillStyle = 'rgba(' + INK + ',0.5)'; ctx.fillText('INT8 · ' + latency.toFixed(1) + ' MS', cx, cy + sz + 37);
     if (lastOut.a > 0.02) {
-      ctx.font = "600 9.5px 'Space Mono', monospace";
+      ctx.font = "600 9.5px 'JetBrains Mono', monospace";
       ctx.fillStyle = 'rgba(' + ACCENT + ',' + (lastOut.a * 0.95).toFixed(3) + ')';
       ctx.fillText(lastOut.txt, cx, cy + sz + 52);
       lastOut.a *= 0.997;

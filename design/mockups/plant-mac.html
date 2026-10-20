@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="mock.css">
+<style> .row { grid-template-columns: 1.2fr 1.3fr 0.8fr 1fr 1fr; } </style></head>
+<body>
+<div class="win">
+  <aside class="side">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="sec">
+      <h6>Mill North</h6>
+      <div class="item"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.6"/><rect x="9" y="1" width="6" height="6" rx="1.6"/><rect x="1" y="9" width="6" height="6" rx="1.6"/><rect x="9" y="9" width="6" height="6" rx="1.6"/></svg></span>Overview</div>
+      <div class="item on"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 14V7l4 2.5V7l4 2.5V3h5v11z"/></svg></span>Line 3<span class="badge">1</span></div>
+      <div class="item"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 14V7l4 2.5V7l4 2.5V3h5v11z"/></svg></span>Line 4</div>
+      <div class="item"><span class="g"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1.5" y="2.5" width="13" height="12" rx="2.2"/><path d="M1.5 6.5h13M5 1v3M11 1v3"/></svg></span>Work orders<span class="count">5</span></div>
+    </div>
+    <div class="sec">
+      <h6>Line 3 assets</h6>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--orange)"></i></span>Pump P-204</div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--green)"></i></span>Pump P-205</div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--green)"></i></span>Compressor C-31</div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--green)"></i></span>Conveyor K-3</div>
+      <div class="item"><span class="g"><i class="dot" style="background:var(--green)"></i></span>Crusher R-1</div>
+    </div>
+  </aside>
+  <section class="main">
+    <div class="toolbar">
+      <div class="title"><b>Line 3</b><span>5 assets · 31 sensors · inference on the line controller</span></div>
+      <div class="seg"><span>Day</span><span class="on">Week</span><span>Month</span></div>
+      <div class="search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5" stroke-linecap="round"/></svg>Search</div>
+    </div>
+    <div class="content">
+      <div class="card kpi"><div class="l">Line availability</div><div class="v tnum">98.6<small>%</small></div><div class="s">This week</div></div>
+      <div class="card kpi"><div class="l">Throughput</div><div class="v tnum">412<small>t/h</small></div><div class="s">At plan</div></div>
+      <div class="card kpi"><div class="l">Open anomalies</div><div class="v tnum">1</div><div class="s">Pump P-204</div></div>
+      <div class="card kpi"><div class="l">Energy per tonne</div><div class="v tnum">6.8<small>kWh</small></div><div class="s">−0.3 vs last week</div></div>
+
+      <div class="card raised alert span2">
+        <div class="top"><svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#ff9500"/><rect x="7.1" y="3.6" width="1.8" height="5.6" rx=".9" fill="#fff"/><circle cx="8" cy="11.6" r="1.05" fill="#fff"/></svg>Bearing wear · Pump P-204<time>1h ago</time></div>
+        <h3>Outboard bearing vibration rising</h3>
+        <p>The 2× running-speed component has doubled in five days, with temperature tracking it. Matches early outer-race wear.</p>
+        <div class="meta"><div><b class="tnum">9 days</b><span>To alarm threshold</span></div><div><b class="tnum">4.6 mm/s</b><span>Vibration RMS</span></div><div><b class="tnum">82%</b><span>Confidence</span></div></div>
+        <div class="btns"><span class="btn p">Plan Replacement</span><span class="btn s">Open Asset</span></div>
+      </div>
+
+      <div class="card raised chart span2">
+        <header><b>Vibration RMS</b><span>P-204 outboard · Last 7 days</span></header>
+        <div class="big tnum">4.6 mm/s<em style="color:#ff9500">Rising</em></div>
+        <svg width="100%" height="110" viewBox="0 0 560 110" preserveAspectRatio="none" style="display:block;margin-top:6px">
+          <defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9500" stop-opacity=".2"/><stop offset="1" stop-color="#ff9500" stop-opacity="0"/></linearGradient></defs>
+          <g stroke="#ececf0"><path d="M0 20H530M0 52H530M0 84H530"/></g>
+          <path d="M0 14H530" stroke="#ff3b30" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <path d="M0 88C70 87 140 89 210 85S320 76 380 66 470 46 530 38V104H0Z" fill="url(#c)"/>
+          <path d="M0 88C70 87 140 89 210 85S320 76 380 66 470 46 530 38" fill="none" stroke="#ff9500" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="530" cy="38" r="4.5" fill="#fff" stroke="#ff9500" stroke-width="2.2"/>
+        </svg>
+        <div class="axis tnum"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span></div>
+      </div>
+
+      <div class="card table span4">
+        <div class="row h"><span>Asset</span><span>Status</span><span>Health</span><span>Next service</span><span>Sensors</span></div>
+        <div class="row"><span><b style="font-weight:600">Pump P-204</b></span><span class="st"><i class="dot" style="background:var(--orange)"></i>Bearing wear</span><span class="tnum">64</span><span class="tnum">In 9 days</span><span class="tnum sub">8</span></div>
+        <div class="row"><span><b style="font-weight:600">Pump P-205</b></span><span class="st"><i class="dot" style="background:var(--green)"></i>Normal</span><span class="tnum">93</span><span class="tnum">Jul 30</span><span class="tnum sub">8</span></div>
+        <div class="row"><span><b style="font-weight:600">Compressor C-31</b></span><span class="st"><i class="dot" style="background:var(--green)"></i>Normal</span><span class="tnum">90</span><span class="tnum">Aug 14</span><span class="tnum sub">7</span></div>
+        <div class="row"><span><b style="font-weight:600">Conveyor K-3</b></span><span class="st"><i class="dot" style="background:var(--green)"></i>Normal</span><span class="tnum">95</span><span class="tnum">Sep 2</span><span class="tnum sub">5</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+</body></html>

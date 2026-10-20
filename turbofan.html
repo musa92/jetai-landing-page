@@ -40,6 +40,7 @@
   <!-- Styles -->
   <link rel="stylesheet" href="css/style.css?v=20260616-1">
   <link rel="stylesheet" href="css/animations.css?v=20260616-1">
+  <link rel="stylesheet" href="css/premium.css?v=20260927-2">
 </head>
 <body>
 
@@ -90,7 +91,7 @@
   ═══════════════════════════════════════ -->
   <nav id="navbar">
     <div class="nav-inner">
-      <a class="nav-logo" href="index.html" aria-label="Turbnetic — all projects">
+      <a class="nav-logo" href="index.html" aria-label="Turbnetic: all projects">
         <!-- Turbnetic mark — matches asset logo: 6 swept fan blades · nacelle ring · hub -->
         <svg id="nav-logo-spin" width="30" height="30" viewBox="0 0 28 28" fill="none" style="transform-origin:center;will-change:transform;">
           <!-- Nacelle outer ring -->
@@ -163,18 +164,18 @@
     <div class="hero-content">
       <div class="eyebrow-tag" data-animate="fade-up">
         <span class="dot-pulse"></span>
-        Electric Jet Engine Intelligence &mdash; GE Frame 5 / 6 / 7 &middot; LM-Series &middot; eVTOL
+        Electric Jet Engine Intelligence &middot; GE Frame 5 / 6 / 7 &middot; LM-Series &middot; eVTOL
       </div>
 
-      <h1 class="hero-headline hero-headline--robotic" aria-label="Stop Turbine Failures Before They Start">
-        <span class="hl-line" data-scramble="Stop Turbine Failures">Stop Turbine Failures</span>
-        <span class="hl-line hl-line--accent" data-scramble="Before They Start">Before They Start</span>
+      <h1 class="hero-headline" data-animate="fade-up" data-delay="0.15">
+        <span class="hl-line">Stop turbine failures</span>
+        <span class="hl-line hl-line--accent">before they start.</span>
       </h1>
 
       <p class="hero-sub" data-animate="fade-up" data-delay="0.3">
         Real-time AI diagnostics for gas turbines, hybrid-electric propulsion, and eVTOL powertrains.<br>
         Detect combustion instability, blade fouling, and bearing degradation
-        <strong>weeks before failure</strong> &mdash; zero hardware changes.
+        <strong>weeks before failure</strong>, with zero hardware changes.
       </p>
 
       <div class="hero-actions" data-animate="fade-up" data-delay="0.45">
@@ -193,17 +194,14 @@
           <span class="stat-num" data-count="23">0</span><span class="stat-unit">wk</span>
           <span class="stat-label">Early Detection Lead Time</span>
         </div>
-        <div class="stat-divider"></div>
         <div class="stat-item">
           <span class="stat-num" data-count="99">0</span><span class="stat-unit">.2%</span>
           <span class="stat-label">Anomaly Detection Precision</span>
         </div>
-        <div class="stat-divider"></div>
         <div class="stat-item">
           <span class="stat-num">$50K</span>
           <span class="stat-label">Avg. Prevented Failure Cost</span>
         </div>
-        <div class="stat-divider"></div>
         <div class="stat-item">
           <span class="stat-num" data-count="0">0</span><span class="stat-unit"> hardware</span>
           <span class="stat-label">Changes Required</span>
@@ -270,7 +268,7 @@
     <div class="section-container features-header-row">
       <div class="features-header-left">
         <div class="section-eyebrow">Capabilities</div>
-        <h2 class="section-headline">What the Platform Does</h2>
+        <h2 class="section-headline">What the platform <span class="gradient-text">does.</span></h2>
       </div>
       <div class="pipeline-strip">
         <div class="pipe-node">
@@ -390,7 +388,7 @@
           <div class="fspanel-text">
             <div class="fspanel-eyebrow">Predictive Engine &middot; Bayesian Models</div>
             <h3 class="fspanel-title">Predicted Remaining Useful Life</h3>
-            <p class="fspanel-desc">Bayesian degradation models output a RUL estimate with 90% confidence intervals for each asset. Maintenance windows ranked by criticality — never face another surprise forced outage.</p>
+            <p class="fspanel-desc">Bayesian degradation models output a RUL estimate with 90% confidence intervals for each asset. Maintenance windows ranked by criticality, so you never face another surprise forced outage.</p>
             <ul class="fspanel-bullets">
               <li>Per-asset baseline auto-calibrated during commissioning week</li>
               <li>Confidence intervals tighten as more operational data accumulates</li>
@@ -444,7 +442,7 @@
           <div class="fspanel-text">
             <div class="fspanel-eyebrow">Combustion Analytics &middot; Spectral Analysis</div>
             <h3 class="fspanel-title">Combustion Instability Detection</h3>
-            <p class="fspanel-desc">Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset — hours before flame-out risk.</p>
+            <p class="fspanel-desc">Spectral analysis of dynamic pressure and cross-correlation with fuel-air ratio to flag lean blowout precursors and thermoacoustic oscillation onset, hours before flame-out risk.</p>
             <ul class="fspanel-bullets">
               <li>200 Hz band ΔP monitoring with harmonic decomposition</li>
               <li>Dual-channel combustor inlet and exit pressure correlation</li>
@@ -603,9 +601,9 @@
           <div class="fspanel-text">
             <div class="fspanel-eyebrow">Adaptive Learning &middot; Federated ML</div>
             <h3 class="fspanel-title">Continuous Per-Asset Retraining</h3>
-            <p class="fspanel-desc">Every turbine builds its own operational baseline. Models retrain nightly on each plant's history, accounting for fuel quality, ambient conditions, and load profile — a dataset moat that strengthens over time.</p>
+            <p class="fspanel-desc">Every turbine builds its own operational baseline. Models retrain nightly on each plant's history, accounting for fuel quality, ambient conditions, and load profile: a dataset moat that strengthens over time.</p>
             <ul class="fspanel-bullets">
-              <li>Federated architecture — raw sensor data never leaves your plant</li>
+              <li>Federated architecture: raw sensor data never leaves your plant</li>
               <li>AutoML selects optimal model architecture per asset class</li>
               <li>Model drift detection auto-triggers targeted retraining cycles</li>
             </ul>
@@ -657,9 +655,9 @@
           <div class="fspanel-text">
             <div class="fspanel-eyebrow">Plugin-Based Hardware &middot; Zero Cloud Dependency</div>
             <h3 class="fspanel-title">Edge AI Device</h3>
-            <p class="fspanel-desc">A ruggedized DIN-rail edge module ships pre-loaded with your turbine's trained model. Runs full LSTM inference on-device — no internet required. Snaps into existing control cabinet wiring in under 30 minutes.</p>
+            <p class="fspanel-desc">A ruggedized DIN-rail edge module ships pre-loaded with your turbine's trained model. Runs full LSTM inference on-device. No internet required. Snaps into existing control cabinet wiring in under 30 minutes.</p>
             <ul class="fspanel-bullets">
-              <li>Plugin architecture — swappable model cards per asset class</li>
+              <li>Plugin architecture: swappable model cards per asset class</li>
               <li>Operates fully air-gapped; syncs model updates over secure OTA</li>
               <li>Hardened for &minus;40°C to 85°C, IP67, Class I Div 2 rated</li>
               <li>Local alert relay: 4&times;DI / 4&times;DO + Modbus RTU output</li>
@@ -723,7 +721,7 @@
   <section id="problem">
     <div class="section-container">
       <div class="section-eyebrow">The $50B Problem</div>
-      <h2 class="section-headline">Unplanned Turbine Downtime<br>Is Destroying Your Margins</h2>
+      <h2 class="section-headline">Unplanned turbine downtime<br>is <span class="gradient-text">destroying your margins.</span></h2>
     </div>
     <div class="problem-grid">
       <div class="problem-stat" data-animate="slide-up">
@@ -757,8 +755,8 @@
   <section id="agent">
     <div class="section-container">
       <div class="section-eyebrow agent-eyebrow">Maintenance Agent AI</div>
-      <h2 class="section-headline">2,000 Pages of Manual.<br><span class="gradient-text">One Precise Action.</span></h2>
-      <p class="section-sub">Detecting the anomaly is half the job. Turbnetic.ai agents cross-reference the full maintenance manual and send the mechanic an exact, step-by-step directive &mdash; dashboard and pager, instantly.</p>
+      <h2 class="section-headline">2,000 pages of manual.<br><span class="gradient-text">One precise action.</span></h2>
+      <p class="section-sub">Detecting the anomaly is half the job. Turbnetic.ai agents cross-reference the full maintenance manual and send the mechanic an exact, step-by-step directive to dashboard and pager, instantly.</p>
     </div>
 
     <div class="agent-flow-land section-container" data-animate="fade-up">
@@ -783,7 +781,7 @@
       <div class="agent-step agent-step-orange">
         <div class="agent-step-num">04</div>
         <h4>Mechanic Receives</h4>
-        <p>One clear directive on the pager app &mdash; what, where, how, in what order. No manual lookup. No guesswork.</p>
+        <p>One clear directive on the pager app: what, where, how, in what order. No manual lookup. No guesswork.</p>
       </div>
       <div class="agent-arrow">&#8594;</div>
       <div class="agent-step">
@@ -809,11 +807,11 @@
       <div class="agent-points" data-animate="fade-up" data-delay="0.15">
         <div class="agent-point">
           <div class="agent-point-stat">Day 1</div>
-          <p>A new hire responds correctly to any turbine alert from their first shift &mdash; the institutional knowledge lives in the platform, not in one retiring engineer's head.</p>
+          <p>A new hire responds correctly to any turbine alert from their first shift. The institutional knowledge lives in the platform, not in one retiring engineer's head.</p>
         </div>
         <div class="agent-point">
           <div class="agent-point-stat">Zero lookup</div>
-          <p>Blade degradation, combustion instability, vibration, fouling &mdash; every directive arrives with the exact manual section, measurement procedure, and escalation threshold.</p>
+          <p>Blade degradation, combustion instability, vibration, fouling: every directive arrives with the exact manual section, measurement procedure, and escalation threshold.</p>
         </div>
         <div class="agent-point">
           <div class="agent-point-stat">1 operator</div>
@@ -829,14 +827,14 @@
   <section id="integration">
     <div class="section-container">
       <div class="section-eyebrow">Zero-Friction Integration</div>
-      <h2 class="section-headline">Plug Into Your Existing<br>Plant Infrastructure</h2>
-      <p class="section-sub">No new hardware. No rip-and-replace. API connectors for every major industrial historian and control system &mdash; live in days.</p>
+      <h2 class="section-headline">Plug into your existing<br><span class="gradient-text">plant infrastructure.</span></h2>
+      <p class="section-sub">No new hardware. No rip-and-replace. API connectors for every major industrial historian and control system, live in days.</p>
     </div>
 
     <div class="integration-grid">
       <div class="integration-card" data-animate="fade-up">
         <div class="integration-logo">
-          <div class="int-badge" style="color:#00a651;">PI</div>
+          <div class="int-badge">PI</div>
         </div>
         <div class="integration-name">OSIsoft PI System</div>
         <div class="integration-desc">Native PI Web API connector with tag-level subscription streaming</div>
@@ -845,7 +843,7 @@
 
       <div class="integration-card" data-animate="fade-up" data-delay="0.1">
         <div class="integration-logo">
-          <div class="int-badge" style="color:#0078d4;">GE</div>
+          <div class="int-badge">GE</div>
         </div>
         <div class="integration-name">GE APM / Asset360</div>
         <div class="integration-desc">Bidirectional APM integration for alert write-back and case management</div>
@@ -854,7 +852,7 @@
 
       <div class="integration-card" data-animate="fade-up" data-delay="0.2">
         <div class="integration-logo">
-          <div class="int-badge" style="color:#e8a020;">OPC</div>
+          <div class="int-badge">OPC</div>
         </div>
         <div class="integration-name">OPC-UA Server</div>
         <div class="integration-desc">Standard IEC 62541 OPC-UA subscription model for real-time historian bypass</div>
@@ -863,7 +861,7 @@
 
       <div class="integration-card" data-animate="fade-up" data-delay="0.3">
         <div class="integration-logo">
-          <div class="int-badge" style="color:#c0392b;">DCS</div>
+          <div class="int-badge">DCS</div>
         </div>
         <div class="integration-name">DCS / SCADA</div>
         <div class="integration-desc">Honeywell Experion, ABB Symphony, Emerson DeltaV, Siemens SPPA-T3000</div>
@@ -872,7 +870,7 @@
 
       <div class="integration-card" data-animate="fade-up" data-delay="0.4">
         <div class="integration-logo">
-          <div class="int-badge" style="color:#54718c;">CMMS</div>
+          <div class="int-badge">CMMS</div>
         </div>
         <div class="integration-name">CMMS Systems</div>
         <div class="integration-desc">Automatic work order generation into SAP PM, IBM Maximo, and Infor EAM</div>
@@ -881,7 +879,7 @@
 
       <div class="integration-card" data-animate="fade-up" data-delay="0.5">
         <div class="integration-logo">
-          <div class="int-badge" style="color:#6e93b3;">API</div>
+          <div class="int-badge">API</div>
         </div>
         <div class="integration-name">Custom REST API</div>
         <div class="integration-desc">Open webhook and REST API for bespoke integrations and data lake pipelines</div>
@@ -898,14 +896,14 @@
     <div class="results-inner">
       <div class="section-container">
         <div class="section-eyebrow results-eyebrow">Proven Results</div>
-        <h2 class="section-headline results-headline">Built for the World's Most<br>Demanding Turbine Fleets</h2>
+        <h2 class="section-headline results-headline">Built for the world's most<br><span class="gradient-text">demanding turbine fleets.</span></h2>
       </div>
 
       <div class="metrics-grid">
         <div class="metric-card" data-animate="scale-in">
           <div class="metric-value"><span class="counter" data-target="23">0</span><span class="metric-unit">wk</span></div>
           <div class="metric-label">Average early detection lead time</div>
-          <div class="metric-context">Before failure &mdash; not before alarm</div>
+          <div class="metric-context">Before failure, not before alarm</div>
         </div>
         <div class="metric-card" data-animate="scale-in" data-delay="0.1">
           <div class="metric-value"><span class="counter" data-target="99">0</span><span class="metric-unit">.2%</span></div>
@@ -942,8 +940,8 @@
   <section id="edge">
     <div class="section-container">
       <div class="section-eyebrow">Edge Intelligence</div>
-      <h2 class="section-headline">Starts on Turbofans.<br><span class="gradient-text">Built for Every Critical Machine.</span></h2>
-      <p class="section-sub">Our compression pipeline distills the full cloud model into a tiny, hardware-optimized version that runs anywhere &mdash; offshore platforms, pipeline stations, air-gapped defense installations. No cloud. No connectivity. Same detection quality.</p>
+      <h2 class="section-headline">Starts on turbofans.<br><span class="gradient-text">Built for every critical machine.</span></h2>
+      <p class="section-sub">Our compression pipeline distills the full cloud model into a tiny, hardware-optimized version that runs anywhere: offshore platforms, pipeline stations, air-gapped defense installations. No cloud. No connectivity. Same detection quality.</p>
     </div>
 
     <div class="edge-pipeline section-container" data-animate="fade-up">
@@ -980,7 +978,7 @@
         <span class="edge-path-arrow">&#8594;</span>
         <span class="edge-chip">Grid &amp; Electricity Demand Intelligence</span>
       </div>
-      <p class="edge-path-note">One AI core. We prove it where failure costs the most &mdash; utility-scale gas turbines &mdash; then carry the same model, agents, and edge pipeline to every sensor-dense machine that can't afford to fail.</p>
+      <p class="edge-path-note">One AI core. We prove it where failure costs the most, utility-scale gas turbines, then carry the same model, agents, and edge pipeline to every sensor-dense machine that can't afford to fail.</p>
     </div>
   </section>
 
@@ -990,8 +988,8 @@
   <section id="dashboard">
     <div class="section-container">
       <div class="section-eyebrow">Platform</div>
-      <h2 class="section-headline">Operator Intelligence Dashboard</h2>
-      <p class="section-sub">Built for plant engineers &mdash; not data scientists. Actionable, prioritized, and explained in plain language.</p>
+      <h2 class="section-headline">Operator intelligence, <span class="gradient-text">at a glance.</span></h2>
+      <p class="section-sub">Built for plant engineers, not data scientists. Actionable, prioritized, and explained in plain language.</p>
       <p class="dash-interact-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px"><path d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Interactive demo — click on turbines, nav icons, and alerts below</p>
     </div>
 
@@ -1017,7 +1015,7 @@
               <circle cx="14" cy="14" r="4.5" fill="#020810"/>
               <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/>
             </svg>
-            <span class="browser-tab-name">Turbnetic.ai — Fleet Live</span>
+            <span class="browser-tab-name">Turbnetic.ai · Fleet Live</span>
           </div>
           <div class="browser-urlbar">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1335,7 +1333,7 @@
                     <div class="adp-asset-tag" id="adp-asset">GT-07 · Frame 7 · Plant Alpha</div>
                     <div class="adp-rows" id="adp-rows">
                       <div class="adp-row"><span class="adp-k">Root cause</span><span class="adp-v">T4 temp rising above trend. Cross-correlated with ΔP oscillation at 200 Hz band.</span></div>
-                      <div class="adp-row"><span class="adp-k">Confidence</span><span class="adp-v" style="color:#f59e0b">87% — High</span></div>
+                      <div class="adp-row"><span class="adp-k">Confidence</span><span class="adp-v" style="color:#f59e0b">87% · High</span></div>
                       <div class="adp-row"><span class="adp-k">Predicted fault</span><span class="adp-v" style="color:#8fb3d0">~23 days (CI: 18–31d)</span></div>
                       <div class="adp-row"><span class="adp-k">Recommended</span><span class="adp-v">Borescope inspection · hot section</span></div>
                     </div>
@@ -1549,13 +1547,13 @@
     <div class="section-container ai-loop-inner" data-animate="fade-up">
       <div class="ai-loop-text">
         <div class="section-eyebrow ai-loop-eyebrow">Why Now</div>
-        <h2 class="ai-loop-headline">AI Created the Demand.<br><span class="gradient-text">AI Keeps It Running.</span></h2>
-        <p>Data centers will draw over <strong>1,000 TWh a year</strong> &mdash; Japan's entire consumption &mdash; and US data center power demand is projected to grow <strong>160% by 2030</strong>. Gas turbines are the only dispatchable generation fast enough to follow that load. They can no longer afford to fail.</p>
+        <h2 class="ai-loop-headline">AI created the demand.<br><span class="gradient-text">AI keeps it running.</span></h2>
+        <p>Data centers will draw over <strong>1,000 TWh a year</strong> (Japan's entire consumption), and US data center power demand is projected to grow <strong>160% by 2030</strong>. Gas turbines are the only dispatchable generation fast enough to follow that load. They can no longer afford to fail.</p>
       </div>
       <div class="ai-loop-cycle">
         <div class="loop-step"><span>AI infrastructure</span> needs electricity</div>
         <div class="loop-step-arrow">&#8595;</div>
-        <div class="loop-step"><span>Gas turbines</span> supply it &mdash; and must never fail</div>
+        <div class="loop-step"><span>Gas turbines</span> supply it, and must never fail</div>
         <div class="loop-step-arrow">&#8595;</div>
         <div class="loop-step loop-step-hl"><span>Turbnetic.ai</span> keeps them running</div>
         <div class="loop-step-arrow">&#8595;</div>
@@ -1572,10 +1570,10 @@
       <div class="cta-glow"></div>
       <div class="section-eyebrow cta-eyebrow">Get Started</div>
       <h2 class="cta-headline">
-        Your First Anomaly Alert<br>
-        in Under <span class="gradient-text">4 Hours</span>
+        Your first anomaly alert<br>
+        in under <span class="gradient-text">4 hours.</span>
       </h2>
-      <p class="cta-sub">Connect to your PI historian or SCADA system, import your tag list, and receive your first scored anomaly alert — without writing a single line of code.</p>
+      <p class="cta-sub">Connect to your PI historian or SCADA system, import your tag list, and receive your first scored anomaly alert without writing a single line of code.</p>
 
       <form class="cta-form" id="demo-form">
         <div class="form-row">
@@ -1650,7 +1648,7 @@
             <circle cx="14" cy="14" r="5" stroke="#6e93b3" stroke-width="0.8"/>
             <path d="M13.5 11.8 L12 15 L14.5 15 L13 17.8 L17 14 L14.5 14 Z" fill="#8fb3d0"/>
           </svg>
-          Turb<span style="color:#8fb3d0">netic</span><span style="color:rgba(110, 147, 179,0.6);font-size:0.8em">.ai</span>
+          <span class="wm">Turb<span class="logo-accent">netic</span><span class="logo-dot">.ai</span></span>
         </div>
         <p class="footer-tagline">Smart engine intelligence for gas turbine and powerplant fleets worldwide.</p>
       </div>
@@ -1679,6 +1677,7 @@
         </div>
       </div>
     </div>
+    <div class="foot-word" aria-hidden="true">Turbo<em>fan</em></div>
     <div class="footer-bottom">
       <span>&copy; 2026 Turbnetic.ai, Inc. All rights reserved.</span>
       <span>SOC 2 Type II &nbsp;&middot;&nbsp; ISO 27001 &nbsp;&middot;&nbsp; IEC 62443</span>
@@ -1709,7 +1708,7 @@
   <!-- Scripts -->
   <script src="js/features-showcase.js?v=20260616-1"></script>
   <script src="js/app.js?v=20260616-1"></script>
-  <script src="js/turbofan.js?v=20260616-1"></script>
+  <script src="js/turbofan.js?v=20261019-1"></script>
   <script src="js/dataflow.js?v=20260616-1"></script>
   <script src="js/network.js"></script>
   <script src="js/premium-ui.js?v=20260616-1"></script>

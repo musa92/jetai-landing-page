@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  :root { --label: #000; --label2: #8e8e93; --bg: #f2f2f7; --card: #fff; --sep: #e5e5ea; --blue: #007aff; --orange: #ff9500; --green: #34c759; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; }
+  body { font-family: -apple-system, "SF Pro Text", BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.2px; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* device: natural titanium band, black bezel, Dynamic Island */
+  .device { width: 433px; height: 892px; padding: 4px; border-radius: 72px; background: linear-gradient(145deg, #e3dfd8, #9d988f 40%, #c9c4bb 70%, #8a857c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
+  .bezel { width: 100%; height: 100%; padding: 16px; border-radius: 68px; background: #050505; }
+  .screen { position: relative; width: 393px; height: 852px; border-radius: 54px; overflow: hidden; background: var(--bg); }
+  .island { position: absolute; top: 11px; left: 50%; width: 125px; height: 37px; margin-left: -62.5px; border-radius: 20px; background: #000; z-index: 5; }
+  .status { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 6px 36px 0 50px; font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+  .status .r { display: flex; gap: 6px; align-items: center; }
+
+  .nav { display: flex; align-items: flex-end; justify-content: space-between; padding: 14px 20px 10px; }
+  .nav h1 { font-size: 34px; font-weight: 700; letter-spacing: 0.37px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(#a3a3ab, #85858d); color: #fff; font-size: 13px; font-weight: 600; display: grid; place-items: center; margin-bottom: 4px; }
+  .sub { padding: 0 20px 14px; font-size: 15px; color: var(--label2); }
+
+  .card { margin: 0 16px 16px; padding: 16px; border-radius: 20px; background: var(--card); }
+  .eyebrow { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--orange); }
+  .eyebrow time { margin-left: auto; color: var(--label2); font-weight: 400; }
+  .card h2 { margin-top: 8px; font-size: 20px; font-weight: 600; letter-spacing: -0.45px; line-height: 1.2; }
+  .card p { margin-top: 6px; font-size: 15px; line-height: 1.33; color: #3c3c43; }
+  .btns { display: flex; gap: 10px; margin-top: 14px; }
+  .btn { flex: 1; height: 44px; border-radius: 22px; display: grid; place-items: center; font-size: 17px; font-weight: 600; }
+  .btn.p { background: var(--blue); color: #fff; }
+  .btn.s { background: #e9e9eb; color: var(--blue); }
+
+  .hdr { margin: 6px 36px 8px; font-size: 13px; color: var(--label2); text-transform: uppercase; letter-spacing: -0.08px; }
+  .life { display: flex; align-items: center; gap: 18px; }
+  .life .num b { display: block; font-size: 34px; font-weight: 700; letter-spacing: 0.3px; }
+  .life .num span { font-size: 15px; color: var(--label2); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--sep); }
+  .stats b { display: block; font-size: 17px; font-weight: 600; }
+  .stats span { font-size: 12px; color: var(--label2); }
+
+  .list { margin: 0 16px; border-radius: 20px; background: var(--card); overflow: hidden; }
+  .li { position: relative; display: flex; align-items: center; gap: 12px; padding: 11px 16px; }
+  .li + .li::before { content: ""; position: absolute; top: 0; left: 58px; right: 0; border-top: 0.5px solid var(--sep); }
+  .ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
+  .li .t { font-size: 17px; letter-spacing: -0.4px; }
+  .li .d { font-size: 13px; color: var(--label2); margin-top: 1px; }
+  .chev { margin-left: auto; color: #c4c4c7; }
+
+  .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; padding-top: 8px; display: flex; justify-content: space-around; background: rgba(249,249,249,.94); border-top: 0.5px solid rgba(0,0,0,.18); }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 80px; font-size: 10px; font-weight: 500; color: #999; }
+  .tab.on { color: var(--blue); }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: #000; }
+</style></head>
+<body>
+<div class="device"><div class="bezel"><div class="screen">
+  <div class="island"></div>
+  <div class="status"><span class="tnum">9:41</span>
+    <span class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#000"><rect x="0" y="8" width="3" height="4" rx=".7"/><rect x="5" y="5.5" width="3" height="6.5" rx=".7"/><rect x="10" y="3" width="3" height="9" rx=".7"/><rect x="15" y="0" width="3" height="12" rx=".7"/></svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#000"><path d="M8.5 2.3c2.4 0 4.6.9 6.2 2.5l1.2-1.2A10.5 10.5 0 0 0 1.1 3.6l1.2 1.2a8.7 8.7 0 0 1 6.2-2.5zm0 3.4c1.5 0 2.8.5 3.8 1.5l1.2-1.2a7 7 0 0 0-10 0l1.2 1.2c1-1 2.3-1.5 3.8-1.5zm0 3.4c.6 0 1.1.2 1.5.6L8.5 11.2 7 9.7c.4-.4.9-.6 1.5-.6z"/></svg>
+      <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="#000" stroke-opacity=".35"/><rect x="2" y="2" width="20" height="9" rx="2.5" fill="#000"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="#000" fill-opacity=".4"/></svg>
+    </span>
+  </div>
+
+  <div class="nav"><h1>Fleet</h1><div class="avatar">PA</div></div>
+  <p class="sub">Plant Alpha · 4 turbines</p>
+
+  <div class="card">
+    <div class="eyebrow"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#ff9500"/><rect x="7.1" y="3.6" width="1.8" height="5.8" rx=".9" fill="#fff"/><circle cx="8" cy="11.8" r="1.05" fill="#fff"/></svg>Critical alert<time>now</time></div>
+    <h2>GT-07 combustion instability</h2>
+    <p>Exhaust gas temperature is 14 °C above trend. Predicted fault in 23 days.</p>
+    <div class="btns"><span class="btn p">View Details</span><span class="btn s">Dismiss</span></div>
+  </div>
+
+  <p class="hdr">Remaining useful life</p>
+  <div class="card">
+    <div class="life">
+      <svg width="86" height="86" viewBox="0 0 86 86">
+        <circle cx="43" cy="43" r="35" fill="none" stroke="#ff9500" stroke-opacity=".18" stroke-width="12"/>
+        <circle cx="43" cy="43" r="35" fill="none" stroke="#ff9500" stroke-width="12" stroke-linecap="round" stroke-dasharray="219.9" stroke-dashoffset="132" transform="rotate(-90 43 43)"/>
+      </svg>
+      <div class="num"><b class="tnum">552 h</b><span>GT-07 · about 23 days</span></div>
+    </div>
+    <div class="stats"><div><b class="tnum">87%</b><span>Confidence</span></div><div><b class="tnum">+14 °C</b><span>EGT trend</span></div><div><b class="tnum">4 of 4</b><span>Online</span></div></div>
+  </div>
+
+  <p class="hdr">Maintenance</p>
+  <div class="list">
+    <div class="li"><span class="ico" style="background:#007aff"><svg width="16" height="16" viewBox="0 0 16 16" fill="#fff"><path d="M8 1.5C6 4.4 3.8 6.6 3.8 9.2a4.2 4.2 0 0 0 8.4 0C12.2 6.6 10 4.4 8 1.5z"/></svg></span>
+      <div><div class="t">GT-01 compressor wash</div><div class="d">Efficiency −2.1% · within 8 days</div></div><span class="chev">›</span></div>
+    <div class="li"><span class="ico" style="background:#34c759"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+      <div><div class="t">GT-04 borescope</div><div class="d">Completed yesterday</div></div><span class="chev">›</span></div>
+  </div>
+
+  <nav class="tabbar">
+    <span class="tab on"><svg width="25" height="25" viewBox="0 0 16 16" fill="currentColor"><rect x="1.5" y="1.5" width="5.6" height="5.6" rx="1.5"/><rect x="8.9" y="1.5" width="5.6" height="5.6" rx="1.5"/><rect x="1.5" y="8.9" width="5.6" height="5.6" rx="1.5"/><rect x="8.9" y="8.9" width="5.6" height="5.6" rx="1.5"/></svg>Fleet</span>
+    <span class="tab"><svg width="25" height="25" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.6a4.4 4.4 0 0 0-4.4 4.4v2.9L2.3 11v.9h11.4V11l-1.3-2.1V6A4.4 4.4 0 0 0 8 1.6zM6.2 13a1.8 1.8 0 0 0 3.6 0z"/></svg>Alerts</span>
+    <span class="tab"><svg width="25" height="25" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h9A1.5 1.5 0 0 1 14 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5zm1.5 2.2v6.8h9V5.7zM5 1h1.4v2.4H5zm4.6 0H11v2.4H9.6z"/></svg>Maintenance</span>
+    <span class="tab"><svg width="25" height="25" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="5.2" r="3"/><path d="M2.4 14c.4-3 2.8-4.8 5.6-4.8s5.2 1.8 5.6 4.8z"/></svg>Account</span>
+  </nav>
+  <div class="home"></div>
+</div></div></div>
+</body></html>

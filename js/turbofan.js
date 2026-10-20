@@ -11,10 +11,16 @@
 'use strict';
 
 class TurbofanEngine3D {
-  constructor(canvasId) {
+  /* opts.mode: 'tour' (default, turbofan.html) or 'dive' (homepage: scroll flies into the
+     core, then an x-ray pass shows every inner line). opts.apple: Apple system colors. */
+  constructor(canvasId, opts = {}) {
     this.canvas = document.getElementById(canvasId);
     if (!this.canvas || typeof THREE === 'undefined') return;
 
+    this.opts           = opts;
+    this.dive           = opts.mode === 'dive';
+    this.diveProgress   = 0;   /* 0..1, set by the page in dive mode */
+    this._xray          = 0;
     this.scrollProgress = 0;
     this.time           = 0;
     this.raf            = null;
@@ -34,6 +40,11 @@ class TurbofanEngine3D {
     this._initLights();
     this._buildEngine();
     this._buildGroundGlow();
+    /* solid parts cast onto the studio floor; glows and glass stay shadowless */
+    this.engineGroup.traverse(o => {
+      if (o.isMesh && !(o.material && o.material.transparent)) o.castShadow = true;
+    });
+    if (this.dive) this._buildXray();
     this._initCamera();
 
     window.addEventListener('resize', () => this._resize(), { passive: true });
@@ -49,7 +60,7 @@ class TurbofanEngine3D {
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping         = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.toneMappingExposure = 1.15;
     this.renderer.shadowMap.enabled   = true;
     this.renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
     this.renderer.localClippingEnabled = true;
@@ -58,9 +69,9 @@ class TurbofanEngine3D {
   /* ─── Scene ─────────────────────────────────────── */
   _initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x020810);
-    /* faint depth fog */
-    this.scene.fog = new THREE.FogExp2(0x020810, 0.022);  /* reduced for larger scene */
+    /* product-render stage: the engine alone on pure black */
+    this.scene.background = new THREE.Color(0x000000);
+    this.scene.fog = new THREE.FogExp2(0x000000, 0.016);
   }
 
   /* ─── Environment reflections ───────────────────── */
@@ -71,13 +82,13 @@ class TurbofanEngine3D {
     cv.width = 512; cv.height = 256;
     const x = cv.getContext('2d');
 
-    /* dark studio gradient: floor → horizon glow → ceiling */
+    /* neutral photo studio: black floor → soft grey horizon → black ceiling */
     const g = x.createLinearGradient(0, 256, 0, 0);
-    g.addColorStop(0.00, '#050b14');
-    g.addColorStop(0.42, '#0e2236');
-    g.addColorStop(0.55, '#1a3850');
-    g.addColorStop(0.56, '#16314a');
-    g.addColorStop(1.00, '#060d18');
+    g.addColorStop(0.00, '#030303');
+    g.addColorStop(0.42, '#141516');
+    g.addColorStop(0.55, '#2a2b2d');
+    g.addColorStop(0.56, '#232425');
+    g.addColorStop(1.00, '#050505');
     x.fillStyle = g;
     x.fillRect(0, 0, 512, 256);
 
@@ -90,10 +101,10 @@ class TurbofanEngine3D {
       x.fillStyle = bg;
       x.fillRect(bx, by, bw, bh);
     };
-    box( 40, 30, 150, 26, 'rgba(190,225,255,0.85)');  /* key softbox */
-    box(300, 48, 110, 18, 'rgba(120,180,255,0.45)');  /* fill */
-    box(190, 86, 70,  10, 'rgba(0,212,255,0.35)');    /* cyan accent */
-    box(430, 70, 60,  12, 'rgba(255,140,60,0.30)');   /* warm bounce */
+    box( 40, 30, 150, 26, 'rgba(255,255,255,0.95)');  /* key softbox */
+    box(300, 48, 110, 18, 'rgba(235,238,242,0.50)');  /* fill softbox */
+    box(190, 86, 70,  10, 'rgba(255,255,255,0.30)');  /* strip light */
+    box(430, 70, 60,  12, 'rgba(255,190,140,0.18)');  /* faint warm bounce */
 
     const tex   = new THREE.CanvasTexture(cv);
     tex.mapping = THREE.EquirectangularReflectionMapping;
@@ -104,76 +115,68 @@ class TurbofanEngine3D {
     pmrem.dispose();
   }
 
-  /* ─── Ground contact glow ───────────────────────── */
-  /* Radial-faded grid disc under the skid — grounds the package
-     like a product-render floor without a heavy reflector. */
+  /* ─── Studio floor ──────────────────────────────── */
+  /* No grid: a soft pool of light that fades to black, plus a shadow catcher,
+     so the engine sits on the floor the way a product photo does. */
   _buildGroundGlow() {
     const cv = document.createElement('canvas');
     cv.width = cv.height = 512;
     const x = cv.getContext('2d');
-
-    /* faint engineering grid */
-    x.strokeStyle = 'rgba(0, 212, 255, 0.30)';
-    x.lineWidth = 1;
-    for (let i = 0; i <= 512; i += 32) {
-      x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 512); x.stroke();
-      x.beginPath(); x.moveTo(0, i); x.lineTo(512, i); x.stroke();
-    }
-    /* center pool */
-    const pool = x.createRadialGradient(256, 256, 30, 256, 256, 150);
-    pool.addColorStop(0, 'rgba(0, 212, 255, 0.20)');
-    pool.addColorStop(1, 'rgba(0, 212, 255, 0)');
+    const pool = x.createRadialGradient(256, 256, 10, 256, 256, 252);
+    pool.addColorStop(0,    'rgba(150,152,156,0.22)');
+    pool.addColorStop(0.45, 'rgba(90,92,96,0.08)');
+    pool.addColorStop(1,    'rgba(0,0,0,0)');
     x.fillStyle = pool;
     x.fillRect(0, 0, 512, 512);
 
-    /* radial alpha falloff — fade grid to nothing at edges */
-    const mask = x.createRadialGradient(256, 256, 60, 256, 256, 252);
-    mask.addColorStop(0,    'rgba(0,0,0,1)');
-    mask.addColorStop(0.55, 'rgba(0,0,0,0.5)');
-    mask.addColorStop(1,    'rgba(0,0,0,0)');
-    x.globalCompositeOperation = 'destination-in';
-    x.fillStyle = mask;
-    x.fillRect(0, 0, 512, 512);
-
     const tex = new THREE.CanvasTexture(cv);
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex, transparent: true, depthWrite: false, opacity: 0.85,
-    });
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
     const disc = new THREE.Mesh(new THREE.PlaneGeometry(26, 26), mat);
     disc.rotation.x = -Math.PI / 2;
     disc.position.y = -0.80;
     this.engineGroup.add(disc);
+
+    const catcher = new THREE.Mesh(
+      new THREE.PlaneGeometry(26, 26),
+      new THREE.ShadowMaterial({ opacity: 0.55 })
+    );
+    catcher.rotation.x = -Math.PI / 2;
+    catcher.position.y = -0.795;
+    catcher.receiveShadow = true;
+    this.engineGroup.add(catcher);
   }
 
   /* ─── Lights ────────────────────────────────────── */
   _initLights() {
     /* sky/ground hemisphere */
-    this.scene.add(new THREE.HemisphereLight(0x334466, 0x111122, 0.55));
+    this.scene.add(new THREE.HemisphereLight(0xe6eaf0, 0x0a0a0a, 0.38));
 
     /* key light – upper left, warm white */
-    const key = new THREE.DirectionalLight(0xfff8f0, 4.0);
+    const key = new THREE.DirectionalLight(0xfff6ec, 3.6);
     key.position.set(-4, 5, 2);
     key.castShadow = true;
     key.shadow.mapSize.set(window.innerWidth < 768 ? 1024 : 2048, window.innerWidth < 768 ? 1024 : 2048);
     key.shadow.bias = -0.0004;
+    Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 0.5, far: 30 });
+    key.shadow.radius = 6;
     this.scene.add(key);
 
-    /* fill – blue-ish right */
-    const fill = new THREE.DirectionalLight(0x4488ff, 1.0);
+    /* fill – soft, barely cool, right */
+    const fill = new THREE.DirectionalLight(0xd4dcea, 0.75);
     fill.position.set(5, -2, 4);
     this.scene.add(fill);
 
-    /* rim / backlight – cyan */
-    const rim = new THREE.DirectionalLight(0x00d4ff, 0.7);
-    rim.position.set(1, 2, -6);
+    /* rim / backlight – white, traces the silhouette against black */
+    const rim = new THREE.DirectionalLight(0xffffff, 1.8);
+    rim.position.set(1, 3, -6);
     this.scene.add(rim);
 
     /* combustor orange point light */
-    this.combustorLight = new THREE.PointLight(0xff6a00, 10.0, 4.0);
+    this.combustorLight = new THREE.PointLight(0xff6a00, 4.0, 2.4);   /* glows inside, doesn't flood the deck */
     this.scene.add(this.combustorLight);
 
     /* exhaust red glow */
-    this.exhaustLight = new THREE.PointLight(0xff2200, 4.0, 2.8);
+    this.exhaustLight = new THREE.PointLight(0xff2200, 2.0, 2.0);
     this.scene.add(this.exhaustLight);
   }
 
@@ -203,7 +206,7 @@ class TurbofanEngine3D {
     this.renderer.setSize(w, h);
     if (this.camera) {
       this.camera.aspect = w / h;
-      this.camera.fov    = this._isMobile ? 62 : 42;
+      this.camera.fov    = this._isMobile ? (this.dive ? 54 : 62) : 42;
       this.camera.updateProjectionMatrix();
     }
   }
@@ -287,10 +290,16 @@ class TurbofanEngine3D {
       }),
       /* enclosure / skid steel — gray industrial panels */
       enclosureSteel: new THREE.MeshStandardMaterial({
-        color:     0x2a3848,
-        metalness: 0.72,
-        roughness: 0.40,
+        color:     0x1e2023,   /* graphite, painted satin (linear space) */
+        metalness: 0.45,
+        roughness: 0.58,
         side:      THREE.DoubleSide,
+      }),
+      /* skid deck: matte painted steel, so the floor never out-shines the engine */
+      skidSteel: new THREE.MeshStandardMaterial({
+        color:     0x09090a,   /* linear-space colour: renders as deep charcoal */
+        metalness: 0.25,
+        roughness: 0.80,
       }),
       darkMetal: new THREE.MeshStandardMaterial({
         color:     0x565b61,   /* neutral dark steel */
@@ -311,7 +320,7 @@ class TurbofanEngine3D {
         emissiveIntensity: 0.3,
       }),
       genBody: new THREE.MeshStandardMaterial({
-        color:     0x1c2a38,
+        color:     0x16171a,   /* graphite (linear space) */
         metalness: 0.85,
         roughness: 0.30,
       }),
@@ -326,8 +335,8 @@ class TurbofanEngine3D {
     /* env reflection strength — bright on polished parts, restrained on casings */
     const envI = {
       titaniumFan: 1.45, nickelBlade: 1.30, steelShaft: 1.45, ogvVane: 1.25,
-      disc: 1.05, copper: 1.20, nacelle: 0.95, enclosureSteel: 0.55,
-      darkMetal: 0.65, genBody: 0.65, exhaust: 0.75, hpcFoul: 1.25,
+      disc: 1.05, copper: 1.20, nacelle: 0.95, enclosureSteel: 0.45,
+      darkMetal: 0.65, skidSteel: 0.12, genBody: 0.65, exhaust: 0.75, hpcFoul: 1.25,
     };
     Object.keys(this.M).forEach(k => {
       if ('envMapIntensity' in this.M[k]) {
@@ -386,7 +395,7 @@ class TurbofanEngine3D {
   /* Heavy-duty common baseplate, full package length */
   _buildSkidFrame() {
     const BY = -0.68, Z1 = -6.50, Z2 = 5.90, XO = 1.10;
-    const mat = this.M.darkMetal;
+    const mat = this.M.skidSteel;
 
     /* Two longitudinal main stringers */
     [-XO, XO].forEach(x => {
@@ -1142,7 +1151,9 @@ class TurbofanEngine3D {
   ═══════════════════════════════════════════════════ */
   _buildSensorMarkers() {
     /* Severity palette */
-    const C = { N: 0x00d4ff, W: 0xf59e0b, A: 0xff2d78, O: 0xaef03f };
+    const C = this.opts.apple
+      ? { N: 0x30d158, W: 0xff9f0a, A: 0xff453a, O: 0x30d158 }   /* Apple system green / orange / red */
+      : { N: 0x00d4ff, W: 0xf59e0b, A: 0xff2d78, O: 0xaef03f };
 
     /*  id, label, unit, value function, severity, alarm state, 3-D position
         Positions are in engineGroup local space (engine along +Z)  */
@@ -1211,7 +1222,11 @@ class TurbofanEngine3D {
       x.fillRect(0, 0, 64, 64);
       return new THREE.CanvasTexture(cv);
     };
-    this._ringTex = {
+    this._ringTex = this.opts.apple ? {
+      normal:   mkRingTex(48,  209, 88),
+      warning:  mkRingTex(255, 159, 10),
+      critical: mkRingTex(255, 69,  58),
+    } : {
       normal:   mkRingTex(0,   212, 255),
       warning:  mkRingTex(245, 158, 11),
       critical: mkRingTex(239, 68,  68),
@@ -1606,6 +1621,7 @@ class TurbofanEngine3D {
   _update(dt) {
     this.time += dt;
     const f = dt / 16;
+    if (this.dive) this._mapDive();
 
     /* LP shaft ~3 600 RPM */
     this.fanAngle        += 0.010 * f;
@@ -1620,7 +1636,7 @@ class TurbofanEngine3D {
     if (this.combustorGlow)
       this.combustorGlow.material.emissiveIntensity = 1.8 + flk * 1.2;
     if (this.combustorLight)
-      this.combustorLight.intensity = 7.0 * flk + 3.0;
+      this.combustorLight.intensity = 2.8 * flk + 1.4;
 
     /* generator electric glow pulse */
     if (this.generatorLight) {
@@ -1641,6 +1657,85 @@ class TurbofanEngine3D {
     this._updateScanBeams();
     this._updateFouling();
     this._updateHUDLines();
+    if (this.dive) this._updateXray();
+  }
+
+  /* ═══════════════════════════════════════════════════
+     DIVE MODE (homepage)
+     0.00 establishing · 0.20 orbit in · 0.18–0.34 casing opens
+     0.36–0.50 down onto the compressor blade rows
+     0.50–0.64 along the shaft to combustor and turbine
+     0.66–0.82 x-ray: casings turn to glass, edges trace every part
+     0.82–1.00 pull back to the whole machine in x-ray
+  ═══════════════════════════════════════════════════ */
+  _mapDive() {
+    const P = this.diveProgress;
+    /* legacy effects (HUD, fouling, scan beams) follow the tour's own timeline */
+    let lp;
+    if      (P < 0.20) lp = P;
+    else if (P < 0.36) lp = 0.20 + (P - 0.20) / 0.16 * 0.22;
+    else if (P < 0.66) lp = 0.42 + (P - 0.36) / 0.30 * 0.22;
+    else               lp = 0.64;
+    this.scrollProgress = lp;
+    const s = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    this._xray = s(0.66, 0.82, P);
+  }
+
+  _diveTarget() {
+    const K = [
+      { p: 0.00, pos: [9.2, 4.6,  0.6],  look: [0,  0.35, -0.4] },
+      { p: 0.20, pos: [5.0, 2.5, -2.8],  look: [0,  0.10, -0.5] },
+      { p: 0.36, pos: [2.1, 1.30, -1.9], look: [0,  0.00, -0.6], deep: true },
+      { p: 0.50, pos: [1.00, 0.70, -0.95], look: [0, -0.02, -0.30], deep: true },
+      { p: 0.64, pos: [1.30, 1.05, 0.30],  look: [0, -0.06,  0.85], deep: true },
+      { p: 0.80, pos: [3.6, 2.1,  1.6],  look: [0,  0.05,  0.40] },
+      { p: 1.00, pos: [10.8, 5.4, 1.2],  look: [0,  0.25, -0.30] },
+    ];
+    const P = Math.min(1, Math.max(0, this.diveProgress));
+    let i = 0;
+    while (i < K.length - 2 && P > K[i + 1].p) i++;
+    const a = K[i], b = K[i + 1];
+    let t = (P - a.p) / (b.p - a.p);
+    t = t * t * (3 - 2 * t);
+    /* portrait screens: pull the wide shots back so the package fits */
+    const far = this._isMobile ? 1.45 : 1.0;
+    const fa = a.deep ? 1 : far, fb = b.deep ? 1 : far;
+    const lerp = (x, y) => x + (y - x) * t;
+    return {
+      pos:  [0, 1, 2].map(j => lerp(a.pos[j] * fa, b.pos[j] * fb)),
+      look: [0, 1, 2].map(j => lerp(a.look[j], b.look[j])),
+    };
+  }
+
+  _buildXray() {
+    const names = ['nacelle', 'nacelleInner', 'enclosureSteel', 'genBody', 'exhaust', 'darkMetal'];
+    this._ghostMats = names.map(n => this.M[n]).filter(Boolean);
+    this._ghostMats.forEach(m => { m.transparent = true; m.needsUpdate = true; });
+    const ghost = new Set(this._ghostMats);
+    const lined = new Set([...this._ghostMats, this.M.skidSteel]);
+    this._xrayLineMat = new THREE.LineBasicMaterial({
+      color: 0xe8eef5, transparent: true, opacity: 0, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const targets = [];
+    this.engineGroup.traverse(o => {
+      if (o.isMesh && !o.isInstancedMesh && lined.has(o.material)) targets.push(o);
+    });
+    targets.forEach(o => {
+      const lines = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 28), this._xrayLineMat);
+      lines.raycast = () => {};
+      o.add(lines);
+    });
+    this._ghostSet = ghost;
+  }
+
+  _updateXray() {
+    const X = this._xray;
+    if (this._ghostMats) this._ghostMats.forEach(m => { m.opacity = 1 - 0.9 * X; m.depthWrite = X < 0.02; });
+    if (this._xrayLineMat) { this._xrayLineMat.opacity = 0.5 * X; this._xrayLineMat.visible = X > 0.002; }
+    /* the sensor tags belong to the dive; they fade out as the x-ray takes over */
+    if (this._hudEl)  this._hudEl.style.opacity  = String((parseFloat(this._hudEl.style.opacity) || 0) * (1 - X));
+    if (this._hudSVG) this._hudSVG.style.opacity = String(1 - X);
   }
 
   /* ─── Camera path — Solar Titan 350 style ──────── */
@@ -1649,6 +1744,18 @@ class TurbofanEngine3D {
      Phase 0.42→0.65: close-up interior with cutaway  (compressor/combustor)
      Phase 0.65→1.00: drift right to reveal gearbox + 38 MW alternator */
   _updateCamera() {
+    if (this.dive) {
+      const t = this._diveTarget(), k = 0.12;
+      this._camPos.x  += (t.pos[0]  - this._camPos.x)  * k;
+      this._camPos.y  += (t.pos[1]  - this._camPos.y)  * k;
+      this._camPos.z  += (t.pos[2]  - this._camPos.z)  * k;
+      this._camLook.x += (t.look[0] - this._camLook.x) * k;
+      this._camLook.y += (t.look[1] - this._camLook.y) * k;
+      this._camLook.z += (t.look[2] - this._camLook.z) * k;
+      this.camera.position.copy(this._camPos);
+      this.camera.lookAt(this._camLook);
+      return;
+    }
     const p   = this.scrollProgress;
     /* Portrait scale-back factor on the camera's x/y distance. Mobile uses a
        much wider FOV (62° vs 42°), which makes everything look smaller — so:
@@ -1720,6 +1827,12 @@ class TurbofanEngine3D {
   /* Top-down Y cut reveals the turbine interior like a cutaway diagram.
      d=0.65 (intact) → d=-0.07 (top half removed, blades visible) */
   _updateClipping() {
+    if (this.dive) {
+      const P = this.diveProgress, s = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+      const open = 0.65 - 0.74 * s(0.18, 0.34, P);              /* cut the casing open */
+      this.clipPlane.constant = open + (0.65 - open) * this._xray; /* close it again as glass */
+      return;
+    }
     const p = this.scrollProgress;
     if (p < 0.32) { this.clipPlane.constant = 0.65; return; }
     const t = Math.min(1, (p - 0.32) / 0.26);

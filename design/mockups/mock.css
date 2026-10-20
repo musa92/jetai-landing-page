@@ -1,0 +1,99 @@
+/* Shared Apple-UI kit for the product mockups (macOS window + iPhone).
+   SF Pro via the system font, Apple system colors. Render on a Mac so SF Pro is used. */
+:root {
+  --label: #1d1d1f; --label2: #86868b; --label3: #aeaeb2;
+  --sep: #e5e5ea; --fill: #f2f2f7; --sidebar: #ececee;
+  --blue: #007aff; --orange: #ff9500; --red: #ff3b30; --green: #34c759; --yellow: #ffcc00; --teal: #30b0c7; --indigo: #5856d6; --pink: #ff2d55;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: transparent; }
+body { font-family: -apple-system, "SF Pro Text", BlinkMacSystemFont, sans-serif; color: var(--label); -webkit-font-smoothing: antialiased; letter-spacing: -0.08px; }
+.tnum { font-variant-numeric: tabular-nums; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+
+/* ═════════ macOS window ═════════ */
+.win { width: 1280px; display: flex; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 0 0 0.5px rgba(0,0,0,.22); font-size: 13px; }
+.win .side { width: 228px; flex-shrink: 0; background: var(--sidebar); border-right: 0.5px solid #d8d8dc; padding: 14px 10px; display: flex; flex-direction: column; gap: 18px; }
+.win .lights { display: flex; gap: 8px; padding: 4px 8px 6px; }
+.win .lights i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,.12); }
+.win .lights i:nth-child(1) { background: #ff5f57; } .win .lights i:nth-child(2) { background: #febc2e; } .win .lights i:nth-child(3) { background: #28c840; }
+.win .sec h6 { font-size: 11px; font-weight: 600; color: var(--label2); padding: 0 10px 4px; }
+.win .item { display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 10px; border-radius: 6px; }
+.win .item.on { background: rgba(0,0,0,.08); }
+.win .item .g { width: 16px; height: 16px; display: grid; place-items: center; color: var(--blue); }
+.win .item .count { margin-left: auto; color: var(--label2); font-size: 12px; }
+.win .item .badge { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--orange); color: #fff; font-size: 11px; font-weight: 600; display: grid; place-items: center; }
+.win .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.win .toolbar { height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 18px; border-bottom: 0.5px solid var(--sep); }
+.win .toolbar .title b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+.win .toolbar .title span { font-size: 11px; color: var(--label2); }
+.win .seg { margin-left: auto; display: flex; background: var(--fill); border-radius: 7px; padding: 2px; }
+.win .seg span { padding: 3px 12px; border-radius: 5px; font-size: 12px; }
+.win .seg span.on { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 0 0 0.5px rgba(0,0,0,.06); font-weight: 500; }
+.win .search { width: 190px; height: 28px; border-radius: 7px; background: var(--fill); display: flex; align-items: center; gap: 6px; padding: 0 9px; color: var(--label3); }
+.win .content { padding: 20px 22px 22px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.win .card { border-radius: 12px; background: var(--fill); padding: 14px 16px; }
+.win .card.raised { background: #fff; box-shadow: 0 0 0 0.5px var(--sep), 0 4px 16px rgba(0,0,0,.05); }
+.win .span2 { grid-column: span 2; } .win .span4 { grid-column: 1 / -1; }
+.win .kpi .l { font-size: 11px; font-weight: 600; color: var(--label2); }
+.win .kpi .v { margin-top: 8px; font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+.win .kpi .v small { font-size: 15px; font-weight: 500; color: var(--label2); margin-left: 2px; }
+.win .kpi .s { margin-top: 2px; font-size: 11px; color: var(--label2); }
+.win .alert { display: flex; flex-direction: column; gap: 8px; }
+.win .alert .top { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: var(--orange); }
+.win .alert .top time { margin-left: auto; color: var(--label2); font-weight: 400; }
+.win .alert h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+.win .alert p { color: var(--label2); line-height: 1.38; }
+.win .meta { display: flex; gap: 22px; margin-top: 4px; }
+.win .meta b { display: block; font-size: 17px; font-weight: 600; }
+.win .meta span { font-size: 11px; color: var(--label2); }
+.win .btns { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+.win .btn { height: 26px; padding: 0 14px; border-radius: 6px; display: grid; place-items: center; font-weight: 500; }
+.win .btn.p { background: var(--blue); color: #fff; } .win .btn.s { background: var(--fill); }
+.win .chart header { display: flex; align-items: baseline; justify-content: space-between; }
+.win .chart header b { font-weight: 600; } .win .chart header span { font-size: 11px; color: var(--label2); }
+.win .chart .big { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-top: 2px; }
+.win .chart .big em { font-style: normal; font-size: 13px; font-weight: 500; margin-left: 6px; }
+.win .axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--label2); margin-top: 2px; }
+.win .table { padding: 0; overflow: hidden; background: #fff; box-shadow: 0 0 0 0.5px var(--sep); }
+.win .row { display: grid; align-items: center; height: 38px; padding: 0 16px; border-top: 0.5px solid var(--sep); }
+.win .row.h { height: 30px; border-top: 0; font-size: 11px; font-weight: 600; color: var(--label2); background: #fafafa; }
+.win .st { display: flex; align-items: center; gap: 7px; }
+.win .sub { color: var(--label2); }
+.win .pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
+/* ═════════ iPhone ═════════ */
+.device { width: 433px; height: 892px; padding: 4px; border-radius: 72px; background: linear-gradient(145deg, #e3dfd8, #9d988f 40%, #c9c4bb 70%, #8a857c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
+.device .bezel { width: 100%; height: 100%; padding: 16px; border-radius: 68px; background: #050505; }
+.device .screen { position: relative; width: 393px; height: 852px; border-radius: 54px; overflow: hidden; background: var(--fill); letter-spacing: -0.2px; }
+.device .island { position: absolute; top: 11px; left: 50%; width: 125px; height: 37px; margin-left: -62.5px; border-radius: 20px; background: #000; z-index: 5; }
+.device .status { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 6px 36px 0 50px; font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+.device .status .r { display: flex; gap: 6px; align-items: center; }
+.device .nav { display: flex; align-items: flex-end; justify-content: space-between; padding: 14px 20px 10px; }
+.device .nav h1 { font-size: 34px; font-weight: 700; letter-spacing: 0.37px; }
+.device .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(#a3a3ab, #85858d); color: #fff; font-size: 13px; font-weight: 600; display: grid; place-items: center; margin-bottom: 4px; }
+.device .lead { padding: 0 20px 14px; font-size: 15px; color: #8e8e93; }
+.device .card { margin: 0 16px 16px; padding: 16px; border-radius: 20px; background: #fff; }
+.device .eyebrow { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+.device .eyebrow time { margin-left: auto; color: #8e8e93; font-weight: 400; }
+.device .card h2 { margin-top: 8px; font-size: 20px; font-weight: 600; letter-spacing: -0.45px; line-height: 1.2; }
+.device .card p { margin-top: 6px; font-size: 15px; line-height: 1.33; color: #3c3c43; }
+.device .btns { display: flex; gap: 10px; margin-top: 14px; }
+.device .btn { flex: 1; height: 44px; border-radius: 22px; display: grid; place-items: center; font-size: 17px; font-weight: 600; }
+.device .btn.p { background: var(--blue); color: #fff; } .device .btn.s { background: #e9e9eb; color: var(--blue); }
+.device .hdr { margin: 6px 36px 8px; font-size: 13px; color: #8e8e93; text-transform: uppercase; letter-spacing: -0.08px; }
+.device .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--sep); }
+.device .stats b { display: block; font-size: 17px; font-weight: 600; }
+.device .stats span { font-size: 12px; color: #8e8e93; }
+.device .list { margin: 0 16px 16px; border-radius: 20px; background: #fff; overflow: hidden; }
+.device .li { position: relative; display: flex; align-items: center; gap: 12px; padding: 11px 16px; }
+.device .li + .li::before { content: ""; position: absolute; top: 0; left: 58px; right: 0; border-top: 0.5px solid var(--sep); }
+.device .ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
+.device .li .t { font-size: 17px; letter-spacing: -0.4px; }
+.device .li .d { font-size: 13px; color: #8e8e93; margin-top: 1px; }
+.device .li .val { margin-left: auto; font-size: 15px; color: #8e8e93; }
+.device .chev { margin-left: 8px; color: #c4c4c7; }
+.device .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; padding-top: 8px; display: flex; justify-content: space-around; background: rgba(249,249,249,.94); border-top: 0.5px solid rgba(0,0,0,.18); }
+.device .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 80px; font-size: 10px; font-weight: 500; color: #999; }
+.device .tab.on { color: var(--blue); }
+.device .home { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: #000; }
