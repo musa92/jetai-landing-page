@@ -13,8 +13,8 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="apple-touch-icon" href="assets/turbnetic-logo.png">
   <link rel="preload" as="image" href="assets/shots/edge-console.webp">
-  <link rel="stylesheet" href="css/apple.css?v=20261019-8">
-  <link rel="stylesheet" href="css/devices.css?v=20261019-3">
+  <link rel="stylesheet" href="css/apple.css?v=20261019-19">
+  <link rel="stylesheet" href="css/devices.css?v=20261019-6">
 </head>
 <body>
 
@@ -60,21 +60,67 @@
   </header>
 
   <main>
+    <div class="morph" id="morph">
     <!-- ═════════ 1 · EDGE INTELLIGENCE (the platform) ═════════ -->
     <section class="hero center" data-nav="light" id="edge">
       <div class="wrap stack-md">
-        <p class="eyebrow" style="justify-content:center;color:var(--ink-2)">Turbnetic</p>
         <h1 class="h-hero">Edge Intelligence</h1>
         <p class="lede">AI that runs next to the machine, not in someone else's cloud.</p>
         <div class="ctas">
-          <a class="btn" href="#contact">Request a demo</a>
-          <a class="link" href="#stack">Learn more</a>
+          <a class="pill" href="#contact">Request a demo</a>
+          <a class="pill ghost" href="#stack">Learn more</a>
         </div>
       </div>
-      <div class="hero-stage">
-        <div class="ui-fit app-window solo" id="hero-window" data-app="edge-console" data-w="1200"><img class="ui-fallback" src="assets/shots/edge-console.webp" width="2560" height="1172" alt="Edge Console for Mac: 128 edge devices across turbines, a pilot hospital, a mill and a field, each running its model on site at a median 12 ms" fetchpriority="high"></div>
+      <div class="hero-pin" id="hero-pin">
+        <div class="hero-sticky">
+          <div class="hero-stage">
+            <div class="ui-fit app-window solo" id="hero-window" data-app="edge-console" data-w="1400" data-frame="macbook" data-intro="open" data-name="Edge Console"><img class="ui-fallback" src="assets/shots/edge-console.webp" width="2560" height="1172" alt="Edge Console for Mac: 128 edge devices across turbines, a pilot hospital, a mill and a field, each running its model on site at a median 12 ms" fetchpriority="high"></div>
+          </div>
+          <div class="chapters" aria-live="polite">
+            <p class="chap on" data-pane="devices"><b>Every machine, one view.</b> 128 edge devices across four products, each answering in about 12 ms.</p>
+            <p class="chap" data-pane="models"><b>A model for every machine.</b> Compressed to a few megabytes and trained on the asset it watches.</p>
+            <p class="chap" data-pane="deployments"><b>Updates without a truck roll.</b> Staged rollouts that roll back on their own if accuracy slips.</p>
+          </div>
+          <div class="chap-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+        </div>
       </div>
     </section>
+
+    <!-- ═════════ HIGHLIGHTS ═════════ -->
+    <section class="hl" id="highlights" data-nav="dark" aria-roledescription="carousel" aria-label="Highlights">
+      <div class="wrap wide"><h2 class="h-section" data-wipe>Get the highlights.</h2></div>
+      <ul class="hl-track" id="hl-track">
+          <li class="hl-card shot" id="hl-edge" aria-roledescription="slide" aria-label="1 of 6">
+            <p class="hl-cap"><b>Inference in 12 ms.</b> Models run right at the machine. No cloud round trip.</p>
+            <div class="hl-media"><img src="assets/shots/edge-console.webp" width="2560" height="1172" alt="Edge Console showing 128 edge devices and a live latency chart" loading="lazy" decoding="async"></div>
+          </li>
+          <li class="hl-card cover" id="hl-cut" aria-roledescription="slide" aria-label="2 of 6">
+            <p class="hl-cap"><b>See inside every turbine.</b> A live model of each engine, down to the last blade.</p>
+            <div class="hl-media"><img src="assets/shots/engine-cutaway.webp" width="2800" height="1491" alt="Cutaway render of a gas turbine showing compressor, combustor and turbine stages" loading="lazy" decoding="async"></div>
+          </li>
+          <li class="hl-card duo" id="hl-warn" aria-roledescription="slide" aria-label="3 of 6">
+            <p class="hl-cap"><b>Twenty-three weeks of warning.</b> Turbofan flags combustion faults months before they stop a unit.</p>
+            <div class="hl-media"><img src="assets/shots/engine-exterior.webp" width="2800" height="1255" alt="Studio render of a gas turbine" loading="lazy" decoding="async"><img class="hl-phone" src="assets/shots/app-iphone.webp" width="866" height="1784" alt="Turbofan for iPhone with a GT-07 combustion alert" loading="lazy" decoding="async"></div>
+          </li>
+          <li class="hl-card phone" id="hl-ward" aria-roledescription="slide" aria-label="4 of 6">
+            <p class="hl-cap"><b>Early warning at the bedside.</b> Patient data never leaves the building.</p>
+            <div class="hl-media"><svg class="hl-art vitals" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="vg" x1="0" x2="1"><stop offset="0" stop-color="#ff375f" stop-opacity="0"/><stop offset=".35" stop-color="#ff375f" stop-opacity=".55"/><stop offset="1" stop-color="#ff9f0a"/></linearGradient></defs><path class="grid" d="M0 100H1000M0 200H1000M0 300H1000"/><path class="trace" pathLength="1" d="M0 260 L120 260 L140 250 L150 268 L162 150 L176 300 L188 252 L230 260 L330 258 L350 246 L360 266 L372 140 L386 302 L398 250 L440 256 L540 252 L560 240 L570 262 L582 128 L596 300 L608 246 L650 248 L750 242 L770 230 L780 254 L792 110 L806 296 L818 236 L860 236 L940 230 L960 216 L1000 214"/></svg><img src="assets/shots/hospital-iphone.webp" width="866" height="1784" alt="Concept: Ward 4B app with an early-warning alert at bed 7" loading="lazy" decoding="async"></div>
+          </li>
+          <li class="hl-card phone" id="hl-field" aria-roledescription="slide" aria-label="5 of 6">
+            <p class="hl-cap"><b>Works with no signal at all.</b> Field decisions on the gateway. Syncs when a connection returns.</p>
+            <div class="hl-media"><div class="hl-art field" aria-hidden="true"><div class="field-grid"><i class="mid"></i><i class="low"></i><i class="wet"></i><i class="low"></i><i class="mid"></i><i class="mid"></i><i class="low"></i><i class="mid"></i><i class="low"></i><i class="mid"></i><i class="low"></i><i class="low"></i><i class="mid"></i><i class="wet"></i><i class="low"></i><i class="low"></i><i class="wet"></i><i class="wet"></i><i class="dry"></i><i class="mid"></i><i class="wet"></i><i class="low"></i><i class="wet"></i><i class="mid"></i><i class="low"></i><i class="low"></i><i class="mid"></i><i class="wet"></i><i class="low"></i><i class="mid"></i><i class="wet"></i><i class="mid"></i><i class="mid"></i><i class="low"></i><i class="low"></i><i class="low"></i><i class="wet"></i><i class="mid"></i><i class="mid"></i><i class="mid"></i></div></div><img src="assets/shots/ag-iphone.webp" width="866" height="1784" alt="Concept: Field 7 app with a soil-moisture map, working offline" loading="lazy" decoding="async"></div>
+          </li>
+          <li class="hl-card shot" id="hl-line" aria-roledescription="slide" aria-label="6 of 6">
+            <p class="hl-cap"><b>Every line. Every shift.</b> Find the failing bearing before the line stops.</p>
+            <div class="hl-media"><img src="assets/shots/plant-mac.webp" width="2560" height="1200" alt="Concept: Plant and Process app with a bearing vibration chart" loading="lazy" decoding="async"></div>
+          </li>
+      </ul>
+      <div class="hl-ctrl">
+        <div class="hl-dots" role="tablist" aria-label="Choose a highlight"><button type="button" role="tab" aria-label="Highlight 1"><i></i></button><button type="button" role="tab" aria-label="Highlight 2"><i></i></button><button type="button" role="tab" aria-label="Highlight 3"><i></i></button><button type="button" role="tab" aria-label="Highlight 4"><i></i></button><button type="button" role="tab" aria-label="Highlight 5"><i></i></button><button type="button" role="tab" aria-label="Highlight 6"><i></i></button></div>
+        <button type="button" class="hl-play" id="hl-play" aria-label="Pause highlights"><svg viewBox="0 0 28 28" aria-hidden="true"><path class="i-pause" d="M10 8.5h2.6v11H10zM15.4 8.5H18v11h-2.6z"/><path class="i-play" d="M11 8.3v11.4l9.2-5.7z"/><path class="i-replay" d="M14 7.5a6.5 6.5 0 1 1-6.1 4.3l1.7.6A4.7 4.7 0 1 0 14 9.3v2.2L10.5 8.4 14 5.3z"/></svg></button>
+      </div>
+    </section>
+    </div>
 
     <!-- ═════════ 2 · TURBOFAN INTELLIGENCE (live) ═════════ -->
     <section class="product dark center" data-nav="dark" id="turbofan">
@@ -83,8 +129,8 @@
         <h2 class="h-chapter" data-wipe>Turbofan Intelligence</h2>
         <p class="lede">Stop turbine failures before they start.</p>
         <div class="ctas" style="margin-top:10px">
-          <a class="link" href="turbofan.html">Learn more</a>
-          <a class="link" href="https://turbneticai.floot.app" target="_blank" rel="noopener">See the live demo</a>
+          <a class="pill" href="turbofan.html">Learn more</a>
+          <a class="pill ghost" href="https://turbneticai.floot.app" target="_blank" rel="noopener">See the live demo</a>
         </div>
         <p class="scroll-hint">Scroll to go inside the turbine</p>
       </div>
@@ -109,7 +155,7 @@
       </div>
     </section>
 
-    <section class="dark center" data-nav="dark">
+    <section class="dark center stats-band" data-nav="dark">
       <div class="wrap">
         <div class="stats">
           <div class="stat" data-reveal><b>23 weeks</b><span>Average early detection lead time</span></div>
@@ -123,11 +169,12 @@
     <section class="ptile grey center" data-nav="light" id="apps">
       <div class="wrap">
         <h2 class="h-section" data-wipe>Your fleet.<br><span class="soft">On every screen.</span></h2>
-        <p class="lede" style="max-width:34ch;margin:18px auto 0;color:var(--ink-2)">Turbofan Intelligence for Mac and iPhone. Alerts, remaining life and the maintenance plan, wherever your team is.</p>
-        <div class="ctas" style="margin-top:22px"><a class="link" href="turbofan.html">Learn more</a><a class="link" href="#contact">Request a demo</a></div>
+        <p class="lede" style="max-width:34ch;margin:18px auto 0;color:var(--ink-2)">Turbofan Intelligence for Mac, iPhone and Apple Watch. Alerts, remaining life and the maintenance plan, wherever your team is.</p>
+        <div class="ctas" style="margin-top:22px"><a class="pill" href="turbofan.html">Learn more</a><a class="pill ghost" href="#contact">Request a demo</a></div>
       </div>
       <div class="hero-stage" style="margin-top:48px">
-        <div class="ui-fit app-window" data-app="turbofan-mac" data-w="1200"><img class="ui-fallback" src="assets/shots/app-mac.webp" width="2560" height="1220" alt="Turbofan Intelligence for Mac: fleet overview with a critical combustion alert on GT-07, an exhaust gas temperature chart and four turbines" loading="lazy" decoding="async"></div>
+        <div class="ui-fit app-window" data-app="turbofan-mac" data-w="1400" data-frame="macbook" data-name="Turbofan"><img class="ui-fallback" src="assets/shots/app-mac.webp" width="2560" height="1220" alt="Turbofan Intelligence for Mac: fleet overview with a critical combustion alert on GT-07, an exhaust gas temperature chart and four turbines" loading="lazy" decoding="async"></div>
+        <div class="ui-fit app-watch" data-app="turbofan-watch" data-w="260" aria-label="Turbofan for Apple Watch: GT-07 combustion alert with a work order button"></div>
         <div class="ui-fit app-phone" data-app="turbofan-ios" data-w="433"><img class="ui-fallback" src="assets/shots/app-iphone.webp" width="866" height="1784" alt="Turbofan Intelligence for iPhone: critical alert for GT-07 and 552 hours of remaining useful life" loading="lazy" decoding="async"></div>
       </div>
     </section>
@@ -138,33 +185,38 @@
         <p class="status">In development</p>
         <h2>Hospital Intelligence</h2>
         <p class="tag">Early warning at the bedside.</p>
-        <div class="ctas"><a class="link" href="#contact">Join the pilot</a></div>
+        <div class="ctas"><a class="pill" href="#contact">Join the pilot</a></div>
         <div class="ui-fit gshot phone" data-app="hospital-ios" data-w="433"><img class="ui-fallback" src="assets/shots/hospital-iphone.webp" width="866" height="1784" alt="Concept: Ward 4B app with an early-warning alert for rising breathing rate at bed 7" loading="lazy" decoding="async"></div>
       </article>
 
-      <article class="gtile" id="agriculture" data-reveal>
+      <article class="gtile ink" id="agriculture" data-reveal>
         <p class="status">Exploring</p>
         <h2>Precision Ag Intelligence</h2>
         <p class="tag">Field decisions, no connection needed.</p>
-        <div class="ctas"><a class="link" href="#contact">Talk to us</a></div>
+        <div class="ctas"><a class="pill" href="#contact">Talk to us</a></div>
         <div class="ui-fit gshot phone" data-app="ag-ios" data-w="433"><img class="ui-fallback" src="assets/shots/ag-iphone.webp" width="866" height="1784" alt="Concept: Field 7 app with a soil-moisture map, working offline, recommending irrigation for zone C3" loading="lazy" decoding="async"></div>
       </article>
 
-      <article class="gtile wide" id="plant" data-reveal>
+      <article class="gtile full" id="plant" data-reveal>
         <p class="status">In development</p>
         <h2>Plant &amp; Process Intelligence</h2>
         <p class="tag">Find the failing bearing before the line stops.</p>
-        <div class="ctas"><a class="link" href="#contact">Join the pilot</a></div>
-        <div class="ui-fit gshot mac" data-app="plant-mac" data-w="1200"><img class="ui-fallback" src="assets/shots/plant-mac.webp" width="2560" height="1200" alt="Concept: Line 3 overview for a mill, flagging outboard bearing wear on pump P-204 nine days before its alarm threshold" loading="lazy" decoding="async"></div>
+        <div class="ctas"><a class="pill" href="#contact">Join the pilot</a></div>
+        <div class="ui-fit gshot mac" data-app="plant-mac" data-w="1400" data-frame="macbook" data-name="Plant &amp; Process"><img class="ui-fallback" src="assets/shots/plant-mac.webp" width="2560" height="1200" alt="Concept: Line 3 overview for a mill, flagging outboard bearing wear on pump P-204 nine days before its alarm threshold" loading="lazy" decoding="async"></div>
       </article>
 
 
-      <article class="gtile wide next" data-reveal>
+      <article class="gtile full next ink" data-reveal>
         <p class="status">Next</p>
         <h2>Your industry.</h2>
         <p class="tag">We adapt the foundation anywhere sensor data outpaces the people reading it.</p>
-        <div class="ctas"><a class="link" href="#contact">Talk to us</a></div>
+        <div class="ctas"><a class="pill" href="#contact">Talk to us</a></div>
       </article>
+    </section>
+
+    <!-- ═════════ STATEMENT ═════════ -->
+    <section class="manifesto" data-nav="light" aria-label="Why edge">
+      <p class="wrap" data-fill>Your machines already know when something is about to go wrong. Edge Intelligence listens where the data is born, answers in twelve milliseconds, and never sends it away.</p>
     </section>
 
     <!-- ═════════ EDGE STACK ═════════ -->
@@ -185,6 +237,47 @@
             <div><p class="t">Runs on ARM, x86 and NPU accelerators. Installs in hours.</p><p style="margin-top:8px">Connects to what you already run:</p></div>
             <div class="integrations"><span>OSIsoft PI</span><span>GE Digital APM</span><span>ABB Ability</span><span>Siemens MindSphere</span><span>Honeywell Forge</span><span>SAP PM</span></div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════ COMPARE ═════════ -->
+    <section class="cmp pad" data-nav="light" id="compare">
+      <div class="wrap wide">
+        <h2 class="h-section center" data-wipe>Which product is right for you?</h2>
+        <div class="cmp-grid">
+        <div class="cmp-col" data-reveal>
+          <span class="cmp-icon" style="background:#ff9500"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5c1.6 1.6 1.6 3.6 0 4.6-1.6-1-1.6-3 0-4.6zM14.5 8c-1.6 1.6-3.6 1.6-4.6 0 1-1.6 3-1.6 4.6 0zM8 14.5c-1.6-1.6-1.6-3.6 0-4.6 1.6 1 1.6 3 0 4.6zM1.5 8c1.6-1.6 3.6-1.6 4.6 0-1 1.6-3 1.6-4.6 0z"/></svg></span>
+          <p class="status">Now live</p>
+          <h3>Turbofan</h3>
+          <p class="cmp-line">For gas turbines and compressors.</p>
+          <a class="pill" href="turbofan.html">Learn more</a>
+          <dl><dt>Runs on</dt><dd>Plant gateway</dd><dt>Model</dt><dd>7.8 MB</dd><dt>Latency</dt><dd>11 ms</dd><dt>Reads</dt><dd>Vibration, heat, pressure</dd><dt>Offline</dt><dd>Yes</dd></dl>
+        </div>
+        <div class="cmp-col" data-reveal>
+          <span class="cmp-icon" style="background:#ff2d55"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.2 2.3 8.6A3.4 3.4 0 0 1 8 4.2a3.4 3.4 0 0 1 5.7 4.4z"/></svg></span>
+          <p class="status">In development</p>
+          <h3>Hospital</h3>
+          <p class="cmp-line">For wards and step-down units.</p>
+          <a class="pill" href="#contact">Join the pilot</a>
+          <dl><dt>Runs on</dt><dd>Ward gateway</dd><dt>Model</dt><dd>5.1 MB</dd><dt>Latency</dt><dd>9 ms</dd><dt>Reads</dt><dd>Bedside monitors</dd><dt>Offline</dt><dd>Yes</dd></dl>
+        </div>
+        <div class="cmp-col" data-reveal>
+          <span class="cmp-icon" style="background:#5856d6"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 14V7l4 2.5V7l4 2.5V3h5v11z"/></svg></span>
+          <p class="status">In development</p>
+          <h3>Plant &amp; Process</h3>
+          <p class="cmp-line">For mills, lines and rotating equipment.</p>
+          <a class="pill" href="#contact">Join the pilot</a>
+          <dl><dt>Runs on</dt><dd>Line controller</dd><dt>Model</dt><dd>6.4 MB</dd><dt>Latency</dt><dd>14 ms</dd><dt>Reads</dt><dd>Vibration, motor current</dd><dt>Offline</dt><dd>Yes</dd></dl>
+        </div>
+        <div class="cmp-col" data-reveal>
+          <span class="cmp-icon" style="background:#34c759"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V7.5C8 4.5 10 2.5 14 2.5c0 4-2 6-5 6M8 10C8 7.5 6.5 6 3 6c0 3 1.5 4.5 5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+          <p class="status">Exploring</p>
+          <h3>Precision Ag</h3>
+          <p class="cmp-line">For fields far from a signal.</p>
+          <a class="pill" href="#contact">Talk to us</a>
+          <dl><dt>Runs on</dt><dd>Field gateway</dd><dt>Model</dt><dd>3.2 MB</dd><dt>Latency</dt><dd>18 ms</dd><dt>Reads</dt><dd>Soil moisture, weather</dd><dt>Offline</dt><dd>Yes</dd></dl>
+        </div>
         </div>
       </div>
     </section>
@@ -239,7 +332,7 @@
     </div>
   </footer>
 
-  <script src="js/devices.js?v=20261019-2" defer></script>
-  <script src="js/apple.js?v=20261019-6" defer></script>
+  <script src="js/devices.js?v=20261019-5" defer></script>
+  <script src="js/apple.js?v=20261019-10" defer></script>
 </body>
 </html>

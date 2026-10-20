@@ -195,7 +195,7 @@
     var input = h('input', { type: 'search', placeholder: 'Search', 'aria-label': 'Search' });
     if (o.onSearch) input.addEventListener('input', function () { o.onSearch(input.value.trim().toLowerCase()); });
     var toolbar = h('div', { class: 'ui-toolbar' }, h('div', { class: 'ui-title' }, titleB, titleS), seg, h('label', { class: 'ui-search', style: seg ? null : 'margin-left:auto' }, ic('search', 13), input));
-    var body = h('div');
+    var body = h('div', { class: 'ui-body' });
     var veil = h('div', { class: 'ui-veil' }), sheet = h('div', { class: 'ui-sheet', role: 'dialog' });
     var notify = h('div', { class: 'ui-notify', role: 'status' });
     var main = h('section', { class: 'ui-main' }, toolbar, body, veil, sheet);
@@ -504,6 +504,7 @@
     go('devices');
     return {
       el: W.root,
+      show: function (p) { if (S.pane !== p) { S.product = null; go(p); } },
       tick: function () {
         lat.push(+(12 + (Math.random() - 0.5) * 1.2).toFixed(2)); lat.shift();
         if (S.pane === 'devices' && ch) { drawLat(); k1.set(lat[lat.length - 1].toFixed(0), 'ms'); }
@@ -780,6 +781,54 @@
     } };
   }
 
+  /* ═════════ Turbofan for Apple Watch ═════════ */
+  function turbofanWatch() {
+    var UNITS = [['GT-07', '#ff9500', 614], ['GT-01', '#ffcc00', 588], ['GT-04', '#30d158', 579], ['GT-02', '#30d158', 581]];
+    var S = { page: 0, sent: false };
+    var time = h('span', { class: 'ui-tnum' });
+    function setTime() { var d = new Date(); time.textContent = ((d.getHours() % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0'); }
+    setTime(); setInterval(setTime, 20000);
+    var woBtn = h('button', { type: 'button', class: 'ui-wbtn', onclick: function () {
+      if (S.sent) return;
+      S.sent = true; woBtn.classList.add('sent'); woBtn.textContent = '';
+      woBtn.append(ic('check', 14), ' Sent to crew');
+    } }, 'Work Order');
+    var temps = [];
+    var pages = [
+      h('div', { class: 'ui-wpage' },
+        h('div', { class: 'ui-wico' }, excl('#ff9500', 26)),
+        h('div', { class: 'ui-wsub' }, 'GT-07 · now'),
+        h('div', { class: 'ui-wtitle' }, 'Combustion instability'),
+        h('div', { class: 'ui-wsub' }, '23 days to fault · 87%'),
+        woBtn),
+      h('div', { class: 'ui-wpage ui-wcenter' },
+        (function () { var r = ring(0.4, '#ff9500', 112); return r; })(),
+        h('div', { class: 'ui-wbig ui-tnum' }, '552 h'),
+        h('div', { class: 'ui-wsub' }, 'GT-07 remaining life')),
+      h('div', { class: 'ui-wpage' }, h('div', { class: 'ui-wsub', style: 'margin-bottom:6px' }, 'Exhaust temperature'),
+        UNITS.map(function (u) {
+          var v = h('b', { class: 'ui-tnum' }, u[2] + '°');
+          temps.push({ u: u, el: v });
+          return h('div', { class: 'ui-wrow' }, h('i', { class: 'ui-dot', style: 'background:' + u[1] }), h('span', null, u[0]), v);
+        })),
+    ];
+    var track = h('div', { class: 'ui-wtrack' }, pages);
+    var dots = h('div', { class: 'ui-wdots' }, pages.map(function (_, i) { return h('button', { type: 'button', 'aria-label': 'Page ' + (i + 1), onclick: function () { go(i); } }); }));
+    function go(i) {
+      S.page = (i + pages.length) % pages.length;
+      track.style.transform = 'translateY(' + (-S.page * 100) + '%)';
+      Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === S.page); });
+    }
+    var screen = h('div', { class: 'ui-wscreen' }, h('div', { class: 'ui-whead' }, h('b', null, 'Turbofan'), time), h('div', { class: 'ui-wview' }, track), dots);
+    var root = h('div', { class: 'ui-watch' },
+      h('div', { class: 'ui-band top' }), h('div', { class: 'ui-band bottom' }),
+      h('div', { class: 'ui-case' }, screen),
+      h('button', { type: 'button', class: 'ui-crown', 'aria-label': 'Digital Crown, next page', onclick: function () { go(S.page + 1); } }),
+      h('i', { class: 'ui-sidebtn', 'aria-hidden': 'true' }));
+    go(0);
+    return { el: root, tick: function () { temps.forEach(function (t) { t.u[2] = Math.round(t.u[2] + (Math.random() - 0.5) * 2); t.el.textContent = t.u[2] + '°'; }); } };
+  }
+
   /* ═════════ app configs ═════════ */
   var TURBOFAN = {
     site: 'Fleet', unitsLabel: 'Units', title: 'Overview', subtitle: 'Plant Alpha · 4 turbines · updated just now',
@@ -834,7 +883,27 @@
     'turbofan-ios': turbofanPhone,
     'hospital-ios': hospitalPhone,
     'ag-ios': agPhone,
+    'turbofan-watch': turbofanWatch,
   };
+
+  /* ═════════ hardware: MacBook Pro around a maximized window ═════════ */
+  var DAYS_LONG = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function macbook(appEl, appName) {
+    appEl.classList.add('max');
+    var clock = h('span', { class: 'ui-tnum' });
+    function tickClock() { var d = new Date(); clock.textContent = DAYS_LONG[d.getDay()] + ' ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + '  ' + ((d.getHours() % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (d.getHours() < 12 ? 'AM' : 'PM'); }
+    tickClock(); setInterval(tickClock, 20000);
+    var right = h('div', { class: 'ui-menu-r' }); right.innerHTML = STATUS_ICONS.replace(/fill="#000"/g, 'fill="#1d1d1f"');
+    right.append(clock);
+    var menubar = h('div', { class: 'ui-menubar' }, h('b', null, appName), ['File', 'Edit', 'View', 'Window', 'Help'].map(function (m) { return h('span', null, m); }), right);
+    return h('div', { class: 'ui-mbp' },
+      h('div', { class: 'ui-mbp-lid' }, h('div', { class: 'ui-mbp-notch' }), h('div', { class: 'ui-mbp-screen' }, menubar, h('div', { class: 'ui-desktop' }, appEl))),
+      h('div', { class: 'ui-mbp-base' }, h('i', { class: 'ui-mbp-lip' })));
+  }
+  function iphoneHardware(appEl) {
+    ['action', 'vol-up', 'vol-dn', 'power'].forEach(function (k) { appEl.append(h('i', { class: 'ui-hw ui-hw-' + k, 'aria-hidden': 'true' })); });
+    return appEl;
+  }
 
   /* ═════════ mount, scale to fit, tick while visible ═════════ */
   var mounted = [];
@@ -843,10 +912,21 @@
     if (!make) return;
     var app;
     try { app = make(); } catch (e) { console.error(e); return; }
+    var el = app.el;
+    if (box.dataset.frame === 'macbook') el = macbook(app.el, box.dataset.name || 'Turbnetic');
+    else if (el.classList.contains('ui-ios')) el = iphoneHardware(el);
     var logical = +box.dataset.w || 1200;
-    var scale = h('div', { class: 'ui-scale', style: 'width:' + logical + 'px' }, app.el);
+    var scale = h('div', { class: 'ui-scale', style: 'width:' + logical + 'px' }, el);
     box.append(scale);
     box.classList.add('live');
+    box._app = app;
+    // the hero MacBook arrives closed and opens once it is on screen
+    var mbp = el.classList.contains('ui-mbp') ? el : null;
+    if (mbp && box.dataset.intro === 'open' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      mbp.classList.add('closed');
+      var open = function () { requestAnimationFrame(function () { requestAnimationFrame(function () { mbp.classList.add('intro'); mbp.classList.remove('closed'); }); }); };
+      if (document.readyState === 'complete') setTimeout(open, 250); else window.addEventListener('load', function () { setTimeout(open, 250); });
+    }
     function fit() {
       var s = box.clientWidth / logical;
       scale.style.transform = 'scale(' + s + ')';

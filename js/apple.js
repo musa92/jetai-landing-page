@@ -73,6 +73,62 @@
     }).then(function () { btn.disabled = false; });
   });
 
+  /* ── Get the highlights: native snap scroller, autoplay with a filling dot, pause/replay ── */
+  var track = $('#hl-track');
+  if (track) (function () {
+    var cards = Array.prototype.slice.call(track.children);
+    var dotsEl = $$('.hl-dots button'), play = $('#hl-play');
+    var DUR = 5200, idx = 0, t0 = 0, elapsed = 0, playing = !REDUCED, inView = false, ended = false, raf = 0;
+    function left(i) { return cards[i].offsetLeft - (track.clientWidth - cards[i].offsetWidth) / 2; }
+    function mark(i) {
+      idx = i;
+      cards.forEach(function (c, k) { c.classList.toggle('on', k === i); c.setAttribute('aria-hidden', String(k !== i)); });
+      dotsEl.forEach(function (d, k) { d.classList.toggle('on', k === i); d.setAttribute('aria-selected', String(k === i)); if (k !== i) d.style.removeProperty('--p'); });
+    }
+    function go(i, smooth) {
+      mark(i); elapsed = 0; t0 = performance.now();
+      track.scrollTo({ left: left(i), behavior: smooth === false || REDUCED ? 'auto' : 'smooth' });
+    }
+    function setBtn() {
+      play.classList.toggle('paused', !playing && !ended);
+      play.classList.toggle('ended', ended);
+      play.setAttribute('aria-label', ended ? 'Replay highlights' : playing ? 'Pause highlights' : 'Play highlights');
+    }
+    function loop(now) {
+      raf = 0;
+      if (!playing || !inView || document.hidden) return;
+      var p = Math.min(1, (elapsed + now - t0) / DUR);
+      dotsEl[idx].style.setProperty('--p', (p * 100).toFixed(2) + '%');
+      if (p >= 1) {
+        if (idx < cards.length - 1) go(idx + 1);
+        else { playing = false; ended = true; setBtn(); return; }
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    function resume() { if (!raf && playing && inView) { t0 = performance.now(); raf = requestAnimationFrame(loop); } }
+    function pause() { if (playing) { elapsed += performance.now() - t0; } playing = false; if (raf) cancelAnimationFrame(raf); raf = 0; setBtn(); }
+    play.addEventListener('click', function () {
+      if (ended) { ended = false; playing = true; go(0); setBtn(); resume(); }
+      else if (playing) pause();
+      else { playing = true; setBtn(); resume(); }
+    });
+    dotsEl.forEach(function (d, i) { d.addEventListener('click', function () { pause(); dotsEl[i].style.setProperty('--p', '100%'); go(i); }); });
+    // a swipe or trackpad scroll hands control to the reader
+    ['pointerdown', 'wheel', 'touchstart'].forEach(function (ev) { track.addEventListener(ev, function (e) { if (ev !== 'wheel' || Math.abs(e.deltaX) > Math.abs(e.deltaY)) pause(); }, { passive: true }); });
+    var st;
+    track.addEventListener('scroll', function () {
+      clearTimeout(st);
+      st = setTimeout(function () {
+        var c = track.scrollLeft + track.clientWidth / 2, best = 0, bd = Infinity;
+        cards.forEach(function (card, i) { var d = Math.abs(card.offsetLeft + card.offsetWidth / 2 - c); if (d < bd) { bd = d; best = i; } });
+        if (best !== idx) { mark(best); if (!playing) dotsEl[best].style.setProperty('--p', '100%'); }
+      }, 90);
+    }, { passive: true });
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { inView = e[0].isIntersecting; if (inView) resume(); }, { threshold: 0.45 }).observe(track);
+    mark(0); setBtn();
+    if (!playing) dotsEl[0].style.setProperty('--p', '100%');
+  })();
+
   if (REDUCED) return; // everything below is motion
 
   /* ═════════ damped scroll engine ═════════ */
@@ -81,6 +137,21 @@
   var pin = $('#why'), pinBg = $('#pin-bg'), steps = $$('.step'), dots = $$('.step-dots i');
   var wipes = $$('[data-wipe]'), reveals = $$('[data-reveal]'), draws = $$('.tile .draw');
   var dive = $('#dive'), caps = $$('.cap'), diveBar = $('#dive-bar'), engine = null;
+  var devices = $$('.ui-fit:not(#hero-window)');
+  var morph = $('#morph'), hl = $('#highlights');
+  if (morph && hl) morph.classList.add('morphing');
+  var heroPin = $('#hero-pin'), chaps = $$('.chap'), chapDots = $$('.chap-dots i'), chapOn = 0;
+
+  // statement: split into words once, so each can fill as the reader passes it
+  var fills = $$('[data-fill]').map(function (el) {
+    var words = el.textContent.trim().split(/\s+/);
+    el.textContent = '';
+    words.forEach(function (w, i) {
+      var sp = document.createElement('span'); sp.className = 'w'; sp.textContent = w;
+      el.appendChild(sp); if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
+    });
+    return { el: el, words: Array.prototype.slice.call(el.querySelectorAll('.w')) };
+  });
 
   // top of an element as the damped scroll sees it (it lags the real scroll slightly)
   function dampedTop(el) { return el.getBoundingClientRect().top + (window.scrollY - cur); }
@@ -91,6 +162,33 @@
       var p = easeOut(clamp(cur / (vh * 0.55)));
       laptop.style.transform = 'translateY(' + (40 * (1 - p)).toFixed(1) + 'px) scale(' + (0.9 + 0.1 * p).toFixed(4) + ')';
     }
+
+    // the white hero darkens to black as the highlights rise into view
+    if (morph && hl) {
+      var mq = easeOut(clamp((vh * 0.82 - dampedTop(hl)) / (vh * 0.32)));
+      var c = Math.round(255 * (1 - mq));
+      morph.style.backgroundColor = 'rgb(' + c + ',' + c + ',' + c + ')';
+    }
+
+    // hero chapters: the pinned console steps through devices, models, deployments
+    if (heroPin && chaps.length) {
+      var ht = dampedTop(heroPin) - 48, hspan = heroPin.offsetHeight - (vh - 48);
+      var hp = hspan > 0 ? clamp(-ht / hspan) : 0;
+      var idx = Math.min(chaps.length - 1, Math.floor(hp * chaps.length));
+      if (idx !== chapOn) {
+        chapOn = idx;
+        chaps.forEach(function (c, i) { c.classList.toggle('on', i === idx); });
+        chapDots.forEach(function (d, i) { d.classList.toggle('on', i === idx); });
+        if (laptop && laptop._app && laptop._app.show) laptop._app.show(chaps[idx].dataset.pane);
+      }
+    }
+
+    // statement words fill in reading order
+    fills.forEach(function (f) {
+      var q = clamp((vh * 0.82 - dampedTop(f.el)) / (f.el.offsetHeight + vh * 0.28));
+      var n = Math.round(q * f.words.length);
+      f.words.forEach(function (w, i) { w.classList.toggle('on', i < n); });
+    });
 
     // engine render: gentle parallax plus a settle-in scale
     if (engineShot) {
@@ -139,6 +237,12 @@
       var q = easeOut(clamp((vh * 0.94 - dampedTop(el)) / (vh * 0.34)));
       el.style.clipPath = 'inset(-0.1em 0 ' + ((1 - q) * 100).toFixed(1) + '% 0)';
       el.style.transform = 'translateY(' + ((1 - q) * 28).toFixed(1) + 'px)';
+    });
+
+    // devices ease from 92% to full size as they arrive, bound continuously to scroll
+    devices.forEach(function (el) {
+      var q = easeOut(clamp((vh - dampedTop(el)) / (vh * 0.7)));
+      el.style.transform = 'translateY(' + ((1 - q) * 48).toFixed(1) + 'px) scale(' + (0.92 + 0.08 * q).toFixed(4) + ')';
     });
 
     // cards and tiles fade up continuously as they enter
