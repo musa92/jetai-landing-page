@@ -13,8 +13,8 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="apple-touch-icon" href="assets/turbnetic-logo.png">
   <link rel="preload" as="image" href="assets/shots/edge-console.webp">
-  <link rel="stylesheet" href="css/apple.css?v=20261019-19">
-  <link rel="stylesheet" href="css/devices.css?v=20261019-6">
+  <link rel="stylesheet" href="css/apple.css?v=20261020-3">
+  <link rel="stylesheet" href="css/devices.css?v=20261020-4">
 </head>
 <body>
 
@@ -74,14 +74,16 @@
       <div class="hero-pin" id="hero-pin">
         <div class="hero-sticky">
           <div class="hero-stage">
-            <div class="ui-fit app-window solo" id="hero-window" data-app="edge-console" data-w="1400" data-frame="macbook" data-intro="open" data-name="Edge Console"><img class="ui-fallback" src="assets/shots/edge-console.webp" width="2560" height="1172" alt="Edge Console for Mac: 128 edge devices across turbines, a pilot hospital, a mill and a field, each running its model on site at a median 12 ms" fetchpriority="high"></div>
+            <div class="ui-fit app-window solo" id="hero-window" data-app="desktop" data-w="1400" data-frame="macbook" data-intro="open" data-name="Edge Console"><img class="ui-fallback" src="assets/shots/edge-console.webp" width="2560" height="1172" alt="Edge Console for Mac: 128 edge devices across turbines, a pilot hospital, a mill and a field, each running its model on site at a median 12 ms" fetchpriority="high"></div>
           </div>
           <div class="chapters" aria-live="polite">
-            <p class="chap on" data-pane="devices"><b>Every machine, one view.</b> 128 edge devices across four products, each answering in about 12 ms.</p>
-            <p class="chap" data-pane="models"><b>A model for every machine.</b> Compressed to a few megabytes and trained on the asset it watches.</p>
-            <p class="chap" data-pane="deployments"><b>Updates without a truck roll.</b> Staged rollouts that roll back on their own if accuracy slips.</p>
+            <p class="chap on" data-pane="edge"><b>Edge Console.</b> Every model on every machine, in one window. 128 devices, about 12 ms each.</p>
+            <p class="chap" data-pane="turbofan"><b>Turbofan.</b> Every alarm comes with its cause: the chain of states that leads to the fault, and how soon.</p>
+            <p class="chap" data-pane="hospital"><b>Hospital.</b> Early warning at the bedside. Patient data stays in the building.</p>
+            <p class="chap" data-pane="plant"><b>Plant &amp; Process.</b> The failing bearing, found before the line stops.</p>
+            <p class="chap" data-pane="field"><b>Field.</b> Irrigation decisions with no signal at all.</p>
           </div>
-          <div class="chap-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+          <div class="chap-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></div>
         </div>
       </div>
     </section>
@@ -129,7 +131,7 @@
         <h2 class="h-chapter" data-wipe>Turbofan Intelligence</h2>
         <p class="lede">Stop turbine failures before they start.</p>
         <div class="ctas" style="margin-top:10px">
-          <a class="pill" href="turbofan.html">Learn more</a>
+          <a class="pill" href="#turbofan">Learn more</a>
           <a class="pill ghost" href="https://turbneticai.floot.app" target="_blank" rel="noopener">See the live demo</a>
         </div>
         <p class="scroll-hint">Scroll to go inside the turbine</p>
@@ -170,7 +172,7 @@
       <div class="wrap">
         <h2 class="h-section" data-wipe>Your fleet.<br><span class="soft">On every screen.</span></h2>
         <p class="lede" style="max-width:34ch;margin:18px auto 0;color:var(--ink-2)">Turbofan Intelligence for Mac, iPhone and Apple Watch. Alerts, remaining life and the maintenance plan, wherever your team is.</p>
-        <div class="ctas" style="margin-top:22px"><a class="pill" href="turbofan.html">Learn more</a><a class="pill ghost" href="#contact">Request a demo</a></div>
+        <div class="ctas" style="margin-top:22px"><a class="pill" href="#turbofan">Learn more</a><a class="pill ghost" href="#contact">Request a demo</a></div>
       </div>
       <div class="hero-stage" style="margin-top:48px">
         <div class="ui-fit app-window" data-app="turbofan-mac" data-w="1400" data-frame="macbook" data-name="Turbofan"><img class="ui-fallback" src="assets/shots/app-mac.webp" width="2560" height="1220" alt="Turbofan Intelligence for Mac: fleet overview with a critical combustion alert on GT-07, an exhaust gas temperature chart and four turbines" loading="lazy" decoding="async"></div>
@@ -251,7 +253,7 @@
           <p class="status">Now live</p>
           <h3>Turbofan</h3>
           <p class="cmp-line">For gas turbines and compressors.</p>
-          <a class="pill" href="turbofan.html">Learn more</a>
+          <a class="pill" href="#turbofan">Learn more</a>
           <dl><dt>Runs on</dt><dd>Plant gateway</dd><dt>Model</dt><dd>7.8 MB</dd><dt>Latency</dt><dd>11 ms</dd><dt>Reads</dt><dd>Vibration, heat, pressure</dd><dt>Offline</dt><dd>Yes</dd></dl>
         </div>
         <div class="cmp-col" data-reveal>
@@ -320,7 +322,7 @@
     <div class="wrap wide">
       <p class="note">Hospital, Plant &amp; Process and Agriculture screens are concepts of products in development.</p>
       <div class="footer-cols">
-        <div><h4>Products</h4><a href="#edge">Edge Intelligence</a><a href="turbofan.html">Turbofan Intelligence</a><a href="#hospital">Hospital Intelligence</a><a href="#plant">Plant &amp; Process</a><a href="#agriculture">Precision Ag</a></div>
+        <div><h4>Products</h4><a href="#edge">Edge Intelligence</a><a href="#turbofan">Turbofan Intelligence</a><a href="#hospital">Hospital Intelligence</a><a href="#plant">Plant &amp; Process</a><a href="#agriculture">Precision Ag</a></div>
         <div><h4>Platform</h4><a href="#stack">Edge stack</a><a href="#apps">Mac and iPhone</a><a href="upcoming.html">Upcoming</a></div>
         <div><h4>Research</h4><a href="research/uap/">Universal Ads Protocol</a></div>
         <div><h4>Company</h4><a href="#contact">Contact</a><a href="mailto:service@turbnetic.ai">service@turbnetic.ai</a></div>
@@ -332,7 +334,7 @@
     </div>
   </footer>
 
-  <script src="js/devices.js?v=20261019-5" defer></script>
-  <script src="js/apple.js?v=20261019-10" defer></script>
+  <script src="js/devices.js?v=20261020-8" defer></script>
+  <script src="js/apple.js?v=20261020-9" defer></script>
 </body>
 </html>

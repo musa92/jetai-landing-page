@@ -63,7 +63,7 @@ button, input, select, textarea { font: inherit; color: inherit; letter-spacing:
 .link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .link:hover::after { transform: translate(2px, -1px); }
 .dark .link { color: var(--link-dark); }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 11px 22px; border: 0; border-radius: 980px; background: var(--btn); color: #fff; font-size: 17px; line-height: 1.18; cursor: pointer; transition: background 0.2s var(--ease), transform 0.1s var(--ease); }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 11px 22px; border: 0; border-radius: 12px; background: var(--btn); color: #fff; font-size: 17px; line-height: 1.18; cursor: pointer; transition: background 0.2s var(--ease), transform 0.1s var(--ease); }
 .btn:hover { background: var(--btn-hover); }
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.6; cursor: progress; }
@@ -90,7 +90,7 @@ section { position: relative; }
 .gn-links { display: flex; gap: 30px; list-style: none; margin-left: auto; }
 .gn-links a { font-size: 12px; letter-spacing: -0.01em; opacity: 0.8; transition: opacity 0.2s; }
 .gn-links a:hover { opacity: 1; }
-.gn-cta { font-size: 12px; padding: 5px 12px; border-radius: 980px; background: var(--btn); color: #fff !important; transition: background 0.2s; }
+.gn-cta { font-size: 12px; padding: 5px 12px; border-radius: 7px; background: var(--btn); color: #fff !important; transition: background 0.2s; }
 .gn-cta:hover { background: var(--btn-hover); }
 .gn-burger { display: none; width: 44px; height: 44px; margin-right: -12px; background: none; border: 0; cursor: pointer; position: relative; }
 .gn-burger span { position: absolute; left: 14px; width: 16px; height: 1.2px; background: currentColor; transition: transform 0.3s var(--ease), top 0.3s var(--ease); }
@@ -172,7 +172,7 @@ section { position: relative; }
 .card .label { font: 600 14px/1.29 var(--text); letter-spacing: -0.016em; color: var(--ink-2); }
 .card.ink .label { color: var(--on-dark-2); }
 .integrations { display: flex; flex-wrap: wrap; gap: 8px 10px; }
-.integrations span { padding: 8px 14px; border-radius: 980px; background: var(--white); font-size: 14px; letter-spacing: -0.016em; color: var(--ink); }
+.integrations span { padding: 8px 14px; border-radius: 9px; background: var(--white); font-size: 14px; letter-spacing: -0.016em; color: var(--ink); }
 
 /* ═════════ RESEARCH (dark) ═════════ */
 .research .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(40px, 6vw, 80px); align-items: end; margin-top: clamp(48px, 6vw, 72px); }
@@ -279,7 +279,7 @@ section { position: relative; }
 .ui-fit.gshot.mac.live { margin-bottom: 48px; }
 
 /* Apple's current tile CTAs: a filled pill and an outlined pill */
-.pill { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 20px; border: 1px solid var(--btn); border-radius: 980px; background: var(--btn); color: #fff; font-size: 17px; line-height: 1.18; letter-spacing: -0.022em; transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .1s var(--ease); }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 20px; border: 1px solid var(--btn); border-radius: 11px; background: var(--btn); color: #fff; font-size: 17px; line-height: 1.18; letter-spacing: -0.022em; transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .1s var(--ease); }
 .pill:hover { background: var(--btn-hover); border-color: var(--btn-hover); }
 .pill:active { transform: scale(.97); }
 .pill.ghost { background: transparent; color: var(--btn); }
@@ -522,3 +522,10 @@ section { position: relative; }
   .hl-card .vitals .trace { animation: none; stroke-dashoffset: 0; }
   .hl-card.on .field-grid i.dry { animation: none; }
 }
+.hero-pin { height: 420vh; }
+@media (max-width: 600px) { .hero-pin { height: 320vh; } }
+/* lens vignette over the turbine render */
+.dive-stage::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+
+/* Turbnetic buttons: softly squared corners, our own signature rather than Apple's capsule */
+.cmp-col .pill { border-radius: 9px; }

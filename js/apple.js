@@ -285,7 +285,8 @@
     var boot = function () {
       booted = true;
       loadScript('https://unpkg.com/three@0.134.0/build/three.min.js')
-        .then(function () { return loadScript('js/turbofan.js?v=20261019-6'); })
+        .then(function () { return Promise.all(['environments/RoomEnvironment.js', 'geometries/RoundedBoxGeometry.js'].map(function (f) { return loadScript('https://unpkg.com/three@0.134.0/examples/js/' + f).catch(function () {}); })); })
+        .then(function () { return loadScript('js/turbofan.js?v=20261020-9'); })
         .then(function () {
           /* eslint-disable-next-line no-undef */
           engine = new TurbofanEngine3D('dive-canvas', { mode: 'dive', apple: true });

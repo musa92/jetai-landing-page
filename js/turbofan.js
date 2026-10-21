@@ -19,6 +19,8 @@ class TurbofanEngine3D {
 
     this.opts           = opts;
     this.dive           = opts.mode === 'dive';
+    /* premium: gamma-correct studio render (homepage); the tour keeps its original look */
+    this.premium        = !!opts.apple;
     this.diveProgress   = 0;   /* 0..1, set by the page in dive mode */
     this._xray          = 0;
     this.scrollProgress = 0;
@@ -61,6 +63,10 @@ class TurbofanEngine3D {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping         = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
+    if (this.premium) {
+      this.renderer.outputEncoding      = THREE.sRGBEncoding;
+      this.renderer.toneMappingExposure = 1.0;
+    }
     this.renderer.shadowMap.enabled   = true;
     this.renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
     this.renderer.localClippingEnabled = true;
@@ -78,6 +84,12 @@ class TurbofanEngine3D {
   /* Procedural studio equirect → PMREM. Gives every PBR metal
      real reflections instead of flat 3-light response. */
   _initEnvironment() {
+    if (this.premium && THREE.RoomEnvironment) {
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      this.scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+      pmrem.dispose();
+      return;
+    }
     const cv = document.createElement('canvas');
     cv.width = 512; cv.height = 256;
     const x = cv.getContext('2d');
@@ -332,15 +344,18 @@ class TurbofanEngine3D {
       }),
     };
 
+    if (this.premium) this._premiumMaterials();
+
     /* env reflection strength — bright on polished parts, restrained on casings */
     const envI = {
       titaniumFan: 1.45, nickelBlade: 1.30, steelShaft: 1.45, ogvVane: 1.25,
       disc: 1.05, copper: 1.20, nacelle: 0.95, enclosureSteel: 0.45,
       darkMetal: 0.65, skidSteel: 0.12, genBody: 0.65, exhaust: 0.75, hpcFoul: 1.25,
     };
+    const envScale = this.premium ? 0.5 : 1;
     Object.keys(this.M).forEach(k => {
       if ('envMapIntensity' in this.M[k]) {
-        this.M[k].envMapIntensity = envI[k] !== undefined ? envI[k] : 0.8;
+        this.M[k].envMapIntensity = (envI[k] !== undefined ? envI[k] : 0.8) * envScale;
       }
     });
 
@@ -382,6 +397,8 @@ class TurbofanEngine3D {
     /* sensor markers — desktop only (too cluttered on mobile) */
     if (!this._isMobile) this._buildSensorMarkers();
 
+    if (this.premium) this._buildGlow();
+
     /* effects */
     this._buildExhaustParticles();
     this._buildIntakeVortex();
@@ -389,6 +406,91 @@ class TurbofanEngine3D {
     this._buildScanBeams();
 
     this.scene.add(this.engineGroup);
+  }
+
+  /* ─── Glow: soft additive halos where the machine runs hot ── */
+  _buildGlow() {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const x = cv.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    const tex = new THREE.CanvasTexture(cv);
+    const halo = (color, z, size, op) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending }));
+      sp.position.set(0, 0, z); sp.scale.setScalar(size);
+      this.engineGroup.add(sp);
+      return sp;
+    };
+    this._glows = [halo(0xff7a1a, 0.40, 1.5, 0.55), halo(0xff4d0a, 0.95, 1.1, 0.3), halo(0xff9a3c, 0.40, 0.55, 0.65)];
+  }
+
+  /* ─── Premium materials ─────────────────────────── */
+  /* Hex palette was tuned for linear output; convert it so sRGB output shows the same
+     colours with physically correct falloff, then give the key surfaces real finishes. */
+  _premiumMaterials() {
+    const M = this.M;
+    Object.values(M).forEach(m => { m.color && m.color.convertSRGBToLinear(); m.emissive && m.emissive.convertSRGBToLinear(); });
+
+    /* lathe-turned streaks: fine circumferential lines, used as a roughness map */
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 512;
+    const x = cv.getContext('2d');
+    x.fillStyle = '#8a8a8a'; x.fillRect(0, 0, 64, 512);
+    for (let i = 0; i < 900; i++) {
+      const y = Math.random() * 512, a = 0.05 + Math.random() * 0.18, v = Math.random() > 0.5 ? 255 : 0;
+      x.fillStyle = `rgba(${v},${v},${v},${a})`; x.fillRect(0, y, 64, Math.random() * 1.4 + 0.3);
+    }
+    const brushed = new THREE.CanvasTexture(cv);
+    brushed.wrapS = brushed.wrapT = THREE.RepeatWrapping;
+    brushed.repeat.set(1, 3);
+    this._brushed = brushed;
+
+    const phys = (base, extra) => {
+      const p = { color: base.color, metalness: base.metalness, roughness: base.roughness, side: base.side,
+        clippingPlanes: base.clippingPlanes, clipShadows: base.clipShadows, emissive: base.emissive, emissiveIntensity: base.emissiveIntensity };
+      Object.keys(p).forEach(k => { if (p[k] == null) delete p[k]; });
+      const m = new THREE.MeshPhysicalMaterial(p);
+      Object.assign(m, extra);
+      base.dispose();
+      return m;
+    };
+    /* machined casings: brushed steel under a thin clear coat */
+    M.nacelle = phys(M.nacelle, { roughness: 0.42, roughnessMap: brushed, clearcoat: 0.55, clearcoatRoughness: 0.22, color: new THREE.Color(0x9aa1a9).convertSRGBToLinear() });
+    /* polished rotor parts */
+    M.steelShaft = phys(M.steelShaft, { roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.06 });
+    M.titaniumFan = phys(M.titaniumFan, { roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.08 });
+    M.nickelBlade = phys(M.nickelBlade, { color: new THREE.Color(0x8d939b).convertSRGBToLinear(), roughness: 0.32, roughnessMap: brushed, clearcoat: 0.4, clearcoatRoughness: 0.2 });
+    M.hpcFoul = phys(M.hpcFoul, { color: new THREE.Color(0x8d939b).convertSRGBToLinear(), roughness: 0.34, roughnessMap: brushed });
+    M.ogvVane.color.set(0x7d838b).convertSRGBToLinear();
+    /* housings: satin space-grey paint, like a product finish */
+    M.enclosureSteel = phys(M.enclosureSteel, { color: new THREE.Color(0x3a3c40).convertSRGBToLinear(), metalness: 0.55, roughness: 0.46, clearcoat: 0.7, clearcoatRoughness: 0.32 });
+    M.genBody = phys(M.genBody, { color: new THREE.Color(0x2f3135).convertSRGBToLinear(), metalness: 0.6, roughness: 0.42, clearcoat: 0.7, clearcoatRoughness: 0.3 });
+    /* skid: deep graphite, matte, never brighter than the machine */
+    M.skidSteel = phys(M.skidSteel, { color: new THREE.Color(0x0d0d0f).convertSRGBToLinear(), metalness: 0.2, roughness: 0.88 });
+    M.copper = phys(M.copper, { roughness: 0.22, clearcoat: 0.6, clearcoatRoughness: 0.15 });
+  }
+
+  /* Parts mounted on the casing (flanges, bolts, manifold) open with the cutaway
+     instead of floating across it as loose rings. */
+  _clip(mat) {
+    if (!this.premium) return mat;
+    this._clipped = this._clipped || new Map();
+    if (!this._clipped.has(mat)) {
+      const c = mat.clone(); c.clippingPlanes = [this.clipPlane]; c.clipShadows = true; c.side = THREE.DoubleSide;
+      this._clipped.set(mat, c);
+    }
+    return this._clipped.get(mat);
+  }
+
+  /* Housing as one softly rounded box (premium) or six flat panels (tour). */
+  _housing(w, h, d, x, y, z, mat, panels) {
+    if (this.premium && THREE.RoundedBoxGeometry) {
+      const m = new THREE.Mesh(new THREE.RoundedBoxGeometry(w, h, d, 4, Math.min(w, h, d) * 0.06), mat);
+      m.position.set(x, y, z);
+      this.engineGroup.add(m);
+      return true;
+    }
+    panels();
+    return false;
   }
 
   /* ─── Titan 350 Skid Frame ──────────────────────── */
@@ -424,6 +526,29 @@ class TurbofanEngine3D {
     bm.position.set(0, BY - 0.135, (Z1 + Z2) / 2);
     this.engineGroup.add(bm);
 
+    if (this.premium) {
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(XO * 2 + 0.1, 0.03, Z2 - Z1), this.M.skidSteel);
+      deck.position.set(0, BY + 0.016, (Z1 + Z2) / 2); deck.receiveShadow = true; this.engineGroup.add(deck);
+      for (let z = Z1 + 1.3; z < Z2; z += 1.3) {
+        const seam = new THREE.Mesh(new THREE.BoxGeometry(XO * 2 + 0.1, 0.002, 0.006), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        seam.position.set(0, BY + 0.032, z); this.engineGroup.add(seam);
+      }
+      /* fuel gas line along the skid edge, with two valves and supports */
+      const line = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 6.2, 16).rotateX(Math.PI / 2), this.M.steelShaft);
+      line.position.set(XO - 0.12, BY + 0.12, -1.2); this.engineGroup.add(line);
+      [-3.2, -0.6].forEach(z => {
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.06, 20, 14), this.M.darkMetal);
+        body.position.set(XO - 0.12, BY + 0.12, z); this.engineGroup.add(body);
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 10), this.M.disc);
+        stem.position.set(XO - 0.12, BY + 0.22, z); this.engineGroup.add(stem);
+        const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 8, 24).rotateX(Math.PI / 2), this.M.disc);
+        wheel.position.set(XO - 0.12, BY + 0.28, z); this.engineGroup.add(wheel);
+      });
+      for (let z = -4; z <= 1.6; z += 1.4) {
+        const sup = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.09, 0.03), this.M.darkMetal);
+        sup.position.set(XO - 0.12, BY + 0.06, z); this.engineGroup.add(sup);
+      }
+    }
     /* Leg supports every ~2 units */
     [-5.8, -3.8, -1.2, 1.5, 3.8, 5.5].forEach(z => {
       [-XO, XO].forEach(x => {
@@ -450,11 +575,13 @@ class TurbofanEngine3D {
       this.engineGroup.add(m);
     };
     const cy = CY + CH / 2;
-    addP(CW, CH, 0, 0,          0,    cy, CZ + CD / 2);
-    addP(CW, CH, 0, Math.PI,    0,    cy, CZ - CD / 2);
-    addP(CD, CH, 0, Math.PI/2, -CW/2, cy, CZ);
-    addP(CD, CH, 0,-Math.PI/2,  CW/2, cy, CZ);
-    addP(CW, CD,-Math.PI/2, 0,  0, CY + CH, CZ);
+    this._housing(CW, CH, CD, 0, cy, CZ, mat, () => {
+      addP(CW, CH, 0, 0,          0,    cy, CZ + CD / 2);
+      addP(CW, CH, 0, Math.PI,    0,    cy, CZ - CD / 2);
+      addP(CD, CH, 0, Math.PI/2, -CW/2, cy, CZ);
+      addP(CD, CH, 0,-Math.PI/2,  CW/2, cy, CZ);
+      addP(CW, CD,-Math.PI/2, 0,  0, CY + CH, CZ);
+    });
 
     /* Door panel */
     const dp = new THREE.BoxGeometry(CW * 0.42, CH * 0.48, 0.028);
@@ -489,15 +616,31 @@ class TurbofanEngine3D {
       this.engineGroup.add(m);
     };
 
-    addFace(PW, PH, 0, 0,         0,    PCY, PZ2);       /* near face */
-    addFace(PW, PH, 0, Math.PI,   0,    PCY, PZ1);       /* far face */
-    addFace(PD, PH, 0, Math.PI/2,-PX,   PCY, PCZ);       /* left */
-    addFace(PD, PH, 0,-Math.PI/2,  PX,  PCY, PCZ);       /* right */
-    addFace(PW, PD,-Math.PI/2, 0,  0, PY_TOP, PCZ);      /* top */
-    addFace(PW, PD, Math.PI/2, 0,  0, PY_BOT, PCZ);      /* bottom */
+    this._housing(PW, PH, PD, 0, PCY, PCZ, mat, () => {
+      addFace(PW, PH, 0, 0,         0,    PCY, PZ2);       /* near face */
+      addFace(PW, PH, 0, Math.PI,   0,    PCY, PZ1);       /* far face */
+      addFace(PD, PH, 0, Math.PI/2,-PX,   PCY, PCZ);       /* left */
+      addFace(PD, PH, 0,-Math.PI/2,  PX,  PCY, PCZ);       /* right */
+      addFace(PW, PD,-Math.PI/2, 0,  0, PY_TOP, PCZ);      /* top */
+      addFace(PW, PD, Math.PI/2, 0,  0, PY_BOT, PCZ);      /* bottom */
+    });
 
+    if (this.premium) {
+      /* weather hoods: angled rain shields in rows across the filter face */
+      for (let i = 0; i < 7; i++) {
+        const hy = PY_BOT + 0.30 + i * (PH - 0.45) / 6;
+        if (!this._hoodMat) this._hoodMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0x2c2e32).convertSRGBToLinear(), metalness: 0.5, roughness: 0.62 });
+        const hg = new THREE.BoxGeometry(PW * 0.9, 0.03, 0.17);
+        const hm = new THREE.Mesh(hg, this._hoodMat);
+        hm.position.set(0, hy, PZ2 + 0.07); hm.rotation.x = 0.85;
+        this.engineGroup.add(hm);
+        const lip = new THREE.Mesh(new THREE.BoxGeometry(PW * 0.9, 0.02, 0.02), this.M.disc);
+        lip.position.set(0, hy - 0.06, PZ2 + 0.12);
+        this.engineGroup.add(lip);
+      }
+    }
     /* Horizontal louver baffles on near face */
-    for (let i = 0; i < 20; i++) {
+    if (!this.premium) for (let i = 0; i < 20; i++) {
       const fy = PY_BOT + (i + 0.5) * (PH / 20);
       const fg = new THREE.BoxGeometry(PW * 0.86, 0.018, 0.060);
       const fm = new THREE.Mesh(fg, imat);
@@ -507,7 +650,7 @@ class TurbofanEngine3D {
     }
 
     /* Corner uprights / stiffeners */
-    [[PX, PZ1],[PX, PZ2],[-PX, PZ1],[-PX, PZ2]].forEach(([x, z]) => {
+    if (!this.premium) [[PX, PZ1],[PX, PZ2],[-PX, PZ1],[-PX, PZ2]].forEach(([x, z]) => {
       const cg = new THREE.BoxGeometry(0.042, PH + 0.04, 0.042);
       const cm = new THREE.Mesh(cg, this.M.disc);
       cm.position.set(x, PCY, z);
@@ -532,12 +675,12 @@ class TurbofanEngine3D {
     /* Inlet bellmouth */
     const bg = new THREE.TorusGeometry(0.55, 0.042, 12, 52);
     bg.rotateX(Math.PI / 2);
-    const bm = new THREE.Mesh(bg, this.M.disc);
+    const bm = new THREE.Mesh(bg, this._clip(this.M.disc));
     bm.position.z = -1.85;
     this.engineGroup.add(bm);
 
     /* Access pipes / blow-off valves on side of plenum */
-    [PCZ - 0.40, PCZ + 0.40].forEach(z => {
+    if (!this.premium) [PCZ - 0.40, PCZ + 0.40].forEach(z => {
       const pg = new THREE.CylinderGeometry(0.030, 0.030, 0.30, 8);
       const pm = new THREE.Mesh(pg, imat);
       pm.rotation.z = Math.PI / 2;
@@ -573,13 +716,13 @@ class TurbofanEngine3D {
     const boltFlange = (z, r, nb) => {
       const fg = new THREE.TorusGeometry(r + 0.012, 0.020, 8, 56);
       fg.rotateX(Math.PI / 2);
-      const f = new THREE.Mesh(fg, this.M.disc);
+      const f = new THREE.Mesh(fg, this._clip(this.M.disc));
       f.position.z = z;
       this.engineGroup.add(f);
 
       const bg = new THREE.CylinderGeometry(0.009, 0.009, 0.030, 6);
       bg.rotateX(Math.PI / 2);
-      const bolts = new THREE.InstancedMesh(bg, this.M.darkMetal, nb);
+      const bolts = new THREE.InstancedMesh(bg, this._clip(this.M.darkMetal), nb);
       bolts.frustumCulled = false;
       const mtx = new THREE.Matrix4();
       for (let i = 0; i < nb; i++) {
@@ -683,6 +826,19 @@ class TurbofanEngine3D {
     const span     = tipR - hubR;
     const midChord = chord || 0.022;
     const t        = thick || 0.005;
+    if (this.premium) {
+      const hot = material === this.M.hotBlade, dir = (pitch || 0) >= 0 ? 1 : -1;
+      const g = this._airfoil(hubR, tipR, midChord * 1.15, Math.min(0.22, Math.max(0.07, t / midChord)),
+        hot ? 0.11 : 0.05, dir * (0.62 + Math.abs(pitch || 0) * 0.5), dir * (hot ? 0.18 : 0.38));
+      const ai = new THREE.InstancedMesh(g, material, n);
+      ai.position.z = z;
+      ai.frustumCulled = false;
+      const mm = new THREE.Matrix4();
+      for (let i = 0; i < n; i++) { mm.makeRotationZ((i / n) * Math.PI * 2); ai.setMatrixAt(i, mm); }
+      ai.instanceMatrix.needsUpdate = true;
+      group.add(ai);
+      return;
+    }
     const bladeGeom = new THREE.BoxGeometry(midChord, span, t, 1, 2, 1);
 
     /* taper chord toward the tip (root wider than tip) */
@@ -707,6 +863,39 @@ class TurbofanEngine3D {
     }
     inst.instanceMatrix.needsUpdate = true;
     group.add(inst);
+  }
+
+  /* ─── Airfoil blade ─────────────────────────────── */
+  /* NACA-style section (round leading edge, sharp trailing edge, cambered), lofted
+     root to tip with taper and twist. Chord lies in the axial/tangential plane and is
+     staggered about the radius, the way real compressor and turbine blades sit. */
+  _airfoil(hubR, tipR, chord, tRatio, camber, stagger, twist) {
+    const K = 9, L = 7, span = tipR - hubR, pts = [], idx = [];
+    const thick = u => 5 * tRatio * (0.2969 * Math.sqrt(u) - 0.126 * u - 0.3516 * u * u + 0.2843 * u * u * u - 0.1036 * u * u * u * u);
+    for (let j = 0; j < L; j++) {
+      const sF = j / (L - 1), r = hubR + span * sF * 0.985 + span * 0.008;
+      const c = chord * (1 - 0.28 * sF), th = stagger + twist * sF;
+      const cd = [Math.sin(th), Math.cos(th)], nd = [Math.cos(th), -Math.sin(th)];   /* chord / normal in (x, z) */
+      const ring = [];
+      for (let i = 0; i < K; i++) { const u = (1 - Math.cos(Math.PI * i / (K - 1))) / 2; ring.push([u, 1]); }
+      for (let i = K - 2; i > 0; i--) { const u = (1 - Math.cos(Math.PI * i / (K - 1))) / 2; ring.push([u, -1]); }
+      ring.forEach(([u, side]) => {
+        const yc = camber * 4 * u * (1 - u), a = (u - 0.5) * c, b = (yc + side * thick(u) / 2) * c;
+        pts.push(a * cd[0] + b * nd[0], r, a * cd[1] + b * nd[1]);
+      });
+    }
+    const R = 2 * K - 2;
+    for (let j = 0; j < L - 1; j++) for (let i = 0; i < R; i++) {
+      const a = j * R + i, b = j * R + (i + 1) % R, c2 = a + R, d = b + R;
+      idx.push(a, c2, b, b, c2, d);
+    }
+    /* tip cap */
+    const top = (L - 1) * R; for (let i = 1; i < R - 1; i++) idx.push(top, top + i, top + i + 1);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
   }
 
   /* ─── Axial Compressor — 17 dense stages on a tapering drum ─── */
@@ -849,7 +1038,7 @@ class TurbofanEngine3D {
     const mat  = this.M.enclosureSteel;
     const imat = this.M.darkMetal;
     const ECZ  = 1.10, EX = 0.75, EZH = 0.58;   /* center, half-width, half-depth */
-    const EYB  = 0.52, EYT = 2.75;               /* bottom / top Y */
+    const EYB  = 0.52, EYT = this.premium ? 1.72 : 2.75;   /* bottom / top Y */
     const EH   = EYT - EYB, CY = (EYB + EYT) / 2;
 
     const addP = (w, h, rx, ry, px, py, pz) => {
@@ -860,13 +1049,26 @@ class TurbofanEngine3D {
       this.engineGroup.add(m);
     };
     /* Four vertical sides */
-    addP(EX*2, EH, 0, 0,         0,  CY, ECZ + EZH);   /* near */
-    addP(EX*2, EH, 0, Math.PI,   0,  CY, ECZ - EZH);   /* far */
-    addP(EZH*2, EH, 0,-Math.PI/2, EX,  CY, ECZ);        /* right */
-    addP(EZH*2, EH, 0, Math.PI/2,-EX,  CY, ECZ);        /* left */
-    /* Top opening rim */
-    addP(EX*2, EZH*2,-Math.PI/2, 0, 0, EYT, ECZ);
+    this._housing(EX * 2, EH, EZH * 2, 0, CY, ECZ, mat, () => {
+      addP(EX*2, EH, 0, 0,         0,  CY, ECZ + EZH);   /* near */
+      addP(EX*2, EH, 0, Math.PI,   0,  CY, ECZ - EZH);   /* far */
+      addP(EZH*2, EH, 0,-Math.PI/2, EX,  CY, ECZ);        /* right */
+      addP(EZH*2, EH, 0, Math.PI/2,-EX,  CY, ECZ);        /* left */
+      /* Top opening rim */
+      addP(EX*2, EZH*2,-Math.PI/2, 0, 0, EYT, ECZ);
+    });
 
+    if (this.premium && THREE.RoundedBoxGeometry) {
+      /* square-to-round transition, then the stack with expansion-joint bellows */
+      const add = (geo, m, y) => { const o = new THREE.Mesh(geo, m); o.position.set(0, y, ECZ); this.engineGroup.add(o); return o; };
+      add(new THREE.CylinderGeometry(0.42, 0.66, 0.34, 48, 1), mat, EYT + 0.14);
+      const stackMat = this.M.nacelle.clone(); stackMat.clippingPlanes = []; stackMat.side = THREE.FrontSide;
+      add(new THREE.CylinderGeometry(0.42, 0.42, 1.35, 48, 1, true), stackMat, EYT + 0.98);
+      for (let i = 0; i < 5; i++) add(new THREE.TorusGeometry(0.43, 0.022, 10, 56).rotateX(Math.PI / 2), this.M.disc, EYT + 0.40 + i * 0.05);
+      [EYT + 0.33, EYT + 0.70, EYT + 1.65].forEach(y => add(new THREE.TorusGeometry(0.435, 0.03, 10, 56).rotateX(Math.PI / 2), this.M.darkMetal, y));
+      add(new THREE.CylinderGeometry(0.40, 0.40, 0.02, 48), new THREE.MeshBasicMaterial({ color: 0x050505 }), EYT + 1.655);
+      return;
+    }
     /* Horizontal stiffening ribs */
     [0.28, 0.55, 0.80].forEach(t => {
       const rg = new THREE.BoxGeometry(EX*2+0.04, 0.032, 0.032);
@@ -952,15 +1154,35 @@ class TurbofanEngine3D {
       this.engineGroup.add(m);
     };
     /* Six faces */
-    addP(GW, GH, 0, 0,         0,   CY, GZ + GD/2);       /* near */
-    addP(GW, GH, 0, Math.PI,   0,   CY, GZ - GD/2);       /* far */
-    addP(GD, GH, 0,-Math.PI/2,  GW/2, CY, GZ);            /* right */
-    addP(GD, GH, 0, Math.PI/2, -GW/2, CY, GZ);            /* left */
-    addP(GW, GD,-Math.PI/2, 0,  0, CY + GH/2, GZ);        /* top */
-    addP(GW, GD, Math.PI/2, 0,  0, CY - GH/2, GZ);        /* bottom */
+    this._housing(GW, GH, GD, 0, CY, GZ, this.premium ? this.M.genBody : mat, () => {
+      addP(GW, GH, 0, 0,         0,   CY, GZ + GD/2);       /* near */
+      addP(GW, GH, 0, Math.PI,   0,   CY, GZ - GD/2);       /* far */
+      addP(GD, GH, 0,-Math.PI/2,  GW/2, CY, GZ);            /* right */
+      addP(GD, GH, 0, Math.PI/2, -GW/2, CY, GZ);            /* left */
+      addP(GW, GD,-Math.PI/2, 0,  0, CY + GH/2, GZ);        /* top */
+      addP(GW, GD, Math.PI/2, 0,  0, CY - GH/2, GZ);        /* bottom */
+    });
 
+    if (this.premium) {
+      /* air-to-air cooler on the roof: a frame with a deep fin pack */
+      const cw = GW * 0.86, cd = GD * 0.78, ch = 0.30, cyT = CY + GH / 2 + ch / 2 + 0.02;
+      const frame = new THREE.Mesh(THREE.RoundedBoxGeometry ? new THREE.RoundedBoxGeometry(cw, ch, cd, 3, 0.03) : new THREE.BoxGeometry(cw, ch, cd), this.M.enclosureSteel);
+      frame.position.set(0, cyT, GZ); this.engineGroup.add(frame);
+      const fins = new THREE.InstancedMesh(new THREE.BoxGeometry(cw * 0.94, 0.012, 0.012), this.M.disc, 34);
+      const fm = new THREE.Matrix4();
+      for (let i = 0; i < 34; i++) { fm.makeTranslation(0, cyT + ch / 2 + 0.006, GZ - cd * 0.45 + i * (cd * 0.9 / 33)); fins.setMatrixAt(i, fm); }
+      fins.instanceMatrix.needsUpdate = true; this.engineGroup.add(fins);
+      /* panel seams on the housing sides */
+      [-0.35, 0, 0.35].forEach(f => [GW / 2 + 0.002, -(GW / 2 + 0.002)].forEach(x => {
+        const sm = new THREE.Mesh(new THREE.BoxGeometry(0.004, GH * 0.86, 0.008), this.M.darkMetal);
+        sm.position.set(x, CY, GZ + f * GD); this.engineGroup.add(sm);
+      }));
+      /* non-drive-end bearing pedestal */
+      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.26, 0.42, 32), this.M.darkMetal);
+      ped.position.set(0, CY - GH / 2 + 0.21, GZ + GD / 2 + 0.29); this.engineGroup.add(ped);
+    }
     /* Horizontal cooling vent strips on side faces */
-    const VN = 16;
+    const VN = this.premium ? 0 : 16;
     for (let i = 0; i < VN; i++) {
       const vy = CY - GH*0.40 + i * (GH * 0.80 / (VN - 1));
       [GW/2 + 0.005, -(GW/2 + 0.005)].forEach(x => {
@@ -971,10 +1193,11 @@ class TurbofanEngine3D {
       });
     }
 
-    /* Terminal box on top */
+    /* Terminal box on top (on the side when the roof carries the cooler) */
     const tbG = new THREE.BoxGeometry(GW * 0.38, 0.24, 0.44);
     const tb  = new THREE.Mesh(tbG, imat);
-    tb.position.set(0, CY + GH/2 + 0.12, GZ - GD * 0.12);
+    if (this.premium) { tb.geometry = new THREE.BoxGeometry(0.2, 0.42, 0.5); tb.position.set(GW / 2 + 0.1, CY + 0.1, GZ - GD * 0.28); }
+    else tb.position.set(0, CY + GH/2 + 0.12, GZ - GD * 0.12);
     this.engineGroup.add(tb);
 
     /* Exciter on the far end — smaller cylinder */
@@ -1009,7 +1232,7 @@ class TurbofanEngine3D {
     this.lpGroup.add(this.generatorRotor);
 
     /* Power output point light */
-    this.generatorLight = new THREE.PointLight(0x00d4ff, 3.0, 3.5);
+    this.generatorLight = new THREE.PointLight(this.premium ? 0xfff2e0 : 0x00d4ff, this.premium ? 0 : 3.0, 3.5);
     this.generatorLight.position.set(0, CY + 1.0, GZ);
     this.engineGroup.add(this.generatorLight);
     this.termGlow = null;
@@ -1103,7 +1326,7 @@ class TurbofanEngine3D {
     const trayG   = new THREE.BoxGeometry(0.08, 0.022, trayLen);
     const trayM   = new THREE.Mesh(trayG, imat);
     trayM.position.set(0.88, 0.85, (trayZ1 + trayZ2) / 2);  /* x=0.88 clears exhaust collector */
-    this.engineGroup.add(trayM);
+    if (!this.premium) this.engineGroup.add(trayM);
   }
 
   /* ─── External Plumbing — combustor fuel manifold only ─── */
@@ -1118,7 +1341,7 @@ class TurbofanEngine3D {
     const CZ = 0.40, MR = 0.45;
     const ringG = new THREE.TorusGeometry(MR, 0.016, 10, 56);
     ringG.rotateX(Math.PI / 2);
-    const ring = new THREE.Mesh(ringG, imat);
+    const ring = new THREE.Mesh(ringG, this._clip(imat));
     ring.position.z = CZ;
     this.engineGroup.add(ring);
 
@@ -1126,7 +1349,7 @@ class TurbofanEngine3D {
     for (let i = 0; i < 12; i++) {
       const a  = (i / 12) * Math.PI * 2;
       const sg = new THREE.CylinderGeometry(0.007, 0.007, 0.07, 6);
-      const sm = new THREE.Mesh(sg, imat);
+      const sm = new THREE.Mesh(sg, this._clip(imat));
       sm.position.set(Math.cos(a) * (MR - 0.03), Math.sin(a) * (MR - 0.03), CZ + 0.04);
       sm.rotation.x = Math.PI / 2;
       this.engineGroup.add(sm);
@@ -1548,7 +1771,10 @@ class TurbofanEngine3D {
     if (!this.M.hpcFoul) return;
     const vis = Math.max(0, Math.min(1, (this.scrollProgress - 0.40) / 0.18));
     /* lerp: clean steel 0xbcc2c9 → fouled brown 0x6b4a28 */
-    this.M.hpcFoul.color.setRGB(
+    if (this.premium) {
+      /* brushed nickel → fouled bronze, blended in display space */
+      this.M.hpcFoul.color.setRGB(0.553 - vis * 0.13, 0.576 - vis * 0.25, 0.608 - vis * 0.39).convertSRGBToLinear();
+    } else this.M.hpcFoul.color.setRGB(
       0.737 - vis * 0.317,
       0.761 - vis * 0.471,
       0.788 - vis * 0.628
@@ -1638,10 +1864,18 @@ class TurbofanEngine3D {
     if (this.combustorLight)
       this.combustorLight.intensity = 2.8 * flk + 1.4;
 
+    if (this._glows) {
+      /* halos only show once the casing is open, breathing with the flame */
+      const open = Math.max(0, Math.min(1, (0.62 - this.clipPlane.constant) / 0.5)) * (1 - 0.6 * this._xray);
+      this._glows[0].material.opacity = 0.5 * flk * open;
+      this._glows[1].material.opacity = 0.28 * flk * open;
+      this._glows[2].material.opacity = 0.6 * flk * open;
+    }
+
     /* generator electric glow pulse */
     if (this.generatorLight) {
       const gf = 0.82 + 0.18 * Math.sin(this.time * 0.0044) * Math.sin(this.time * 0.0071);
-      this.generatorLight.intensity = 3.5 * gf + 1.0;
+      this.generatorLight.intensity = this.premium ? 0 : 3.5 * gf + 1.0;
     }
     if (this.termGlow) {
       this.termGlow.material.emissiveIntensity = 2.5 + 0.8 * Math.sin(this.time * 0.0053);
@@ -1683,7 +1917,7 @@ class TurbofanEngine3D {
 
   _diveTarget() {
     const K = [
-      { p: 0.00, pos: [9.2, 4.6,  0.6],  look: [0,  0.35, -0.4] },
+      { p: 0.00, pos: [9.8, 4.4,  0.8],  look: [0,  0.75, -0.4] },
       { p: 0.20, pos: [5.0, 2.5, -2.8],  look: [0,  0.10, -0.5] },
       { p: 0.36, pos: [2.1, 1.30, -1.9], look: [0,  0.00, -0.6], deep: true },
       { p: 0.50, pos: [1.00, 0.70, -0.95], look: [0, -0.02, -0.30], deep: true },
@@ -1710,6 +1944,16 @@ class TurbofanEngine3D {
   _buildXray() {
     const names = ['nacelle', 'nacelleInner', 'enclosureSteel', 'genBody', 'exhaust', 'darkMetal'];
     this._ghostMats = names.map(n => this.M[n]).filter(Boolean);
+    if (this.premium) {
+      /* rings, flanges and bolts belong to the casings: they turn to glass with them */
+      if (this._clipped) this._clipped.forEach(m => this._ghostMats.push(m));
+      const ringGhost = new Map();
+      this.engineGroup.traverse(o => {
+        if (!o.isMesh || !o.geometry || o.geometry.type !== 'TorusGeometry' || this._ghostMats.includes(o.material)) return;
+        if (!ringGhost.has(o.material)) { const c = o.material.clone(); ringGhost.set(o.material, c); this._ghostMats.push(c); }
+        o.material = ringGhost.get(o.material);
+      });
+    }
     this._ghostMats.forEach(m => { m.transparent = true; m.needsUpdate = true; });
     const ghost = new Set(this._ghostMats);
     const lined = new Set([...this._ghostMats, this.M.skidSteel]);

@@ -16,6 +16,13 @@
   to   = "/research/:splat"
   status = 200
 
+# Turbofan page disabled for now; remove this rule to bring it back.
+[[redirects]]
+  from = "/turbofan.html"
+  to   = "/"
+  status = 302
+  force = true
+
 [[redirects]]
   from = "/*"
   to   = "/index.html"
