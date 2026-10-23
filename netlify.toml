@@ -16,6 +16,12 @@
   to   = "/research/:splat"
   status = 200
 
+# Custodian governance demo: same passthrough as /fl-demo.
+[[redirects]]
+  from = "/custodian/*"
+  to   = "/custodian/:splat"
+  status = 200
+
 # Turbofan page disabled for now; remove this rule to bring it back.
 [[redirects]]
   from = "/turbofan.html"

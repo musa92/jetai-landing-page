@@ -1,0 +1,80 @@
+/* Apple pass for the Federated Ranker demo. Loaded after style.css and wins on
+   specificity or order. Matches the homepage system (css/apple.css): light-first,
+   sentence case, one blue, product color only in the charts. Removes the
+   aurora, starfield, grain, uppercase labels and terminal-window chrome. */
+
+:root {
+  --accent: #0071e3;
+  --ink: #1d1d1f;
+  --ink-soft: #6e6e73;
+  --bg-soft: #f5f5f7;
+  --radius: 22px;
+  --display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --text: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+body { font-family: var(--text); letter-spacing: -0.022em; }
+h1, h2, h3 { font-family: var(--display); }
+
+/* No shouting labels anywhere: Apple sets every label in sentence case. */
+body *:not(kbd) { text-transform: none !important; }
+
+/* ── nav: 48px frosted bar ── */
+.nav { background: rgba(251, 251, 253, 0.8); border-bottom: 0; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
+.nav-inner { max-width: 1024px; padding: 0 22px; height: 48px; }
+.nav-mark { font: 600 17px/1 var(--display); letter-spacing: -0.01em; }
+.nav-stage { font-size: 12px !important; letter-spacing: -0.01em; }
+
+/* ── hero: white, product-page headline, no effects ── */
+.hero { background: #fff; color: var(--ink); padding: clamp(88px, 11vw, 140px) 22px clamp(72px, 9vw, 120px); }
+.hero-canvas, .hero-aurora, .hero-grain { display: none !important; }
+.eyebrow { font: 600 17px/1.24 var(--text); letter-spacing: -0.022em; color: #bf4800; margin-bottom: 14px; }
+.demo .eyebrow, .demo-header .eyebrow { color: var(--ink-soft); }
+.hero h1 { font: 600 clamp(48px, 7.4vw, 80px)/1.05 var(--display); letter-spacing: -0.015em; margin-bottom: 22px; max-width: none; text-wrap: balance; }
+.hero-sub { font: 400 clamp(19px, 2.2vw, 24px)/1.25 var(--display); letter-spacing: 0.004em; color: var(--ink-soft); max-width: 40ch; text-wrap: pretty; }
+.cta { display: inline-flex; align-items: center; min-height: 44px; padding: 11px 22px; border: 0; border-radius: 980px; background: var(--accent); color: #fff; font-size: 17px; font-weight: 400; transition: background .2s; }
+.cta:hover { background: #0077ed; border: 0; }
+
+/* proof row: plain numerals separated by hairlines, not glass cards */
+.hero-proof { gap: 0; max-width: 900px; margin-top: 64px; }
+.hero-proof-item { background: none; border: 0; border-left: 1px solid #d2d2d7; border-radius: 0; backdrop-filter: none; padding: 4px 18px; }
+.hero-proof-item:first-child { border-left: 0; }
+.hero-proof-value { color: var(--ink); font: 600 clamp(28px, 3.4vw, 40px)/1.05 var(--display); letter-spacing: -0.01em; }
+.hero-proof-label { font-size: 14px; color: var(--ink-soft); margin-top: 8px; letter-spacing: -0.01em; }
+.hero-caveat { color: var(--ink-soft); margin-top: 28px; }
+.hero-caveat-dim { color: #86868b; }
+
+/* ── features: no invented glyph icons ── */
+.feature-icon { display: none !important; }
+.feature h3 { font: 600 24px/1.17 var(--display); letter-spacing: 0.009em; }
+.feature p { font-size: 17px; line-height: 1.47; letter-spacing: -0.022em; }
+
+/* ── section headers ── */
+.demo-header h2 { font: 600 clamp(40px, 5.6vw, 64px)/1.06 var(--display); letter-spacing: -0.009em; }
+.demo-sub { font-size: clamp(19px, 2vw, 21px) !important; line-height: 1.38 !important; color: var(--ink-soft) !important; }
+
+/* ── buttons: one blue, pill shape ── */
+.btn { border-radius: 980px; font-size: 15px; }
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+
+/* ── panels: Apple dark tiles, no window chrome ── */
+.panel { border-radius: 28px; padding: 28px 28px 24px; box-shadow: none; }
+.panel.panel-dark { background: #000; border: 0; padding-top: 28px; box-shadow: none; }
+.panel.panel-dark::before, .panel.panel-dark::after { display: none !important; }
+.panel h4 { font: 600 19px/1.21 var(--display); letter-spacing: 0.012em; color: var(--ink); margin-bottom: 14px; }
+.panel.panel-dark h4 { color: #f5f5f7; }
+.panel-note { font-size: 14px; line-height: 1.43; }
+.panel.panel-dark .panel-note { color: #86868b; }
+.compute-strip { border-radius: 28px; background: #000; }
+.compute-label, .control-section-label, .chart-stat-label { font-size: 12px !important; letter-spacing: -0.01em !important; font-weight: 400 !important; }
+.control-section-label { font: 600 17px/1.24 var(--text) !important; color: var(--ink) !important; }
+
+/* ── floating code tab: quiet, not a neon pill ── */
+.code-toggle { background: rgba(29, 29, 31, 0.86); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.code-toggle-icon { color: #2997ff; }
+
+/* later "premium pass" rules in style.css re-add glass; neutralise them */
+.hero-proof-item, .hero-proof-item:hover { background: none !important; box-shadow: none !important; transform: none !important; }
+.hero-proof-value { font-size: clamp(24px, 2.6vw, 32px) !important; white-space: nowrap; }
+.panel.panel-dark { box-shadow: none !important; }
+.controls, .pipeline, .runs-panel, .panel:not(.panel-dark) { box-shadow: none !important; }
+.hero-inner { max-width: 980px !important; }
