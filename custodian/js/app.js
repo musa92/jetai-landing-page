@@ -79,6 +79,20 @@ async function seedWork() {
 
 /* ───────────────────────── chrome ───────────────────────── */
 
+const ICON = {
+  home: '<path d="M3 8.5 10 3l7 5.5V16a1 1 0 0 1-1 1h-3.5v-5h-5v5H4a1 1 0 0 1-1-1z"/>',
+  data: '<ellipse cx="10" cy="5" rx="6" ry="2.5"/><path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5M4 10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5"/>',
+  access: '<circle cx="7" cy="10" r="3.5"/><path d="M10.5 10H17m-2.5 0v3m-2.5-3v2"/>',
+  privacy: '<path d="M10 2.5 16 5v4.6c0 3.6-2.5 6.6-6 7.9-3.5-1.3-6-4.3-6-7.9V5z"/><path d="m7.5 10 1.8 1.8L12.8 8"/>',
+  models: '<rect x="5" y="5" width="10" height="10" rx="2"/><path d="M8 2.5V5m4-2.5V5M8 15v2.5m4-2.5v2.5M2.5 8H5m-2.5 4H5m10-4h2.5M15 12h2.5"/>',
+  ops: '<path d="M2.5 10h3l2-5 3 10 2-5h5"/>',
+  trust: '<path d="M10 3v14M5 17h10M3.5 7h13M6 7l-2.5 5a2.5 2.5 0 0 0 5 0zm8 0-2.5 5a2.5 2.5 0 0 0 5 0z"/>',
+  settings: '<circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2m0 11v2m7.5-7.5h-2m-11 0h-2m12.8-5.3-1.4 1.4m-7.8 7.8-1.4 1.4m10.6 0-1.4-1.4M6.1 6.1 4.7 4.7"/>',
+  search: '<circle cx="9" cy="9" r="5.5"/><path d="m13 13 4 4"/>',
+  bell: '<path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5.5 1.5 5.5h-13S5 12 5 8M8 16a2 2 0 0 0 4 0"/>',
+};
+const icon = (k) => `<svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+
 const SECTIONS = [
   ['home', 'Home', [['overview', 'Overview']]],
   ['data', 'Data', [['data', 'Explorer'], ['catalog', 'Catalog'], ['lineage', 'Lineage']]],
@@ -87,6 +101,7 @@ const SECTIONS = [
   ['models', 'Models', [['models', 'Registry'], ['training', 'Training gate']]],
   ['ops', 'Operations', [['serving', 'Serving'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
   ['trust', 'Trust', [['regulations', 'Regulations'], ['compliance', 'Controls'], ['audit', 'Audit ledger']]],
+  ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations'], ['apikeys', 'API keys'], ['residency', 'Data residency']]],
 ];
 const SECTION_OF = Object.fromEntries(SECTIONS.flatMap(([k, , tabs]) => tabs.map(([v]) => [v, k])));
 const TITLES = Object.fromEntries(SECTIONS.flatMap(([, , tabs]) => tabs));
@@ -104,12 +119,18 @@ function counts() {
 }
 function renderChrome() {
   const c = counts(), cur = SECTION_OF[S.view];
-  $('#nav').innerHTML = SECTIONS.map(([k, t, tabs]) => `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${tabs[0][0]}">${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`).join('');
+  const item = ([k, t, tabs]) => `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${tabs[0][0]}">${icon(k)}${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`;
+  $('#nav').innerHTML = SECTIONS.filter(([k]) => k !== 'settings').map(item).join('');
+  $('#nav-bottom').innerHTML = item(SECTIONS.find(([k]) => k === 'settings'));
+  const n = notifications().length;
+  $('#btn-bell').innerHTML = icon('bell') + (n ? `<span class="badge">${n}</span>` : '');
   const r = E.ROLES[S.role];
   $('#btn-role').innerHTML = `<span class="av">${initials(r.name)}</span>${h(r.name.split(' ')[0])} <small>${h(r.title)}</small>`;
-  $('#bar-title').textContent = SECTIONS.find(([k]) => k === cur)[1];
-  const healthy = P.policyUp && P.breaker.state === 'closed' && P.serving.violations === 0;
-  $('#side-foot').innerHTML = `<span class="health ${healthy ? '' : 'bad'}"></span>${healthy ? 'All controls healthy' : 'Attention needed'}<br>Policy ads-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
+  const sec = SECTIONS.find(([k]) => k === cur);
+  $('#bar-title').innerHTML = `<span class="crumb">${sec[1]}</span>${sec[2].length > 1 ? `<span class="crumb-sep">›</span><span>${TITLES[S.view]}</span>` : ''}`;
+  const ck = controlChecks(), passing = ck.filter((c) => c[1]).length;
+  const critical = !P.policyUp || P.breaker.state !== 'closed' || P.serving.violations > 0;
+  $('#side-foot').innerHTML = `<span class="health ${critical ? 'bad' : passing === ck.length ? '' : 'warn'}"></span>${passing} of ${ck.length} controls passing<br>Policy ads-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
 }
 function tabsBar() {
   const sec = SECTIONS.find(([k]) => k === SECTION_OF[S.view]);
@@ -126,8 +147,10 @@ function scheduleRender() { if (renderQueued) return; renderQueued = true; reque
 function render() {
   const v = $('#view');
   const st = v.scrollTop;
+  const a = document.activeElement, keep = a && a.dataset && a.dataset.filter, caret = keep ? a.selectionStart : 0;
   v.innerHTML = tabsBar() + VIEWS[S.view]();
   v.scrollTop = st;
+  if (keep) { const el = v.querySelector(`[data-filter="${keep}"]`); if (el) { el.focus(); el.setSelectionRange(caret, caret); } }
   AFTER[S.view] && AFTER[S.view]();
 }
 const LIVE = new Set(['overview', 'serving', 'insights']);
@@ -139,16 +162,46 @@ setInterval(() => {
   renderChrome();
 }, 1000);
 
-const head = (title, sub) => `<div class="view-head"><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div>`;
+const head = (title, sub, how) => `<div class="view-head"><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}${how ? `<details class="how"><summary>How it works</summary><p>${how}</p></details>` : ''}</div>`;
+
+/* Human names for the things people see; technical IDs stay one hover or line away. */
+const NAMES = {
+  iphone_app_events_raw: 'iPhone app events, raw', iphone_app_events_raw_eu: 'iPhone app events, raw (EU)',
+  app_events_clean: 'App events, cleaned', app_events_clean_eu: 'App events, cleaned (EU)',
+  session_metrics_daily: 'Daily session metrics', ad_features_v7: 'Ad features v7', ad_features_v7_eu: 'Ad features v7 (EU)',
+  assistant_conversations: 'Assistant conversations, raw', assistant_conversations_redacted: 'Assistant conversations, redacted',
+  search_clicks_v3: 'Search clicks v3', iphone_app_events_v2: 'iPhone app events v2', iphone_app_events_v2_ads: 'iPhone app events v2, ads view',
+  consent_records: 'Consent records',
+  ads_personalization: 'Personalized ads', analytics: 'Analytics', model_training: 'Model training', cross_service_combination: 'Cross-service data use', third_party_sharing: 'Sharing with partners', user_assist: 'Assistant help',
+  'dev.patel': 'Dev Patel', 'maya.chen': 'Maya Chen', 'jonas.weber': 'Jonas Weber', 'amara.okafor': 'Amara Okafor', 'luis.ortega': 'Luis Ortega', 'priya.nair': 'Priya Nair', 'henrik.lund': 'Henrik Lund',
+  'svc-ads-trainer': 'Ads trainer', 'svc-assistant-trainer': 'Assistant trainer', 'svc-ad-gateway': 'Ad gateway', 'agent:assistant-7': 'Assistant agent',
+  'consent-service': 'Consent service', 'dsr-service': 'Privacy requests', 'policy-service': 'Policy engine', 'data-steward': 'Data steward', workflow: 'Workflow engine', system: 'Custodian',
+};
+const REASONS = {
+  att_denied: 'Tracking not allowed', gdpr_no_opt_in: 'No EU opt-in', dma_no_combination_consent: 'No cross-service consent', ccpa_opt_out: 'Opted out of sharing',
+  gpc_signal: 'Global Privacy Control', minor_no_profiling: 'Minor or unknown age', purpose_not_permitted: 'Purpose not approved', restricted_for_ads: 'Restricted data',
+  eu_transfer_blocked: 'EU data residency', no_active_grant: 'No access grant', dataset_not_approved: 'Dataset not approved', missing_input: 'Missing input, failed closed',
+  gdpr_no_training_consent: 'No EU training consent', training_opt_out: 'Opted out of training', consent_unknown: 'Consent unknown', att_denied_ca: 'Tracking denied (CA)',
+  insufficient_scope: 'Token scope too narrow', no_table: 'No table', deleted: 'Erased',
+};
+const nm = (id) => NAMES[id] || id;
+const rsn = (code) => REASONS[code] || code;
+const named = (id) => `${h(nm(id))}${NAMES[id] ? `<span class="id">${h(id)}</span>` : ''}`;
 const kpi = (v, label, sub, cls = '') => `<div class="card c3 kpi ${cls}"><b>${v}</b><span>${label}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
 const pill = (cls, text) => `<span class="pill ${h(cls)}">${h(text ?? cls)}</span>`;
 const bars = (rows, cls = '') => {
   const max = Math.max(1, ...rows.map((r) => r[1]));
   return `<div class="bars">${rows.map(([k, v, label]) => `<div class="bar-row"><span title="${h(k)}">${h(k)}</span><div class="track"><div class="fill ${cls}" style="width:${(100 * v / max).toFixed(1)}%"></div></div><span class="v">${label ?? fmt(v)}</span></div>`).join('')}</div>`;
 };
+const F = {};
+const match = (key, ...fields) => { const q = (F[key] || '').trim().toLowerCase(); return !q || fields.some((x) => String(x ?? '').toLowerCase().includes(q)); };
+const tools = (key, shown, total, ph) => `<div class="tools"><label class="search">${icon('search')}<input data-filter="${key}" value="${h(F[key] || '')}" placeholder="${h(ph)}"></label><span class="note">${shown === total ? `${fmt(total)} results` : `${fmt(shown)} of ${fmt(total)}`}</span><span class="spacer"></span><button class="btn" data-act="export" data-key="${key}">Export CSV</button></div>`;
+const EXPORTS = {};
+function csv(rows) { return rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n'); }
+
 const can = (...roles) => roles.includes(S.role);
 const roleNote = (...roles) => can(...roles) ? '' : `<p class="note">Requires ${roles.map((r) => `<code>${r}</code>`).join(' or ')}. Switch account from the top right.</p>`;
-const decisionBox = (d, extra = '') => `<div class="decision ${d.allow ? '' : 'deny'}"><h4>${d.allow ? 'Allow' : 'Deny'}</h4>${d.reasons.length ? `<ul>${d.reasons.map((r) => `<li><code>${h(r.code)}</code> ${h(r.msg)} <span class="cite">${h(r.cite)}</span></li>`).join('')}</ul>` : ''}<p class="meta">Bundle <code>${h(d.version)}</code> · evaluated in ${d.latency_ms.toFixed(3)} ms${extra}</p></div>`;
+const decisionBox = (d, extra = '') => `<div class="decision ${d.allow ? '' : 'deny'}"><h4>${d.allow ? 'Allowed' : 'Denied'}</h4>${d.reasons.length ? `<ul>${d.reasons.map((r) => `<li><b>${h(rsn(r.code))}.</b> ${h(r.msg)} <span class="cite">${h(r.cite)}</span></li>`).join('')}</ul>` : ''}<p class="meta">Bundle <code>${h(d.version)}</code> · evaluated in ${d.latency_ms.toFixed(3)} ms${extra}</p></div>`;
 
 function pickUser(fn) { return P.users.find(fn) || P.users[0]; }
 function userLabel(u) { return `${u.id} · ${u.region}`; }
@@ -173,16 +226,16 @@ const AFTER = {};
 /* ── home: what needs me, are controls green, what just happened ── */
 function attention() {
   const out = [], r = S.role;
-  if (r === 'data_steward') for (const d of P.datasets.filter((x) => x.status === 'pending')) out.push({ t: `Review ${d.id}`, m: `New dataset, scanner proposed ${d.classification}`, go: 'catalog', sel: ['dataset', d.id] });
+  if (r === 'data_steward') for (const d of P.datasets.filter((x) => x.status === 'pending')) out.push({ t: `Review ${nm(d.id)}`, m: `New dataset from ${nm(d.owner)}. Scanner proposed ${d.classification}.`, go: 'catalog', sel: ['dataset', d.id] });
   for (const q of P.accessRequests.filter((x) => x.status === 'open')) {
     const cur = q.steps.find((s) => s.state === 'pending');
-    if (cur && cur.role === r) out.push({ t: `${q.id}: ${cur.name.toLowerCase()}`, m: `${q.requester} wants ${q.dataset} for ${q.purpose}`, go: 'access', sel: ['request', q.id] });
+    if (cur && cur.role === r) out.push({ t: `${cur.name}: ${nm(q.dataset)}`, m: `${nm(q.requester)} requests it for ${nm(q.purpose).toLowerCase()}, ${q.days} days. ${q.id}`, go: 'access', sel: ['request', q.id] });
   }
   if (r === 'privacy_reviewer' || r === 'legal_reviewer') for (const d of P.dsrs.filter((x) => x.status !== 'completed')) out.push({ t: `Erasure ${d.idem}`, m: `Due ${date(d.due)}`, go: 'dsr', sel: ['dsr', d.idem] });
   if (r === 'ml_engineer') {
     for (const m of P.models.filter((x) => x.status === 'retrain_required')) out.push({ t: `Retrain ${E.mname(m)}`, m: 'An erased user was in its training data', go: 'models', sel: ['model', E.mname(m)] });
     const ds = P.datasets.find((d) => d.id === S.newDs && d.status === 'approved') && !P.accessRequests.some((q) => q.dataset === S.newDs);
-    if (ds) out.push({ t: `Request access to ${S.newDs}`, m: 'Approved by the steward, no grant yet', go: 'catalog', sel: ['dataset', S.newDs] });
+    if (ds) out.push({ t: `Request access to ${nm(S.newDs)}`, m: 'Approved by the steward, no grant yet', go: 'catalog', sel: ['dataset', S.newDs] });
   }
   if (r === 'sre' && (!P.policyUp || P.breaker.state !== 'closed')) out.push({ t: 'Policy service degraded', m: 'Gateway is failing closed to non-personalized serving', go: 'serving' });
   if (r === 'auditor' && !(S.audit.verify && S.audit.verify.ok)) out.push({ t: 'Verify the audit chain', m: `${fmt(P.ledger.entries.length)} entries since last verification`, go: 'audit' });
@@ -191,17 +244,17 @@ function attention() {
 
 const ACTIVITY = {
   'auth.login': (e) => `signed in as ${e.payload.role.replace('_', ' ')}`,
-  'catalog.registered': (e) => `registered ${e.payload.dataset} as ${e.payload.classification}`,
-  'catalog.approved': (e) => `approved ${e.payload.dataset}`,
+  'catalog.registered': (e) => `registered ${nm(e.payload.dataset)} as ${e.payload.classification}`,
+  'catalog.approved': (e) => `approved ${nm(e.payload.dataset)}`,
   'catalog.rejected': (e) => `rejected ${e.payload.dataset}`,
-  'access.requested': (e) => `requested ${e.payload.dataset} for ${e.payload.purpose}`,
+  'access.requested': (e) => `requested ${nm(e.payload.dataset)} for ${nm(e.payload.purpose).toLowerCase()}`,
   'access.precheck': (e) => `pre-checked ${e.payload.request}: ${e.payload.allow ? 'allowed' : 'needs review'}`,
   'access.approved': (e) => `approved the ${e.payload.step} review of ${e.payload.request}`,
   'access.rejected': (e) => `rejected ${e.payload.request}`,
-  'access.granted': (e) => `granted ${e.payload.dataset} until ${e.payload.expires}`,
+  'access.granted': (e) => `granted ${nm(e.payload.dataset)} until ${e.payload.expires}`,
   'access.revoked': (e) => `revoked ${e.payload.grant} at expiry`,
-  'policy.decision': (e) => `${e.payload.allow ? 'allowed' : 'denied'} ${e.payload.purpose} on ${e.payload.dataset}${e.payload.reasons.length ? ' (' + e.payload.reasons.join(', ') + ')' : ''}`,
-  'consent.change': (e) => `recorded ${e.payload.purpose} ${e.payload.status} from ${e.payload.source}`,
+  'policy.decision': (e) => `${e.payload.allow ? 'allowed' : 'denied'} ${nm(e.payload.purpose).toLowerCase()} on ${nm(e.payload.dataset)}${e.payload.reasons.length ? ' (' + e.payload.reasons.map(rsn).join(', ').toLowerCase() + ')' : ''}`,
+  'consent.change': (e) => `recorded ${nm(e.payload.purpose).toLowerCase()} ${e.payload.status} (${e.payload.source.replace(/_/g, ' ')})`,
   'model.registered': (e) => `registered ${e.payload.model}`,
   'dsr.opened': () => 'opened an erasure request',
   'dsr.step': (e) => `completed erasure step ${e.payload.step}`,
@@ -214,33 +267,51 @@ const ACTIVITY = {
   'platform.start': () => 'started the platform',
 };
 
+function upcomingDeadlines(n) {
+  const today = new Date().toISOString().slice(0, 10);
+  return REGULATIONS.flatMap((r) => r.dates.filter(([d]) => d >= today).map(([d, w]) => [d, r.name, w])).sort().slice(0, n);
+}
+function lagP95() {
+  const lags = P.propagationLags.slice().sort((a, b) => a - b);
+  return lags.length ? lags[Math.floor(lags.length * 0.95)] : null;
+}
+function controlChecks() {
+  const p95 = lagP95();
+  return [
+    ['Every dataset classified and approved', P.datasets.every((d) => d.status !== 'pending'), 'catalog'],
+    ['No personalized output without an allow', P.serving.violations === 0, 'serving'],
+    ['Policy engine healthy', P.policyUp && P.breaker.state === 'closed', 'serving'],
+    ['Consent reaches serving inside 5 s', p95 === null || p95 < 5000, 'consent'],
+    ['Subject requests inside SLA', P.dsrs.filter((d) => d.status !== 'completed').every((d) => d.due > Date.now()), 'dsr'],
+    ['Audit chain verified this session', !!(S.audit.verify && S.audit.verify.ok), 'audit'],
+  ];
+}
+
+function ring(f) {
+  const r = 22, c = 2 * Math.PI * r, color = f === 1 ? '#34c759' : f >= 0.8 ? '#0071e3' : '#ff9f0a';
+  return `<svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}" fill="none" stroke="#ececf0" stroke-width="6"/><circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 28 28)"/><text x="28" y="32" text-anchor="middle">${Math.round(f * 100)}</text></svg>`;
+}
+
 VIEWS.overview = () => {
   const r = E.ROLES[S.role], hr = new Date().getHours();
   const greet = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
   const items = attention();
-  const lags = P.propagationLags.slice().sort((a, b) => a - b);
-  const p95 = lags.length ? lags[Math.floor(lags.length * 0.95)] : null;
+  const p95 = lagP95();
   const openDsr = P.dsrs.filter((d) => d.status !== 'completed');
   const s = P.serving, total = s.personalized + s.contextual;
-  const checks = [
-    ['Every dataset classified and approved', P.datasets.every((d) => d.status !== 'pending'), 'catalog'],
-    ['No personalized output without an allow', s.violations === 0, 'serving'],
-    ['Policy service healthy', P.policyUp && P.breaker.state === 'closed', 'serving'],
-    ['Consent reaches serving inside 5 s', p95 === null || p95 < 5000, 'consent'],
-    ['Subject requests inside SLA', openDsr.every((d) => d.due > Date.now()), 'dsr'],
-    ['Audit chain verified this session', !!(S.audit.verify && S.audit.verify.ok), 'audit'],
-  ];
+  const checks = controlChecks();
   const recent = P.ledger.entries.filter((e) => e.type !== 'policy.decision' || e.actor !== 'svc-ad-gateway').slice(-8).reverse();
   return `<div class="hello"><h1>${greet}, ${h(r.name.split(' ')[0])}.</h1><p>${items.length ? `${items.length} item${items.length > 1 ? 's' : ''} need${items.length > 1 ? '' : 's'} you today.` : 'Nothing needs you right now.'}</p></div>
   <div class="grid">
-    <div class="card c8"><h3>Needs your attention</h3>${items.length ? `<div class="inbox">${items.map((x) => `<button class="inbox-item" data-go="${x.go}"${x.sel ? ` data-sel="${x.sel[0]}:${h(x.sel[1])}"` : ''}><span><b>${h(x.t)}</b><span>${h(x.m)}</span></span><i>›</i></button>`).join('')}</div>` : `<div class="empty"><b>You're all caught up.</b>Approvals, reviews and incidents for your role appear here.</div>`}</div>
-    <div class="card c4"><h3>Controls</h3><ul class="checks">${checks.map(([t, ok, go]) => `<li data-go="${go}"><span class="tick ${ok ? 'ok' : 'no'}">${ok ? '✓' : '!'}</span>${t}</li>`).join('')}</ul></div>
+    <div class="card c8"><h3>Needs your attention</h3>${items.length ? `<div class="inbox">${items.map((x) => `<button class="inbox-item" data-go="${x.go}"${x.sel ? ` data-sel="${x.sel[0]}:${h(x.sel[1])}"` : ''}><span><b>${h(x.t)}</b><span>${h(x.m)}</span></span><i>›</i></button>`).join('')}</div>` : `<div class="empty"><b>You're all caught up.</b>Approvals, reviews and incidents for your role appear here.</div>`}
+      <h3 class="sub-h">Coming up</h3><ul class="soon">${upcomingDeadlines(3).map(([d, n, w]) => `<li data-go="regulations"><span class="d">${d}</span><span><b>${h(n)}</b> ${h(w)}</span></li>`).join('')}</ul></div>
+    <div class="card c4"><div class="posture">${ring(checks.filter((c) => c[1]).length / checks.length)}<div><b>${checks.filter((c) => c[1]).length} of ${checks.length} controls passing</b><span>Governance posture, live</span></div></div><ul class="checks">${checks.map(([t, ok, go]) => `<li data-go="${go}"><span class="tick ${ok ? 'ok' : 'no'}">${ok ? '✓' : '!'}</span>${t}</li>`).join('')}</ul></div>
     ${kpi(s.violations, 'Personalized without allow', 'target: exactly zero', s.violations ? 'bad' : 'good')}
-    ${kpi(p95 === null ? 'n/a' : (p95 / 1000).toFixed(1) + ' s', 'Consent propagation p95', 'target: under 5 s')}
+    ${kpi(p95 === null ? 'Measuring' : (p95 / 1000).toFixed(1) + ' s', 'Consent propagation p95', 'target: under 5 s')}
     ${kpi(pct(s.personalized, total), 'Requests personalized', `${fmt(total)} served this session`)}
     ${kpi(openDsr.length, 'Open subject requests', openDsr.length ? `next due ${date(Math.min(...openDsr.map((d) => d.due)))}` : 'all closed inside SLA')}
-    <div class="card c12"><h3>Governed AI workloads</h3><div class="scroll-x"><table class="table"><thead><tr><th>Workload</th><th>Consent checked per user</th><th>Datasets</th><th>Models</th><th>Owner</th></tr></thead><tbody>${Object.entries(E.WORKLOADS).map(([k, w]) => `<tr><td><b>${w.name}</b></td><td class="mono">${w.userPurpose}</td><td>${P.datasets.filter((d) => d.workload === k).length}</td><td class="mono">${P.models.filter((m) => m.workload === k).map(E.mname).join(', ') || 'none'}</td><td>${w.owner}</td></tr>`).join('')}</tbody></table></div></div>
-    <div class="card c12"><h3>Recent activity <span class="right"><a href="#" data-go="audit">Audit ledger ›</a></span></h3><ul class="feed">${recent.map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(e.actor)}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}</span></li>`).join('')}</ul></div>
+    <div class="card c12"><h3>Governed AI workloads</h3><div class="scroll-x"><table class="table"><thead><tr><th>Workload</th><th>Consent checked per user</th><th>Datasets</th><th>Models</th><th>Owner</th></tr></thead><tbody>${Object.entries(E.WORKLOADS).map(([k, w]) => `<tr><td><b>${w.name}</b></td><td>${nm(w.userPurpose)}</td><td>${P.datasets.filter((d) => d.workload === k).length}</td><td class="mono">${P.models.filter((m) => m.workload === k).map(E.mname).join(', ') || 'none'}</td><td>${w.owner}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card c12"><h3>Recent activity <span class="right"><a href="#" data-go="audit">Audit ledger ›</a></span></h3><ul class="feed">${recent.map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(nm(e.actor))}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}</span></li>`).join('')}</ul></div>
   </div>`;
 };
 
@@ -251,18 +322,18 @@ VIEWS.insights = () => {
   for (const u of P.users) { const c = P.cache.get(u.id); if (!c) continue; const b = byRegion[u.region] || (byRegion[u.region] = [0, 0]); b[1]++; if (c.consent.ads_personalization !== 'granted') b[0]++; }
   const lat = P.decisions.map((d) => d.decision.latency_ms).sort((a, b) => a - b);
   const p99 = lat.length ? lat[Math.floor(lat.length * 0.99)] : 0;
-  return head('Insights', 'Why requests are denied and where people opt out.') + `
+  return head('Insights', 'Why requests are denied and where people opt out.', 'Aggregates over the policy.decisions topic and the serving consent cache. No per-user data is shown.') + `
   <div class="grid">
     ${kpi(p99.toFixed(3) + ' ms', 'Policy decision p99', 'in-process, target under 10 ms')}
     ${kpi(fmt(P.decisions.length), 'Decisions sampled', 'topic policy.decisions')}
     ${kpi(fmt(P.ledger.entries.length), 'Audit entries', 'hash chained')}
     ${kpi(P.ledger.anchors.length, 'WORM anchors', 'Merkle roots written')}
-    <div class="card c6"><h3>Denials by reason <span class="right">last ${P.decisions.length} decisions</span></h3>${bars(Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 8), 'red')}</div>
+    <div class="card c6"><h3>Denials by reason <span class="right">last ${P.decisions.length} decisions</span></h3>${bars(Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => [rsn(k), v]), 'red')}</div>
     <div class="card c6"><h3>Opted out of personalization <span class="right">by region</span></h3>${bars(Object.entries(byRegion).sort().map(([k, [o, n]]) => [k, o / n * 100, (o / n * 100).toFixed(0) + '%']))}</div>
   </div>`;
 };
 
-VIEWS.architecture = () => head('Architecture', 'Three planes every workload plugs into. Each box opens the component. In the hosted demo each runs in the browser; the design doc maps it to production.') + `
+VIEWS.architecture = () => head('Architecture', 'Three planes every AI workload plugs into. Select a box to open it.', 'In this hosted demo each component runs in the browser. Production mapping: Keycloak, OPA, Postgres with outbox, Redpanda, Redis, Temporal, Iceberg on S3, Marquez, MLflow, S3 Object Lock. See docs/DESIGN.md.') + `
   <div class="grid"><div class="card c12">${archDiagram()}</div></div>`;
 
 function seriesChart() {
@@ -289,7 +360,7 @@ VIEWS.serving = () => {
   const s = P.serving, total = s.personalized + s.contextual, last = S.series.at(-1) || { personalized: 0, contextual: 0, fallback: 0 };
   const rps = last.personalized + last.contextual, fr = rps ? last.fallback / rps : 0;
   const sel = s.log.find((r) => r.at === S.sel.serve) || s.log[0];
-  return head('Serving gateway', 'The enforcement point in front of personalized models. Shown here on the ads ranking workload: every request checks consent from the cache and asks the policy service; anything other than an explicit allow is served by a non-personalized model that sees only the request, never history.') + `
+  return head('Serving', 'Personalization happens only with an explicit allow. Anything else gets a non-personalized result.', 'Every request reads consent from the Redis cache and asks the policy engine. Deny, unknown, or an unavailable policy engine all route to a model that sees only the request, never history. A circuit breaker fails closed.') + `
   <div class="grid">
     ${kpi(fmt(rps), 'Requests per second', 'sampled stream')}
     ${kpi((fr * 100).toFixed(1) + '%', 'Fail-closed fallback rate', 'policy unavailable or circuit open', fr > 0 ? 'bad' : '')}
@@ -318,7 +389,7 @@ VIEWS.consent = () => {
   const hist = P.consent.history(u.id);
   const f = S.flow;
   const hop = (k, t, s) => `<div class="hop${f && f.lit.includes(k) ? ' lit' + (f.done ? ' ok' : '') : ''}"><b>${t}</b><span>${f && f.t[k] ? s(f) : 'waiting'}</span></div>`;
-  return head('Consent', 'Consent per user and purpose is recorded bitemporally in Postgres, published through a transactional outbox to the consent.events topic, and applied to the Redis cache every serving gateway reads.') + `
+  return head('Consent', 'What each person has agreed to, and proof that every change reaches serving within seconds.', 'Consent is stored bitemporally in Postgres (when it applied, and when we learned it), published through a transactional outbox to the consent.events topic, and applied to the Redis cache every gateway reads.') + `
   <div class="grid">
     <div class="card c5"><h3>User</h3>
       <div class="fields"><label class="field">Synthetic user<select data-bind="consentUser">${userOptions(u.id)}</select></label></div>
@@ -333,7 +404,7 @@ VIEWS.consent = () => {
     </div>
     <div class="card c7"><h3>Purposes <span class="right">source of truth vs serving cache</span></h3>
       <table class="table"><thead><tr><th>Purpose</th><th>Postgres</th><th>Redis cache</th></tr></thead><tbody>
-      ${E.PURPOSES.map((p) => `<tr><td class="mono">${p}</td><td>${pill(truth[p])}</td><td>${cache ? pill(cache.consent[p]) : pill('deny', 'purged')}${cache && cache.consent[p] !== truth[p] ? ' <span class="pill warn">propagating</span>' : ''}</td></tr>`).join('')}
+      ${E.PURPOSES.map((p) => `<tr><td>${named(p)}</td><td>${pill(truth[p])}</td><td>${cache ? pill(cache.consent[p]) : pill('deny', 'purged')}${cache && cache.consent[p] !== truth[p] ? ' <span class="pill warn">propagating</span>' : ''}</td></tr>`).join('')}
       </tbody></table>
       <h3>Propagation</h3>
       <div class="flow">
@@ -367,7 +438,7 @@ async function changeConsent(kind, on) {
   const msgs = P.relayOutbox();
   S.flow.t.outbox = Date.now(); S.flow.lit.push('outbox'); render();
   await sleep(120);
-  S.flow.msg = msgs.at(-1); S.flow.t.bus = Date.now(); S.flow.lit.push('bus'); render();
+  S.flow.msg = msgs.filter((m) => m.key === u.id).at(-1) || P.bus.filter((m) => m.key === u.id).at(-1); S.flow.t.bus = Date.now(); S.flow.lit.push('bus'); render();
   await sleep(350 + Math.random() * 700);         // consumer poll + batch
   S.flow.t.consumer = Date.now(); S.flow.lit.push('consumer'); render();
   let lag = 0; for (const m of msgs) lag = P.applyToCache(m);
@@ -381,6 +452,7 @@ async function changeConsent(kind, on) {
 }
 
 /* ── data explorer: example rows behind every number ── */
+EXPORTS.users = () => [['user_id', 'region', 'att', 'personalized_ads', 'gpc', 'age_band', 'services', 'ads_personalization', 'model_training'], ...P.users.filter((x) => match('users', x.id, x.region, x.att, x.age_band)).map((x) => { const c = P.cache.get(x.id); return [x.id, x.region, x.att, x.personalizedAdsToggle, x.gpc, x.age_band, x.services.join(' '), c && c.consent.ads_personalization, c && c.consent.model_training]; })];
 VIEWS.data = () => {
   const d = S.data;
   const u = P.userById.get(d.user) || P.users[0];
@@ -388,10 +460,11 @@ VIEWS.data = () => {
   const regions = ['all', ...new Set(P.users.map((x) => x.region))].sort();
   let body = '';
   if (d.tab === 'users') {
-    const list = P.users.filter((x) => d.region === 'all' || x.region === d.region).slice(0, 40);
-    body = `<div class="row"><label class="field" style="min-width:160px">Region<select data-bind="data.region">${regions.map((r) => `<option${r === d.region ? ' selected' : ''}>${r}</option>`).join('')}</select></label><span class="note" style="margin:0">Showing ${list.length} of ${fmt(P.users.filter((x) => d.region === 'all' || x.region === d.region).length)}. Click a user to see their rows in the other tabs.</span></div>
-    <div class="scroll-x"><table class="table"><thead><tr><th>user_id</th><th>Region</th><th>Law</th><th>ATT</th><th>Personalized ads</th><th>GPC</th><th>Services</th><th>ads_personalization</th><th>model_training</th><th>Events</th></tr></thead><tbody>
-    ${list.map((x) => { const c = P.cache.get(x.id); return `<tr class="click${x.id === u.id ? ' sel' : ''}" data-datauser="${x.id}"><td class="mono">${x.id}</td><td>${x.region}</td><td>${E.regionInfo(x.region).law}</td><td>${x.att}</td><td>${x.personalizedAdsToggle ? 'on' : 'off'}</td><td>${x.gpc ? 'sent' : ''}</td><td>${x.services.join(', ')}</td><td>${c ? pill(c.consent.ads_personalization) : ''}</td><td>${c ? pill(c.consent.model_training) : ''}</td><td>${fmt(x.events)}</td></tr>`; }).join('')}
+    const pool = P.users.filter((x) => (d.region === 'all' || x.region === d.region) && match('users', x.id, x.region, x.att, x.age_band));
+    const list = pool.slice(0, 40);
+    body = `<div class="row"><label class="field" style="min-width:160px">Region<select data-bind="data.region">${regions.map((r) => `<option${r === d.region ? ' selected' : ''}>${r}</option>`).join('')}</select></label><span class="note" style="margin:0">Select a person to see their rows in the other tabs.</span></div>${tools('users', pool.length, P.users.length, 'Search user ID, region, age range')}
+    <div class="scroll-x"><table class="table"><thead><tr><th>user_id</th><th>Region</th><th>Law</th><th>ATT</th><th>Personalized ads</th><th>GPC</th><th>Age range</th><th>Services</th><th>ads_personalization</th><th>model_training</th><th>Events</th></tr></thead><tbody>
+    ${list.map((x) => { const c = P.cache.get(x.id); return `<tr class="click${x.id === u.id ? ' sel' : ''}" data-datauser="${x.id}"><td class="mono">${x.id}</td><td>${x.region}</td><td>${E.regionInfo(x.region).law}</td><td>${x.att}</td><td>${x.personalizedAdsToggle ? 'on' : 'off'}</td><td>${x.gpc ? 'sent' : ''}</td><td>${x.age_band.replace('_', ' to ').replace('18 to plus', '18+').replace('under to 13', 'under 13')}</td><td>${x.services.join(', ')}</td><td>${c ? pill(c.consent.ads_personalization) : ''}</td><td>${c ? pill(c.consent.model_training) : ''}</td><td>${fmt(x.events)}</td></tr>`; }).join('')}
     </tbody></table></div>`;
   }
   if (d.tab === 'raw' || d.tab === 'minimized') {
@@ -420,7 +493,7 @@ VIEWS.data = () => {
     ${Object.values(P.tables).flatMap((t) => t.snapshots.map((sn, i) => `<tr><td class="mono">${i === 0 ? t.name : ''}</td><td class="mono">${i === 0 ? t.bucket : ''}</td><td class="mono">${sn.id}${sn === t.current ? ' ' + pill('blue', 'current') : ''}</td><td>${sn.op}</td><td>${sn.files}</td><td>${fmt(sn.members.size)}</td><td>${sn.members.has(u.id) ? pill('blue', 'present') : ''}</td></tr>`)).join('')}
     </tbody></table></div>`;
   }
-  return head('Data explorer', 'The synthetic records behind every number: users, the raw events a collector writes, the minimized view a model may read, consent rows, and table snapshots. All generated from a fixed seed; no real person.') + `
+  return head('Data explorer', 'The records behind every number: people, raw events, the minimized view a model may read, consent, and table history.', 'All 10,000 users are synthetic and generated from a fixed seed. Raw events mirror what an iOS collector writes; the minimized view is what governance allows a model to read.') + `
   <div class="grid"><div class="card c12">
     <div class="row between"><div class="seg">${tabs.map(([k, t]) => `<button class="${d.tab === k ? 'on' : ''}" data-datatab="${k}">${t}</button>`).join('')}</div>
     <label class="field" style="min-width:200px">User<select data-bind="data.user">${[u, ...featuredUsers()].filter((x, i, a) => a.findIndex((y) => y.id === x.id) === i).map((x) => `<option value="${x.id}"${x.id === u.id ? ' selected' : ''}>${h(userLabel(x))}</option>`).join('')}</select></label></div>
@@ -429,13 +502,15 @@ VIEWS.data = () => {
 };
 
 /* ── catalog ── */
+const catalogRows = () => P.datasets.filter((d) => match('catalog', d.id, nm(d.id), d.classification, d.owner, d.region, d.workload && E.WORKLOADS[d.workload].name, d.pii.join(' ')));
+EXPORTS.catalog = () => [['dataset', 'name', 'workload', 'classification', 'pii', 'region', 'allowed_purposes', 'retention_days', 'status', 'owner'], ...catalogRows().map((d) => [d.id, nm(d.id), d.workload || 'shared', d.classification, d.pii.join(' '), d.region, d.allowed_purposes.join(' '), d.retention_days, d.status, d.owner])];
 VIEWS.catalog = () => {
   const sel = P.dataset(S.sel.dataset);
   const exists = P.dataset(S.newDs);
-  return head('Catalog', 'Every dataset feeding an AI workload, with its governance metadata. New datasets start pending and cannot be read until a steward approves them.') + `
+  return head('Catalog', 'Every dataset that feeds an AI workload, who owns it, how sensitive it is, and what it may be used for.', 'Registration runs a PII scanner on schema and samples and proposes tags. Datasets start pending and cannot be read by any job until a steward approves them.') + `
   <div class="grid">
-    <div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Dataset</th><th>Workload</th><th>Classification</th><th>PII</th><th>Region</th><th>Allowed purposes</th><th>Retention</th><th>Status</th></tr></thead><tbody>
-      ${P.datasets.map((d) => `<tr class="click${d.id === S.sel.dataset ? ' sel' : ''}" data-dataset="${d.id}"><td class="mono">${d.id}<br><span class="note">${d.layer}</span></td><td>${d.workload ? E.WORKLOADS[d.workload].name : 'shared'}</td><td>${pill(d.classification)}</td><td><div class="tags">${d.pii.map((t) => pill('', t)).join('')}</div></td><td>${d.region}</td><td class="mono">${d.allowed_purposes.join(', ')}</td><td>${d.retention_days} d</td><td>${pill(d.status)}</td></tr>`).join('')}
+    <div class="card c12">${tools('catalog', catalogRows().length, P.datasets.length, 'Search datasets, owners, PII')}<div class="scroll-x"><table class="table"><thead><tr><th>Dataset</th><th>Workload</th><th>Classification</th><th>PII</th><th>Region</th><th>Allowed purposes</th><th>Retention</th><th>Status</th></tr></thead><tbody>
+      ${catalogRows().map((d) => `<tr class="click${d.id === S.sel.dataset ? ' sel' : ''}" data-dataset="${d.id}"><td>${named(d.id)}</td><td>${d.workload ? E.WORKLOADS[d.workload].name : 'shared'}</td><td>${pill(d.classification)}</td><td><div class="tags">${d.pii.map((t) => pill('', t)).join('')}</div></td><td>${d.region}</td><td>${d.allowed_purposes.map(nm).join(', ')}</td><td>${d.retention_days} d</td><td>${pill(d.status)}</td></tr>`).join('')}
     </tbody></table></div></div>
     <div class="card c6"><h3>Register a dataset</h3><p class="note">Schema and samples from the iOS collector. The scanner proposes PII tags; a steward confirms them.</p>
       <div class="fields"><label class="field">Name<input data-bind="newDs" value="${h(S.newDs)}"></label><label class="field">Source<input value="ios-collector (maps)" disabled></label></div>
@@ -471,10 +546,10 @@ async function registerDataset() {
 /* ── access requests ── */
 VIEWS.access = () => {
   const sel = P.accessRequests.find((r) => r.id === S.sel.request) || P.accessRequests[0];
-  return head('Access requests', 'Durable approval workflows. Each step is an activity in a Temporal workflow, so a restart resumes exactly where it stopped, and expiry revokes access automatically.') + `
+  return head('Access requests', 'Who can use which data, for what, and for how long. Every grant has a purpose, a region and an end date.', 'Each request is a durable Temporal workflow: an automatic policy pre-check, human reviews by role, a conditional grant, and a timer that revokes access at expiry. A restart resumes exactly where it stopped.') + `
   <div class="grid">
-    <div class="card c5"><h3>Requests</h3>${P.accessRequests.length ? `<table class="table"><tbody>${P.accessRequests.map((r) => `<tr class="click${sel && r.id === sel.id ? ' sel' : ''}" data-request="${r.id}"><td class="mono">${r.id}</td><td>${h(r.dataset)}<br><span class="note">${r.purpose}, ${r.region}, ${r.days} days</span></td><td>${pill(r.status)}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No requests yet. Register a dataset in the catalog and request access.</p>'}
-      <h3>Active grants</h3><table class="table"><tbody>${P.grants.map((g) => `<tr><td class="mono">${g.principal}</td><td class="mono">${g.dataset}<br><span class="note">${g.purpose}, ${g.region}</span></td><td style="white-space:nowrap">${g.expires > Date.now() ? 'until ' + date(g.expires) : pill('deny', 'expired')}</td></tr>`).join('')}</tbody></table>
+    <div class="card c5"><h3>Requests</h3>${P.accessRequests.length ? `<table class="table"><tbody>${P.accessRequests.map((r) => `<tr class="click${sel && r.id === sel.id ? ' sel' : ''}" data-request="${r.id}"><td class="mono">${r.id}</td><td>${h(nm(r.dataset))}<br><span class="note">${h(nm(r.requester))} · ${nm(r.purpose)}, ${r.region}, ${r.days} days</span></td><td>${pill(r.status)}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No requests yet. Register a dataset in the catalog and request access.</p>'}
+      <h3>Active grants</h3><table class="table"><tbody>${P.grants.map((g) => `<tr><td>${h(nm(g.principal))}</td><td>${h(nm(g.dataset))}<br><span class="note">${nm(g.purpose)}, ${g.region}</span></td><td style="white-space:nowrap">${g.expires > Date.now() ? 'until ' + date(g.expires) : pill('deny', 'expired')}</td></tr>`).join('')}</tbody></table>
     </div>
     <div class="card c7">${sel ? requestDetail(sel) : '<h3>Workflow</h3><p class="note">Select a request.</p>'}</div>
   </div>`;
@@ -482,7 +557,7 @@ VIEWS.access = () => {
 function requestDetail(r) {
   const cur = r.steps.find((s) => s.state === 'pending' || s.state === 'running');
   return `<h3>${r.id} <span class="right">workflow access-request/${r.id.toLowerCase()}</span></h3>
-  <dl class="kv"><dt>Requester</dt><dd>${h(r.requester)}</dd><dt>Dataset</dt><dd class="mono">${h(r.dataset)}</dd><dt>Purpose</dt><dd>${r.purpose}</dd><dt>Justification</dt><dd>${h(r.justification)}</dd></dl>
+  <dl class="kv"><dt>Requester</dt><dd>${named(r.requester)}</dd><dt>Dataset</dt><dd>${named(r.dataset)}</dd><dt>Purpose</dt><dd>${nm(r.purpose)}, ${r.region} only, ${r.days} days</dd><dt>Justification</dt><dd>${h(r.justification)}</dd></dl>
   <ol class="steps">${r.steps.map((s) => `<li class="${s.state}"><span class="dot">${s.state === 'done' ? '✓' : s.state === 'rejected' ? '×' : ''}</span><div><b>${s.name}</b>${s.detail ? `<p>${h(s.detail)}</p>` : ''}<p>${s.role === 'system' ? 'Automatic' : 'Assigned to <code>' + s.role + '</code>'}${s.by ? ', by ' + h(s.by) : ''}</p></div><span>${s.state !== 'pending' ? pill(s.state === 'done' ? 'done' : s.state) : ''}</span></li>`).join('')}</ol>
   ${cur && cur.role !== 'system' ? `<div class="row"><button class="btn primary" data-act="approve-step" ${can(cur.role) ? '' : 'disabled'}>Approve ${cur.key} review</button><button class="btn danger" data-act="reject-step" ${can(cur.role) ? '' : 'disabled'}>Reject</button></div>${roleNote(cur.role)}` : ''}
   ${r.status === 'granted' ? `<div class="row"><button class="btn" data-act="expire-grant">Simulate expiry</button></div>` : ''}
@@ -542,7 +617,7 @@ VIEWS.policy = () => {
   const input = { principal: { sub: S.sim.principal, roles: ['service'] }, purpose: S.sim.purpose, dataset: ds, processing_region: S.sim.region, grant: S.sim.principal === 'svc-ad-gateway' ? true : P.hasGrant(S.sim.principal, ds.id, S.sim.purpose), user: cache ? P.userInput(u, cache.consent) : null };
   const live = E.decide(input, 'ads-1.4.0'), shadow = E.decide(input, 'ads-1.5.0');
   const opt = (arr, cur) => arr.map((v) => `<option${v === cur ? ' selected' : ''}>${v}</option>`).join('');
-  return head('Policy studio', 'Policy as code for every workload. The policy service decides; gateways, the training gate, workflows and the lakehouse enforce. Every decision carries its reasons and bundle version.') + `
+  return head('Policies', 'The rules every AI workload follows, written as code, tested, and previewed before rollout.', 'Policy as code in Rego. The policy engine decides; gateways, the training gate, workflows and the lakehouse enforce. Every decision carries reasons and the bundle version. Shadow bundles run beside the live one to show impact before rollout.') + `
   <div class="grid">
     <div class="card c5"><h3>Decision simulator</h3>
       <div class="fields">
@@ -559,7 +634,7 @@ VIEWS.policy = () => {
       <table class="table"><tbody><tr><td class="mono">ads-1.4.0</td><td>${pill('live')}</td><td>${E.POLICY_BUNDLES['ads-1.4.0'].rules.length} rules, opa test: 5 passing</td></tr><tr><td class="mono">ads-1.5.0</td><td>${pill('shadow')}</td><td>${E.POLICY_BUNDLES['ads-1.5.0'].rules.length} rules, evaluated alongside live, never enforced</td></tr></tbody></table>
       <h3>Shadow mode diff</h3><p class="note">Evaluate both bundles over every user on the personalization path and show where they would disagree before rollout.</p>
       <div class="row"><button class="btn primary" data-act="shadow">Run shadow comparison</button></div>
-      ${S.shadow ? `<p class="note">${fmt(S.shadow.total)} users evaluated in ${S.shadow.ms.toFixed(0)} ms. ${fmt(S.shadow.flips)} decisions would change (${pct(S.shadow.flips, S.shadow.total)}), all allow to deny.</p>${bars(Object.entries(S.shadow.by).sort((a, b) => b[1] - a[1]), 'red')}` : ''}
+      ${S.shadow ? `<p class="note">${fmt(S.shadow.total)} users evaluated in ${S.shadow.ms.toFixed(0)} ms. ${fmt(S.shadow.flips)} decisions would change (${pct(S.shadow.flips, S.shadow.total)}), all allow to deny.</p>${bars(Object.entries(S.shadow.by).sort((a, b) => b[1] - a[1]).map(([k, v]) => [rsn(k), v]), 'red')}` : ''}
     </div>
     <div class="card c12"><h3>policies/ads.rego <span class="right">ads-1.4.0</span></h3><pre class="code">${highlightRego(regoSource || 'loading...')}</pre></div>
     <div class="card c12"><h3>Decision log <span class="right">topic policy.decisions</span></h3><div class="scroll-x"><table class="table"><thead><tr><th>Time</th><th>Principal</th><th>Dataset</th><th>Purpose</th><th>User</th><th>Live</th><th>Reasons</th><th>Shadow</th></tr></thead><tbody>
@@ -584,7 +659,7 @@ function runShadow() {
 VIEWS.training = () => {
   const r = S.train.result;
   const opt = (arr, cur) => arr.map((v) => `<option${v === cur ? ' selected' : ''}>${v}</option>`).join('');
-  return head('Training gate', 'Training jobs get a short-lived token scoped to one dataset and one purpose, ask the policy service, then build the training set with a point-in-time join against consent as it was known at the snapshot.') + `
+  return head('Training gate', 'Models only learn from data and people that allow it. Every run shows who was left out and why.', 'The job receives a 15 minute token scoped to one dataset and purpose, asks the policy engine, then joins the table snapshot against consent as it was known at that snapshot (point in time). The run is recorded in lineage with the exact snapshot ID.') + `
   <div class="grid">
     <div class="card c5"><h3>Launch a training run</h3>
       <div class="fields">
@@ -603,18 +678,19 @@ function trainResult(r) {
   const m = r.model, ex = Object.entries(m.excluded).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   return `<h3>${E.mname(m)} registered <span class="right">${pill('ok', m.stage)}</span></h3>${decisionBox(r.gate.decision)}
     <dl class="kv"><dt>Snapshot</dt><dd class="mono">${m.trainedOn[0].table}@${m.trainedOn[0].snapshot}</dd><dt>Eligible users</dt><dd>${fmt(m.eligible)}</dd><dt>Included</dt><dd>${fmt(m.members.size)} (${pct(m.members.size, m.eligible)})</dd><dt>AUC</dt><dd>${m.auc}</dd></dl>
-    <h3>Excluded by reason</h3>${bars(ex, 'red')}
+    <h3>Excluded by reason</h3>${bars(ex.map(([k, v]) => [rsn(k), v]), 'red')}
     <div class="row"><button class="btn" data-go="models">Open model card</button><button class="btn" data-go="lineage">View lineage</button></div>`;
 }
 
 /* ── models ── */
+EXPORTS.models = () => [['model', 'workload', 'stage', 'status', 'score', 'trained_on'], ...P.models.map((m) => [E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status, m.auc, m.trainedOn.map((t) => t.table + '@' + t.snapshot).join(' ')])];
 VIEWS.models = () => {
   const sel = P.models.find((m) => E.mname(m) === S.sel.model) || P.models.at(-1);
   const card = sel.card || E.modelCard({ ...sel, excluded: {}, eligible: sel.members.size }, P.dataset(sel.trainedOn[0].table), { version: 'ads-1.3.2' });
-  return head('Models', 'Registry across workloads with auto-generated model cards. A model trained on data that was later erased is flagged retrain_required.') + `
+  return head('Models', 'Every model, what it may be used for, and the data it learned from.', 'Model cards are generated at registration from lineage and the training gate. When an erased person was in a model\'s training data, the model is flagged for retraining.') + `
   <div class="grid">
-    <div class="card c5"><table class="table"><thead><tr><th>Model</th><th>Stage</th><th>Status</th><th>Score</th></tr></thead><tbody>
-      ${P.models.map((m) => `<tr class="click${m === sel ? ' sel' : ''}" data-model="${E.mname(m)}"><td class="mono">${E.mname(m)}<br><span class="note">${E.WORKLOADS[m.workload].name}</span></td><td>${m.stage}</td><td>${pill(m.status)}</td><td>${m.auc}</td></tr>`).join('')}
+    <div class="card c5">${tools('models', P.models.filter((m) => match('models', E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status)).length, P.models.length, 'Search models')}<table class="table"><thead><tr><th>Model</th><th>Stage</th><th>Status</th><th>Score</th></tr></thead><tbody>
+      ${P.models.filter((m) => match('models', E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status)).map((m) => `<tr class="click${m === sel ? ' sel' : ''}" data-model="${E.mname(m)}"><td class="mono">${E.mname(m)}<br><span class="note">${E.WORKLOADS[m.workload].name}</span></td><td>${m.stage}</td><td>${pill(m.status)}</td><td>${m.auc}</td></tr>`).join('')}
     </tbody></table></div>
     <div class="card c7"><h3>Model card <span class="right">${h(card.regulation)}</span></h3>
       <dl class="kv"><dt>Model</dt><dd>${card.model}</dd><dt>Workload</dt><dd>${card.workload}</dd><dt>Intended purpose</dt><dd>${h(card.intended_purpose)}</dd><dt>Out of scope</dt><dd>${card.out_of_scope.map(h).join('<br>')}</dd>
@@ -629,7 +705,7 @@ VIEWS.models = () => {
 /* ── lineage ── */
 VIEWS.lineage = () => {
   const hits = S.lineageUser ? P.locate(S.lineageUser) : null;
-  return head('Lineage', 'OpenLineage events from every job, with exact Iceberg snapshot IDs. Ask which data trained a model, or where one user\'s data lives.') + `
+  return head('Lineage', 'Where data comes from, where it goes, and where one person\'s data lives today.', 'Every job emits OpenLineage events with exact Iceberg snapshot IDs, so model provenance and per-person location are precise.') + `
   <div class="grid">
     <div class="card c12"><div class="row"><label class="field" style="min-width:220px">Find a user<select data-bind="lineageUser"><option value="">None</option>${userOptions(S.lineageUser)}</select></label></div>${lineageSvg(hits)}</div>
     ${hits ? `<div class="card c6"><h3>Locations for ${h(S.lineageUser)}</h3><table class="table"><tbody>${hits.map((x) => `<tr><td>${x.kind}</td><td class="mono">${h(x.name)}</td><td>${x.kind === 'table' ? `${x.snapshots.length} snapshot${x.snapshots.length === 1 ? '' : 's'}${x.live ? '' : ', time travel only'}` : h(x.note || '')}</td></tr>`).join('')}</tbody></table>${hits.length ? '' : '<p class="note">No location holds this user.</p>'}</div>` : ''}
@@ -679,7 +755,7 @@ function lineageSvg(hits) {
 VIEWS.dsr = () => {
   const sel = P.dsrs.find((d) => d.idem === S.sel.dsr) || P.dsrs[0];
   const target = S.dsrUser || defaultErasureUser().id;
-  return head('Data subject requests', 'Erasure runs as a saga across every system lineage knows about. Steps are idempotent, retried with backoff, and end in a signed evidence pack. GDPR gives one month.') + `
+  return head('Subject requests', 'When someone asks to be deleted, every copy goes, including old table versions, caches and models. You get signed proof.', 'Erasure runs as a saga across every system lineage knows about. Steps are idempotent, retried with backoff, and end in a signed evidence pack. Row deletes alone leave data in old Iceberg snapshots, so snapshots are expired too. GDPR allows one month.') + `
   <div class="grid">
     <div class="card c5"><h3>New erasure request</h3>
       <div class="fields"><label class="field">User<select data-bind="dsrUser">${featuredUsers().concat(P.userById.get(target) ? [P.userById.get(target)] : []).filter((u, i, a) => a.findIndex((x) => x.id === u.id) === i).map((u) => `<option value="${u.id}"${u.id === target ? ' selected' : ''}>${h(userLabel(u))}</option>`).join('')}</select></label></div>
@@ -710,11 +786,13 @@ async function erase(again) {
 }
 
 /* ── audit ── */
+EXPORTS.audit = () => [['seq', 'ts', 'type', 'actor', 'subject', 'payload', 'prev', 'hash'], ...P.ledger.entries.map((e) => [e.seq, new Date(e.ts).toISOString(), e.type, e.actor, e.subject, JSON.stringify(e.payload), e.prev, e.hash])];
 VIEWS.audit = () => {
-  if (!can('auditor')) return head('Audit ledger') + `<div class="grid"><div class="card c12 locked"><b>Auditor access only</b>Ledger queries are restricted to the <code>auditor</code> role. Switch account from the top right.</div></div>`;
+  if (!can('auditor')) return head('Audit ledger') + `<div class="grid"><div class="card c12 locked"><b>Auditor access only</b>Ledger queries are restricted to the auditor role.<div class="row" style="justify-content:center;margin-top:16px"><button class="btn primary" data-act="as-auditor">Switch to Henrik Lund, auditor</button></div></div></div>`;
   const a = S.audit;
-  const rows = a.subjectRows || P.ledger.entries.slice(-60).reverse();
-  return head('Audit ledger', 'Append-only and hash-chained: each entry commits to the one before it. Merkle roots are written to object-locked storage, so a rewrite of history is provable. User IDs are keyed pseudonyms.') + `
+  const all = a.subjectRows || P.ledger.entries.slice().reverse();
+  const rows = all.filter((e) => match('audit', e.type, e.actor, nm(e.actor), JSON.stringify(e.payload), e.subject)).slice(0, 80);
+  return head('Audit ledger', 'A record of every decision that cannot be rewritten without detection.', 'Append-only and hash-chained: each entry commits to the one before it. Merkle roots are written to object-locked storage, so a rewrite of history is provable. People appear only as keyed pseudonyms.') + `
   <div class="grid">
     ${kpi(fmt(P.ledger.entries.length), 'Entries', 'hash chained')}
     ${kpi(a.verify ? (a.verify.ok ? 'Intact' : 'Broken at #' + a.verify.brokenAt) : 'Not run', 'Chain verification', a.verify ? `${fmt(a.verify.checked)} entries checked` : '', a.verify ? (a.verify.ok ? 'good' : 'bad') : '')}
@@ -725,7 +803,8 @@ VIEWS.audit = () => {
       <button class="btn" data-act="anchor">Anchor Merkle root</button>
       ${a.tampered ? '<button class="btn" data-act="untamper">Restore entry</button>' : '<button class="btn danger" data-act="tamper">Tamper with an entry</button>'}
       </div><div class="row"><label class="field" style="min-width:220px">Evidence for user<select data-bind="audit.filter"><option value="">All entries</option>${(() => { const ids = new Set([...featuredUsers().map((u) => u.id), ...P.dsrs.map((d) => d.user)]); if (a.filter) ids.add(a.filter); return [...ids].map((id) => `<option${id === a.filter ? ' selected' : ''}>${id}</option>`).join(''); })()}</select></label></div></div>
-      ${a.filter ? `<p class="note">Pseudonym ${a.pseudonym || ''}: ${fmt(rows.length)} entries.</p>` : ''}
+      ${a.filter ? `<p class="note">Pseudonym ${a.pseudonym || ''}: ${fmt(all.length)} entries.</p>` : ''}
+      ${tools('audit', all.filter((e) => match('audit', e.type, e.actor, nm(e.actor), JSON.stringify(e.payload), e.subject)).length, all.length, 'Search type, actor, payload')}
       <div class="scroll-x"><table class="table"><thead><tr><th>#</th><th>Time</th><th>Type</th><th>Actor</th><th>Subject</th><th>Payload</th><th>Hash</th></tr></thead><tbody>
       ${rows.map((e) => `<tr class="${a.verify && !a.verify.ok && e.seq === a.verify.brokenAt ? 'bad' : ''}"><td class="mono">${e.seq}</td><td>${time(e.ts)}</td><td class="mono">${e.type}</td><td class="mono">${h(e.actor)}</td><td class="mono">${e.subject || ''}</td><td class="mono" style="max-width:360px">${h(JSON.stringify(e.payload))}</td><td class="hash">${e.hash.slice(0, 10)}<br>prev ${e.prev.slice(0, 10)}</td></tr>`).join('')}
       </tbody></table></div>
@@ -746,7 +825,7 @@ AFTER.audit = async () => {
 VIEWS.agent = () => {
   const a = S.agent, u = P.userById.get(a.user) || P.users[0];
   const dma = S.dma;
-  return head('Agent access', 'An assistant acting for a user gets a delegated token through OAuth 2.0 token exchange (RFC 8693). Every tool call carries both identities, goes through policy, and lands in the ledger.') + `
+  return head('Agents', 'AI assistants act for a person with only the access that person delegated, and every action is checked.', 'The agent obtains a delegated token through OAuth 2.0 token exchange (RFC 8693) naming both the user and the agent. Each tool call goes through the policy engine and is written to the audit ledger with both identities.') + `
   <div class="grid">
     <div class="card c6"><h3>Delegation</h3>
       <div class="fields"><label class="field">User<select data-bind="agent.user">${userOptions(u.id)}</select></label></div>
@@ -754,7 +833,7 @@ VIEWS.agent = () => {
       ${a.agentToken ? `<pre class="code" style="max-height:240px">${h(JSON.stringify(a.agentToken.claims, null, 2))}</pre>
       <div class="row"><button class="btn" data-act="agent-read">Tool: read my ad settings</button><button class="btn" data-act="agent-export">Tool: export my ad history to a partner</button></div>` : ''}
     </div>
-    <div class="card c6"><h3>Tool calls</h3>${a.results.length ? a.results.map((r) => `<p class="note" style="margin-top:12px"><b>${h(r.tool)}</b> as <code>${h(r.actor)}</code> for <code>${h(r.sub)}</code></p>${decisionBox(r.decision)}${r.output ? `<pre class="code" style="max-height:140px">${h(r.output)}</pre>` : ''}`).join('') : '<p class="note">Exchange a token, then call a tool.</p>'}</div>
+    <div class="card c6"><h3>Tool calls</h3>${a.results.length ? a.results.map((r) => `<p class="note" style="margin-top:12px"><b>${r.tool === 'read_ad_settings' ? 'Read my ad settings' : 'Export my ad history to a partner'}</b> · ${h(nm(r.actor))} acting for ${h(r.sub)}</p>${decisionBox(r.decision)}${r.output ? `<pre class="code" style="max-height:140px">${h(r.output)}</pre>` : ''}`).join('') : '<p class="note">Exchange a token, then call a tool.</p>'}</div>
     <div class="card c12"><h3>Cross-service combination (DMA Art. 5(2))</h3><p class="note">An EU user granted personalized ads but not combination across services. The feature set joins maps and news data, so serving must refuse personalization.</p>
       <div class="row"><button class="btn primary" data-act="dma">Evaluate for an EU user</button></div>${dma ? `<p class="note">User <code>${dma.user}</code> (${dma.region}): ads_personalization <b>${dma.consent.ads_personalization}</b>, cross_service_combination <b>${dma.consent.cross_service_combination}</b>.</p>${decisionBox(dma.decision)}` : ''}
     </div>
@@ -798,7 +877,7 @@ VIEWS.regulations = () => {
   const list = REGULATIONS.filter((r) => f === 'All' || r.region.startsWith(f));
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = REGULATIONS.flatMap((r) => r.dates.filter(([d]) => d >= today).map(([d, what]) => [d, r.name, what])).sort();
-  return head('Regulations', 'The laws that govern AI data use on a consumer platform with an app store, an ad network and on-device AI, and the controls that answer each one.') + `
+  return head('Regulations', 'What the law requires of AI data use, what is due next, and the controls that answer each obligation.', 'Covers a consumer platform with an app store, an ad network and on-device and cloud AI. Dates were checked in October 2026; sources are in docs/REGULATIONS.md.') + `
   <div class="grid">
     <div class="card c12"><h3>Coming up <span class="right">from ${today}</span></h3><div class="timeline">${upcoming.map(([d, n, w]) => `<div class="tl"><span class="tl-date">${d}</span><b>${h(n)}</b><span>${h(w)}</span></div>`).join('') || '<p class="note">No upcoming dates.</p>'}</div></div>
     <div class="card c12"><div class="row between"><h3>Laws</h3><div class="seg">${regions.map((r) => `<button class="${r === f ? 'on' : ''}" data-reg="${r}">${r}</button>`).join('')}</div></div>
@@ -813,6 +892,98 @@ VIEWS.regulations = () => {
     <div class="card c12"><h3>Privacy engineering patterns <span class="right">from public platform research</span></h3><div class="scroll-x"><table class="table"><thead><tr><th>Pattern</th><th>What it is</th><th>In Custodian</th></tr></thead><tbody>${PATTERNS.map(([p, what, here, v]) => `<tr class="click" data-go="${v}"><td><b>${h(p)}</b></td><td>${h(what)}</td><td>${h(here)}</td></tr>`).join('')}</tbody></table></div></div>
   </div>`;
 };
+
+/* ── settings: what an enterprise buyer checks first ── */
+VIEWS.org = () => head('Organization', 'Identity, sessions and who can administer Custodian.') + `
+  <div class="grid">
+    <div class="card c6"><h3>Single sign-on</h3><dl class="kv"><dt>Provider</dt><dd>Okta (OIDC) ${pill('ok', 'Connected')}</dd><dt>Issuer</dt><dd class="mono">https://acme.okta.com/oauth2/default</dd><dt>Flow</dt><dd>Authorization code with PKCE</dd><dt>MFA</dt><dd>Required for every role</dd><dt>Session</dt><dd>15 minutes, refresh rotates</dd></dl></div>
+    <div class="card c6"><h3>Provisioning</h3><dl class="kv"><dt>SCIM 2.0</dt><dd>${pill('ok', 'On')} users and groups sync every 10 minutes</dd><dt>Role mapping</dt><dd>Okta groups map to the six Custodian roles</dd><dt>Break-glass</dt><dd>2 named accounts, every use paged and ledgered</dd><dt>Just-in-time access</dt><dd>Grants expire automatically, 90 days max</dd></dl></div>
+    <div class="card c12"><h3>Roles</h3><div class="scroll-x"><table class="table"><thead><tr><th>Role</th><th>Member</th><th>Can</th></tr></thead><tbody>
+      ${[['ml_engineer', 'Register datasets, request access, run training'], ['data_steward', 'Confirm PII tags, approve or reject datasets'], ['privacy_reviewer', 'Review access, run subject requests'], ['legal_reviewer', 'Review restricted data, run subject requests'], ['sre', 'Operate serving, run chaos drills'], ['auditor', 'Read and verify the audit ledger, export evidence']].map(([k, w]) => `<tr><td>${named(k)}</td><td>${h(E.ROLES[k].name)}</td><td>${w}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>`;
+const INTEGRATIONS = [
+  ['Identity', 'Okta', 'SSO and SCIM', true], ['Warehouse', 'Snowflake', 'Catalog sync, row access policies', true], ['Lakehouse', 'Databricks Unity Catalog', 'Tags and lineage import', false],
+  ['Streaming', 'Apache Kafka', 'consent.events, policy.decisions', true], ['Storage', 'Amazon S3', 'Iceberg tables, Object Lock anchors', true], ['ML', 'MLflow', 'Model registry and cards', true],
+  ['SIEM', 'Splunk', 'Audit ledger stream', true], ['Ticketing', 'Jira', 'Access reviews as issues', false], ['ITSM', 'ServiceNow', 'Subject requests intake', false], ['Chat', 'Slack', 'Reviewer notifications', true],
+];
+VIEWS.integrations = () => head('Integrations', 'Custodian governs data where it already lives. Connect the systems your teams use.') + `
+  <div class="grid"><div class="card c12"><div class="integ">${INTEGRATIONS.map(([cat, n, what, on]) => `<div class="integ-item"><div class="row between"><b>${n}</b>${pill(on ? 'ok' : '', on ? 'Connected' : 'Available')}</div><span class="note">${cat}</span><p>${what}</p></div>`).join('')}</div></div></div>`;
+VIEWS.apikeys = () => head('API keys', 'Service credentials. Keys are scoped, short-lived where possible, and every use is audited.') + `
+  <div class="grid"><div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Name</th><th>Key</th><th>Scopes</th><th>Created</th><th>Last used</th></tr></thead><tbody>
+    ${[['Ad gateway', 'svc-ad-gateway', 'decide:ads_personalization read:consent', 41, 0], ['Ads trainer', 'svc-ads-trainer', 'read:ad_features_v7 purpose:model_training', 33, 1], ['Assistant trainer', 'svc-assistant-trainer', 'read:assistant_conversations_redacted purpose:model_training', 20, 2], ['SIEM export', 'svc-siem', 'read:audit', 90, 0]].map(([n, id, sc, c, u]) => `<tr><td>${n}<span class="id">${id}</span></td><td class="mono">cst_live_••••${id.length}${id.slice(-3)}</td><td class="mono">${sc}</td><td>${date(Date.now() - 864e5 * c)}</td><td>${u ? u + ' h ago' : 'just now'}</td></tr>`).join('')}
+  </tbody></table></div><p class="note">Client credentials grant. Tokens minted from these keys live 15 minutes and carry only the listed scopes.</p></div></div>`;
+VIEWS.residency = () => {
+  const eu = P.users.filter((u) => u.eu).length;
+  return head('Data residency', 'Where data is stored and processed. EU personal data stays in the EU.') + `
+  <div class="grid">
+    ${kpi('2', 'Regions', 'us-west, eu-west')}${kpi(fmt(eu), 'EU people', 'stored in lake-eu-west')}${kpi(fmt(P.users.length - eu), 'Other people', 'stored in lake-us-west')}${kpi('0', 'Cross-border transfers without a basis', 'blocked by policy', 'good')}
+    <div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Region</th><th>Bucket</th><th>Tables</th><th>Processing allowed in</th><th>Transfer basis</th></tr></thead><tbody>
+      <tr><td>EU (Ireland)</td><td class="mono">lake-eu-west</td><td>${Object.values(P.tables).filter((t) => t.bucket === 'lake-eu-west').length}</td><td>EU only</td><td>Standard contractual clauses, required per decision</td></tr>
+      <tr><td>US (Oregon)</td><td class="mono">lake-us-west</td><td>${Object.values(P.tables).filter((t) => t.bucket === 'lake-us-west').length}</td><td>US</td><td>n/a</td></tr>
+    </tbody></table></div></div>
+  </div>`;
+};
+
+/* ── notifications and command palette ── */
+function notifications() {
+  const out = attention().map((x) => ({ ...x, kind: 'task' }));
+  if (!P.policyUp || P.breaker.state !== 'closed') out.unshift({ t: 'Policy engine degraded', m: 'Serving is failing closed', go: 'serving', kind: 'alert' });
+  if (P.serving.violations) out.unshift({ t: 'Personalized output without an allow', m: 'Invariant broken', go: 'serving', kind: 'alert' });
+  if (S.audit.verify && !S.audit.verify.ok) out.unshift({ t: `Audit chain broken at #${S.audit.verify.brokenAt}`, m: 'Possible tampering', go: 'audit', kind: 'alert' });
+  return out;
+}
+function openBell(e) {
+  e.stopPropagation(); closePop();
+  const r = $('#btn-bell').getBoundingClientRect(), list = notifications();
+  const pop = document.createElement('div');
+  pop.className = 'popover wide'; pop.id = 'pop';
+  pop.style.top = r.bottom + 6 + 'px'; pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
+  pop.innerHTML = `<p class="pop-h">Notifications</p>` + (list.length ? list.map((x) => `<button data-go="${x.go}"${x.sel ? ` data-sel="${x.sel[0]}:${h(x.sel[1])}"` : ''}><span class="dotk ${x.kind}"></span><span>${h(x.t)}<small>${h(x.m)}</small></span></button>`).join('') : '<p class="pop-empty">You are all caught up.</p>');
+  pop.addEventListener('click', (ev) => { if (ev.target.closest('[data-go]')) setTimeout(closePop); });
+  document.body.appendChild(pop);
+}
+
+let palIndex = 0;
+function paletteItems(q) {
+  q = q.trim().toLowerCase();
+  const items = [];
+  for (const [k, t, tabs] of SECTIONS) for (const [v, tt] of tabs) items.push({ t: tabs.length > 1 ? `${t} › ${tt}` : t, kind: 'Page', go: v });
+  for (const d of P.datasets) items.push({ t: nm(d.id), sub: d.id, kind: 'Dataset', go: 'catalog', sel: ['dataset', d.id] });
+  for (const m of P.models) items.push({ t: E.mname(m), sub: E.WORKLOADS[m.workload].name, kind: 'Model', go: 'models', sel: ['model', E.mname(m)] });
+  for (const r of REGULATIONS) items.push({ t: r.name, sub: r.region, kind: 'Regulation', go: 'regulations' });
+  items.push({ t: 'Run the demo', kind: 'Action', act: 'demo' }, { t: 'Verify the audit chain', kind: 'Action', go: 'audit', act: 'verify' }, { t: 'Switch account', kind: 'Action', act: 'role' });
+  if (/^u_\d+$/.test(q) && P.userById.has(q)) items.unshift({ t: q, sub: P.userById.get(q).region, kind: 'Person', go: 'data', person: q });
+  return items.filter((x) => !q || (x.t + ' ' + (x.sub || '') + ' ' + x.kind).toLowerCase().includes(q)).slice(0, 9);
+}
+function openPalette() {
+  if ($('#pal')) return;
+  const back = document.createElement('div'); back.className = 'pal-back'; back.id = 'pal';
+  back.innerHTML = `<div class="pal"><label class="pal-in">${icon('search')}<input id="pal-q" placeholder="Search pages, datasets, models, people (u_000123)" autocomplete="off"><kbd>esc</kbd></label><div id="pal-list"></div></div>`;
+  document.body.appendChild(back);
+  const q = $('#pal-q'); palIndex = 0;
+  const draw = () => { const items = paletteItems(q.value); palIndex = Math.min(palIndex, Math.max(items.length - 1, 0)); $('#pal-list').innerHTML = items.map((x, i) => `<button class="pal-item${i === palIndex ? ' on' : ''}" data-i="${i}"><span>${h(x.t)}${x.sub ? `<small>${h(x.sub)}</small>` : ''}</span><em>${x.kind}</em></button>`).join('') || '<p class="pop-empty">No results</p>'; return items; };
+  let items = draw();
+  const pick = async (x) => {
+    closePalette(); if (!x) return;
+    if (x.sel) S.sel[x.sel[0]] = x.sel[1];
+    if (x.person) { S.data.user = x.person; S.data.tab = 'raw'; }
+    if (x.go) go(x.go);
+    if (x.act === 'demo') openActs();
+    if (x.act === 'verify') await ACTIONS.verify();
+    if (x.act === 'role') $('#btn-role').click();
+  };
+  q.addEventListener('input', () => { palIndex = 0; items = draw(); });
+  q.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { palIndex = Math.min(palIndex + 1, items.length - 1); draw(); e.preventDefault(); }
+    if (e.key === 'ArrowUp') { palIndex = Math.max(palIndex - 1, 0); draw(); e.preventDefault(); }
+    if (e.key === 'Enter') pick(items[palIndex]);
+    if (e.key === 'Escape') closePalette();
+  });
+  back.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) return pick(items[+b.dataset.i]); if (e.target === back) closePalette(); });
+  q.focus();
+}
+function closePalette() { const p = $('#pal'); if (p) p.remove(); }
 
 /* ── compliance ── */
 const MATRIX = [
@@ -830,7 +1001,7 @@ const MATRIX = [
   ['No profiling ads to minors', 'DSA Art. 28(2); COPPA', 'Age range from the OS; unknown age treated as a minor; minor_no_profiling rule', 'policy', 'Decision log'],
   ['Training consent', 'GDPR Art. 6; CPRA 1798.121; EU AI Act Art. 10', 'Per-user model_training consent checked at the training gate', 'training', 'Exclusion report in model card'],
 ];
-VIEWS.compliance = () => head('Controls', 'Control, the regulation it answers, how the platform implements it, and where the evidence lives. Click a row to open the control.') + `
+VIEWS.compliance = () => head('Controls', 'Each control, the law it answers, how it works, and where the evidence is. Select a row to open it.') + `
   <div class="grid"><div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Control</th><th>Regulation</th><th>Implementation</th><th>Evidence</th></tr></thead><tbody>
   ${MATRIX.map(([c, r, i, v, e]) => `<tr class="click" data-go="${v}"><td><b>${c}</b></td><td>${r}</td><td>${i}</td><td>${e}</td></tr>`).join('')}
   </tbody></table></div></div>
@@ -853,6 +1024,21 @@ function startTraffic() {
   }, 500);
   setInterval(() => { S.series.push(bucket); if (S.series.length > 120) S.series.shift(); bucket = { personalized: 0, contextual: 0, fallback: 0 }; }, 1000);
   setInterval(() => { P.ledger.anchor(); }, 30000);
+  // Organic consent changes from people using the apps, through the same outbox, topic and cache.
+  const churn = async () => {
+    if (!S.traffic) return;
+    const keep = new Set(featuredUsers().map((u) => u.id));
+    const u = P.users[Math.floor(Math.random() * P.users.length)];
+    if (keep.has(u.id) || !P.userById.has(u.id)) return;
+    const cur = P.consent.snapshot(u.id).ads_personalization;
+    await P.setConsent(u.id, 'ads_personalization', cur === 'granted' ? 'denied' : 'granted', 'personalized_ads_toggle');
+    await sleep(150 + Math.random() * 350);
+    const msgs = P.relayOutbox();
+    await sleep(300 + Math.random() * 1400);
+    for (const m of msgs) P.applyToCache(m);
+  };
+  churn(); setTimeout(churn, 400);
+  setInterval(churn, 2600);
 }
 
 /* ───────────────────────── events ───────────────────────── */
@@ -887,9 +1073,19 @@ document.addEventListener('change', async (e) => {
   }
   if (t.dataset.consent) changeConsent(t.dataset.consent, t.checked);
 });
-document.addEventListener('input', (e) => { if (e.target.dataset.bind === 'newDs') S.newDs = e.target.value; });
+document.addEventListener('input', (e) => {
+  if (e.target.dataset.bind === 'newDs') S.newDs = e.target.value;
+  if (e.target.dataset.filter) { F[e.target.dataset.filter] = e.target.value; render(); }
+});
 
 const ACTIONS = {
+  'as-auditor': () => signIn('auditor'),
+  export: (t) => {
+    const k = t.dataset.key, rows = EXPORTS[k] ? EXPORTS[k]() : [];
+    const url = URL.createObjectURL(new Blob([csv(rows)], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = `custodian-${k}-${date(Date.now())}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`Exported ${fmt(Math.max(rows.length - 1, 0))} rows`);
+  },
   chaos: async () => {
     P.policyUp = !P.policyUp;
     if (P.policyUp) P.breaker = { state: 'half-open', failures: 0, openedAt: 0 };
@@ -1089,6 +1285,10 @@ async function runAct(i) {
   finally { S.act = null; if (narr) { narr.querySelector('button').textContent = 'Close'; } }
 }
 $('#btn-demo').addEventListener('click', openActs);
+$('#btn-search').addEventListener('click', openPalette);
+$('#btn-bell').addEventListener('click', openBell);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePop(); });
+document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k' && !$('#app').hidden) { e.preventDefault(); openPalette(); } });
 
 /* ───────────────────────── start ───────────────────────── */
 
