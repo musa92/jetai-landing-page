@@ -20,3 +20,10 @@ narrates at the bottom; **Stop** ends an act, **Reset** restores the start state
 Manual controls if you want to drive it: Consent view toggles, Serving view
 chaos button (role `sre`), Policy studio simulator and shadow diff, Audit view
 tamper and verify (role `auditor`).
+
+## Extra screens worth opening live
+
+- **Operations > Dashboard:** Grafana-style panels with a 1h/24h/7d/30d picker; hover for exact values. Kill the policy engine and the fallback panel spikes.
+- **Risk:** register with heat map, DPIA and AI impact assessments with role sign-off, vendor register, incidents with the 72 hour clock (opened automatically by chaos or tampering), and one-click regulator reports.
+- **Data > Catalog:** saved views, bulk approve, and a slide-over panel per dataset with Overview, Activity (from the ledger) and Access.
+- **Account menu > Dark appearance.**
