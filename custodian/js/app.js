@@ -2,7 +2,6 @@
    scripted demo acts. Plain ES modules, no build step. */
 import * as E from './engine.js?v=20261022-3';
 
-const PW_HASH = '1e7228eb5d5a198e09fefac19468f791202bc1f23c74a0356444ac9de025531b'; // sha256('custodian:' + password)
 const $ = (s, r = document) => r.querySelector(s);
 const h = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (n) => Number(n).toLocaleString('en-US');
@@ -34,19 +33,10 @@ const S = {
 
 /* ───────────────────────── boot: gate, sign-in ───────────────────────── */
 
-async function sha(text) { return E.sha256(text); }
-
-function showGate() { $('#gate').hidden = false; $('#signin').hidden = true; $('#app').hidden = true; $('#gate-pw').focus(); }
 function showSignin() {
-  $('#gate').hidden = true; $('#signin').hidden = false; $('#app').hidden = true;
+  $('#signin').hidden = false; $('#app').hidden = true;
   $('#who').innerHTML = Object.entries(E.ROLES).map(([k, r]) => `<button data-signin="${k}"><span class="av">${initials(r.name)}</span><span><b>${h(r.name)}</b><span>${h(r.title)} · <code>${k}</code></span></span><i>›</i></button>`).join('');
 }
-$('#gate-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const pw = $('#gate-pw').value.trim().toLowerCase(); // forgiving: stray spaces, autocapitalize
-  if ((await sha('custodian:' + pw)) === PW_HASH) { store.set('custodian.gate', '1'); showSignin(); }
-  else { $('#gate-err').textContent = 'Incorrect password.'; const f = $('#gate-form'); f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); $('#gate-pw').select(); }
-});
 $('#who').addEventListener('click', (e) => { const b = e.target.closest('[data-signin]'); if (b) signIn(b.dataset.signin); });
 
 async function signIn(role, quiet) {
@@ -55,7 +45,7 @@ async function signIn(role, quiet) {
   S.token = await E.issueToken({ sub: r.name.toLowerCase().replace(' ', '.'), name: r.name, roles: [role], aud: 'custodian-console', amr: ['pwd', 'otp'] }, 900);
   if (P) await P.ledger.append('auth.login', S.token.claims.sub, { role, client: 'custodian-console', flow: 'authorization_code+pkce' });
   if (!quiet) toast(`Signed in as ${r.name}, ${r.title.toLowerCase()}`);
-  $('#gate').hidden = true; $('#signin').hidden = true; $('#app').hidden = false;
+  $('#signin').hidden = true; $('#app').hidden = false;
   if (!P) await boot();
   renderChrome(); render();
 }
@@ -853,7 +843,7 @@ $('#btn-role').addEventListener('click', (e) => {
     const b = ev.target.closest('[data-role]'); if (!b) return;
     closePop();
     if (b.dataset.role === '__out') { store.del('custodian.role'); return showSignin(); }
-    if (b.dataset.role === '__lock') { store.del('custodian.role'); store.del('custodian.gate'); $('#gate-pw').value = ''; return showGate(); }
+    if (b.dataset.role === '__lock') { store.del('custodian.role'); location.href = '/custodian/__logout'; return; }
     signIn(b.dataset.role);
   });
   document.body.appendChild(pop);
@@ -982,7 +972,6 @@ $('#btn-demo').addEventListener('click', openActs);
 /* ───────────────────────── start ───────────────────────── */
 
 (async () => {
-  if (store.get('custodian.gate') !== '1') return showGate();
   const role = store.get('custodian.role');
   if (role && E.ROLES[role]) return signIn(role, true);
   showSignin();

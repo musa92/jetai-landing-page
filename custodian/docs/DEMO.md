@@ -1,6 +1,6 @@
 # Live demo runbook (10 to 12 minutes)
 
-Open https://www.turbnetic.ai/custodian/, enter the password (custodian-demo), sign in as any
+Open https://www.turbnetic.ai/custodian/, enter the password (set in Netlify, never in the repo), sign in as any
 role. Press **Demo** for the act list. Each act switches accounts by itself and
 narrates at the bottom; **Stop** ends an act, **Reset** restores the start state.
 

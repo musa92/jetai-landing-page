@@ -30,8 +30,13 @@ substituted:
 | Audit ledger | SHA-256 hash chain, Merkle roots, HMAC pseudonyms (WebCrypto) | Postgres append-only table, roots to S3 Object Lock |
 | Identity | HS256 JWT-shaped tokens, RFC 8693 exchange shape | Keycloak OIDC, client credentials, token exchange |
 
-The password gate is client-side and keeps the link private; it is not a
-security boundary. Synthetic users only (10,000, seeded).
+Access is gated server-side by a Netlify Edge Function
+(`netlify/edge-functions/custodian-gate.js`): without a session cookie, no
+HTML, JS or docs under `/custodian/` are served, only a login page. The
+password lives only in the `CUSTODIAN_PASSWORD` environment variable in Netlify;
+the session is an HttpOnly cookie signed with HMAC-SHA256 and expires after 12
+hours. If the variable is unset the demo stays locked. Locally (plain static
+server) there is no gate. Synthetic users only (10,000, seeded).
 
 ## Run locally
 
@@ -42,8 +47,8 @@ npm test                        # from custodian/: 12 engine tests
 opa test policies/              # if OPA is installed
 ```
 
-Change the password: `node scripts/set-password.mjs "new password"` and paste
-the hash into `PW_HASH` in `js/app.js`.
+Change the password: Netlify, Site configuration, Environment variables,
+`CUSTODIAN_PASSWORD`, then redeploy. Everyone is signed out.
 
 ## Layout
 
