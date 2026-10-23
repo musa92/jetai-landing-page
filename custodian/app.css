@@ -285,3 +285,55 @@ code, .mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0; }
 .seg button { border: 0; background: none; height: 28px; padding: 0 12px; border-radius: 7px; font-size: 13px; color: var(--ink); }
 .seg button.on { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); font-weight: 600; }
 .table td.mono { white-space: nowrap; }
+
+/* ── enterprise shell: sections, tabs, home ── */
+.workspace { margin: 0 4px 14px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.6); border: 1px solid var(--hair); }
+.workspace b { display: block; font-size: 13px; font-weight: 600; }
+.workspace span { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.workspace span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #34c759; }
+.nav-item { padding: 8px 10px; font-size: 14px; }
+.nav-item .count.alert { color: #fff; background: #ff3b30; border-radius: 980px; padding: 0 6px; font-weight: 600; }
+.health { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #34c759; margin-right: 6px; }
+.health.bad { background: #ff3b30; }
+.tabs-wrap { max-width: 1180px; margin: -8px auto 22px; }
+.hello { max-width: 1180px; margin: 4px auto 24px; }
+.hello h1 { font: 600 34px/1.12 var(--display); letter-spacing: 0.004em; }
+.hello p { margin-top: 6px; font-size: 17px; color: var(--ink-2); }
+.inbox { display: grid; }
+.inbox-item { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border: 0; border-top: 1px solid var(--hair); background: none; text-align: left; border-radius: 0; }
+.inbox-item:first-child { border-top: 0; }
+.inbox-item:hover { background: #fafafc; }
+.inbox-item b { display: block; font-size: 14px; font-weight: 600; }
+.inbox-item span span { display: block; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.inbox-item > span { flex: 1; min-width: 0; }
+.inbox-item i { font-style: normal; color: var(--ink-3); font-size: 18px; }
+.empty { padding: 28px 8px; text-align: center; color: var(--ink-2); font-size: 14px; }
+.empty b { display: block; font: 600 17px/1.3 var(--display); color: var(--ink); margin-bottom: 4px; }
+.checks { list-style: none; display: grid; gap: 2px; }
+.checks li { display: flex; align-items: center; gap: 10px; padding: 8px 4px; font-size: 13px; border-radius: 8px; cursor: pointer; }
+.checks li:hover { background: #fafafc; }
+.tick { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; }
+.tick.ok { background: #34c759; }
+.tick.no { background: #ff9f0a; }
+.feed { list-style: none; display: grid; }
+.feed li { display: grid; grid-template-columns: 72px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--hair); font-size: 13px; }
+.feed li:first-child { border-top: 0; }
+.feed .when { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.feed b { font-weight: 600; }
+.view-head h1 { font-size: 24px; }
+
+/* regulations */
+.timeline { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.tl { border: 1px solid var(--hair); border-radius: 12px; padding: 12px; background: #fafafc; font-size: 12px; }
+.tl-date { display: block; font-weight: 600; color: var(--blue); font-variant-numeric: tabular-nums; }
+.tl b { display: block; margin-top: 4px; font-size: 13px; }
+.tl span:last-child { display: block; margin-top: 2px; color: var(--ink-2); }
+.regs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.reg { border: 1px solid var(--hair); border-radius: 14px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.reg b { font: 600 15px/1.3 var(--display); }
+.reg p { font-size: 13px; color: var(--ink-2); }
+.dates { list-style: none; display: grid; gap: 4px; font-size: 12px; }
+.dates li { display: grid; grid-template-columns: 84px 1fr; gap: 8px; color: var(--ink-2); }
+.dates li span { font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.dates li.future span { color: var(--blue); font-weight: 600; }
+.pill.ctrl { border: 0; cursor: pointer; }

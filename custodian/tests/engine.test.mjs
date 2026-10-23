@@ -35,7 +35,7 @@ test('EU users need opt-in, GPC users are excluded, EU data stays in EU', () => 
   const base = { principal: { sub: 'svc' }, purpose: 'ads_personalization', dataset: ds, processing_region: 'US', grant: true };
   const eu = { id: 'x', eu: true, region: 'EU-DE', gpc: false, att: 'authorized', consent: { ads_personalization: 'denied' } };
   assert.ok(decide({ ...base, user: eu }).reasons.some((r) => r.code === 'gdpr_no_opt_in'));
-  const ca = { id: 'y', eu: false, region: 'US-CA', gpc: true, att: 'authorized', consent: { ads_personalization: 'granted' } };
+  const ca = { id: 'y', eu: false, region: 'US-CA', age_band: '18_plus', gpc: true, att: 'authorized', consent: { ads_personalization: 'granted' } };
   assert.ok(decide({ ...base, user: ca }).reasons.some((r) => r.code === 'gpc_signal'));
   const euds = { ...p.dataset('ad_features_v7_eu') };
   assert.ok(decide({ ...base, dataset: euds, processing_region: 'US' }).reasons.some((r) => r.code === 'eu_transfer_blocked'));
@@ -105,7 +105,7 @@ test('erasure removes the user from time travel, flags models, and is idempotent
 
 test('consent change propagates through outbox, bus and cache', async () => {
   const p = P();
-  const ca = p.users.find((u) => u.region === 'US-CA' && !u.gpc && u.personalizedAdsToggle && u.att === 'authorized');
+  const ca = p.users.find((u) => u.region === 'US-CA' && !u.gpc && u.personalizedAdsToggle && u.att === 'authorized' && u.age_band === '18_plus');
   assert.equal((await p.serve(ca.id)).mode, 'personalized');
   await p.setConsent(ca.id, 'ads_personalization', 'denied', 'GPC_signal', { gpc: true });
   const msgs = p.relayOutbox();
@@ -128,4 +128,14 @@ test('a second workload (assistant LLM) trains through the same gate with its ow
   assert.equal(r.model.version, 2);
   const raw = await p.train({ principal: 'svc-assistant-trainer', datasetId: 'assistant_conversations', purpose: 'model_training' });
   assert.equal(raw.ok, false);
+});
+
+test('minors and unknown ages never get profiling-based ads', () => {
+  const p = P();
+  const ds = p.dataset('ad_features_v7');
+  for (const age_band of ['under_13', '13_17', 'unknown']) {
+    const u = { id: 'm', eu: false, region: 'US-TX', gpc: false, att: 'authorized', age_band, consent: { ads_personalization: 'granted' } };
+    const d = decide({ principal: { sub: 'svc' }, purpose: 'ads_personalization', dataset: ds, processing_region: 'US', grant: true, user: u });
+    assert.ok(d.reasons.some((r) => r.code === 'minor_no_profiling'), age_band);
+  }
 });

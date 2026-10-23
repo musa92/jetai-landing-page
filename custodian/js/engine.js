@@ -98,6 +98,8 @@ export function generateUsers(n, seed = 7) {
       personalizedAdsToggle: r() < (eu ? 0.41 : 0.78),       // OS-level personalized ads setting
       gpc: region.code === 'US-CA' ? r() < 0.11 : r() < 0.03, // Global Privacy Control header seen
       services: r() < 0.55 ? ['maps', 'news'] : ['maps'],
+      // Age range shared by the OS (declared or verified), never a birthdate.
+      age_band: (() => { const a = r(); return a < 0.015 ? 'under_13' : a < 0.07 ? '13_17' : a < 0.075 ? 'unknown' : '18_plus'; })(),
       events: 20 + Math.floor(r() * 400),
     });
   }
@@ -215,6 +217,7 @@ const RULES_V14 = [
   (i) => i.user && ADS(i.purpose) && !i.user.eu && i.user.gpc && R('ccpa.gpc', 'gpc_signal', 'Global Privacy Control is an opt-out of sharing for cross-context behavioral ads.', 'CCPA 1798.120, 1798.135; Regs 7025'),
   (i) => i.user && ADS(i.purpose) && !i.user.eu && !i.user.gpc && i.user.consent.ads_personalization === 'denied' && R('ccpa.opt_out', 'ccpa_opt_out', 'User opted out of sale or sharing.', 'CCPA 1798.120'),
   (i) => i.user && ADS(i.purpose) && i.user.eu && (i.dataset.sources || []).length > 1 && i.user.consent.cross_service_combination !== 'granted' && R('dma.combination', 'dma_no_combination_consent', `Combining ${i.dataset.sources.join(' + ')} data for ads needs explicit consent.`, 'DMA Art. 5(2)'),
+  (i) => i.user && ADS(i.purpose) && i.user.age_band !== '18_plus' && R('minors.no_profiling', 'minor_no_profiling', `Age range ${i.user.age_band}: no profiling-based personalization for minors; unknown age is treated as a minor.`, 'DSA Art. 28(2); COPPA 16 CFR 312'),
   (i) => i.user && i.dataset.uses_idfa && i.user.att !== 'authorized' && R('att.idfa', 'att_denied', 'Tracking authorization denied: the advertising identifier cannot be used.', 'Platform policy (ATT)'),
   (i) => i.user && i.purpose === 'model_training' && i.user.eu && i.user.consent.model_training !== 'granted' && R('gdpr.training', 'gdpr_no_training_consent', 'EU user has not consented to their data training models.', 'GDPR Art. 6(1)(a); EU AI Act Art. 10'),
   (i) => i.user && i.purpose === 'model_training' && !i.user.eu && i.user.consent.model_training === 'denied' && R('training.opt_out', 'training_opt_out', 'User opted out of model training.', 'CPRA 1798.121 (limit use)'),
@@ -439,7 +442,7 @@ export class Platform {
   dataset(id) { return this.datasets.find((d) => d.id === id); }
 
   userInput(u, consent) {
-    return { id: u.id, region: u.region, eu: u.eu, gpc: u.gpc, att: u.att, consent };
+    return { id: u.id, region: u.region, eu: u.eu, gpc: u.gpc, att: u.att, age_band: u.age_band, consent };
   }
 
   hasGrant(principal, datasetId, purpose, region) {

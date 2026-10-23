@@ -1,6 +1,7 @@
 /* Custodian console: renders engine.js state, runs live traffic, and drives the
    scripted demo acts. Plain ES modules, no build step. */
-import * as E from './engine.js?v=20261022-3';
+import * as E from './engine.js?v=20261023-2';
+import { REGULATIONS, WATCH, PATTERNS } from './regulations.js?v=20261023-1';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -54,40 +55,66 @@ async function boot() {
   P = new E.Platform({ users: 10000 });
   await P.ledger.append('platform.start', 'system', { users: P.users.length, policy: 'ads-1.4.0' });
   for (const d of P.datasets) await P.ledger.append('catalog.registered', 'data-steward', { dataset: d.id, classification: d.classification });
+  await seedWork();
   P.ledger.listeners.push(() => { if (S.view === 'audit') scheduleRender(); });
-  S.consentUser = pickUser((u) => u.region === 'US-CA' && !u.gpc && u.personalizedAdsToggle && u.att === 'authorized').id;
+  S.consentUser = pickUser((u) => u.region === 'US-CA' && !u.gpc && u.personalizedAdsToggle && u.att === 'authorized' && u.age_band === '18_plus').id;
   S.sim.user = S.consentUser;
   S.agent.user = S.consentUser;
   S.data.user = S.consentUser;
   startTraffic();
 }
 
+/* Open work so the console starts mid-day, not empty: a dataset waiting for its
+   steward and an access request waiting for privacy review. */
+async function seedWork() {
+  const scan = E.scanPII([{ name: 'user_id', sample: 'u_000812' }, { name: 'query_text', sample: 'pharmacy open now' }, { name: 'result_rank', sample: '3' }, { name: 'clicked', sample: 'true' }]);
+  P.datasets.push({ id: 'search_clicks_v3', layer: 'raw', owner: 'growth-analytics', steward: 'Luis Ortega', classification: scan.classification, pii: scan.tags, region: 'US', allowed_purposes: ['analytics'], retention_days: 90, sources: ['maps'], status: 'pending', legal_basis: 'legitimate_interest', bucket: 'lake-us-west', workload: 'search_quality', scan });
+  await P.ledger.append('catalog.registered', 'dev.patel', { dataset: 'search_clicks_v3', classification: scan.classification, proposed_tags: scan.tags });
+  const q = E.newAccessRequest(P, { requester: 'dev.patel', dataset: 'assistant_conversations_redacted', purpose: 'model_training', region: 'US', days: 30, justification: 'Evaluate a smaller assistant model on redacted conversations.' });
+  q.opened = Date.now() - 864e5 * 2;
+  q.precheck = E.decide({ principal: { sub: 'dev.patel' }, purpose: 'model_training', dataset: P.dataset('assistant_conversations_redacted'), processing_region: 'US', grant: true });
+  q.steps[0].state = 'done'; q.steps[0].detail = 'Policy allows the request as asked. Routed to privacy review for the grant.';
+  await P.ledger.append('access.requested', 'dev.patel', { request: q.id, dataset: q.dataset, purpose: q.purpose });
+}
+
 /* ───────────────────────── chrome ───────────────────────── */
 
-const NAV = [
-  ['Monitor', [['overview', 'Overview'], ['serving', 'Serving gateway'], ['consent', 'Consent']]],
-  ['Govern', [['data', 'Data explorer'], ['catalog', 'Catalog'], ['access', 'Access requests'], ['policy', 'Policy studio'], ['lineage', 'Lineage']]],
-  ['Machine learning', [['training', 'Training gate'], ['models', 'Models']]],
-  ['Rights and evidence', [['dsr', 'Data subject requests'], ['audit', 'Audit ledger'], ['agent', 'Agent access']]],
-  ['Reference', [['compliance', 'Compliance matrix']]],
+const SECTIONS = [
+  ['home', 'Home', [['overview', 'Overview']]],
+  ['data', 'Data', [['data', 'Explorer'], ['catalog', 'Catalog'], ['lineage', 'Lineage']]],
+  ['access', 'Access', [['access', 'Requests'], ['policy', 'Policies'], ['agent', 'Agents']]],
+  ['privacy', 'Privacy', [['consent', 'Consent'], ['dsr', 'Subject requests']]],
+  ['models', 'Models', [['models', 'Registry'], ['training', 'Training gate']]],
+  ['ops', 'Operations', [['serving', 'Serving'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
+  ['trust', 'Trust', [['regulations', 'Regulations'], ['compliance', 'Controls'], ['audit', 'Audit ledger']]],
 ];
-const TITLES = Object.fromEntries(NAV.flatMap(([, items]) => items));
+const SECTION_OF = Object.fromEntries(SECTIONS.flatMap(([k, , tabs]) => tabs.map(([v]) => [v, k])));
+const TITLES = Object.fromEntries(SECTIONS.flatMap(([, , tabs]) => tabs));
 
 function counts() {
+  const mine = attention().length;
   return {
-    catalog: P.datasets.filter((d) => d.status === 'pending').length || '',
+    home: mine || '',
+    data: P.datasets.filter((d) => d.status === 'pending').length || '',
     access: P.accessRequests.filter((r) => r.status === 'open').length || '',
-    dsr: P.dsrs.filter((d) => d.status !== 'completed').length || '',
-    audit: fmt(P.ledger.entries.length),
+    privacy: P.dsrs.filter((d) => d.status !== 'completed').length || '',
+    models: P.models.filter((m) => m.status === 'retrain_required').length || '',
+    ops: !P.policyUp || P.breaker.state !== 'closed' ? '!' : '',
   };
 }
 function renderChrome() {
-  const c = counts();
-  $('#nav').innerHTML = NAV.map(([sec, items]) => `<h6>${sec}</h6>` + items.map(([k, t]) => `<button class="nav-item${S.view === k ? ' on' : ''}" data-go="${k}">${t}<span class="count">${c[k] ?? ''}</span></button>`).join('')).join('');
+  const c = counts(), cur = SECTION_OF[S.view];
+  $('#nav').innerHTML = SECTIONS.map(([k, t, tabs]) => `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${tabs[0][0]}">${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`).join('');
   const r = E.ROLES[S.role];
   $('#btn-role').innerHTML = `<span class="av">${initials(r.name)}</span>${h(r.name.split(' ')[0])} <small>${h(r.title)}</small>`;
-  $('#bar-title').textContent = TITLES[S.view];
-  $('#side-foot').innerHTML = `Policy <b>ads-1.4.0</b> live, 1.5.0 shadow<br>${fmt(P.users.length)} synthetic users<br>Token expires ${time(S.token.claims.exp * 1000)}`;
+  $('#bar-title').textContent = SECTIONS.find(([k]) => k === cur)[1];
+  const healthy = P.policyUp && P.breaker.state === 'closed' && P.serving.violations === 0;
+  $('#side-foot').innerHTML = `<span class="health ${healthy ? '' : 'bad'}"></span>${healthy ? 'All controls healthy' : 'Attention needed'}<br>Policy ads-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
+}
+function tabsBar() {
+  const sec = SECTIONS.find(([k]) => k === SECTION_OF[S.view]);
+  if (!sec || sec[2].length < 2) return '';
+  return `<div class="tabs-wrap"><div class="seg">${sec[2].map(([v, t]) => `<button class="${S.view === v ? 'on' : ''}" data-go="${v}">${t}</button>`).join('')}</div></div>`;
 }
 
 function go(view) { S.view = view; $('#side').classList.remove('open'); renderChrome(); render(); $('#view').scrollTop = 0; }
@@ -99,11 +126,11 @@ function scheduleRender() { if (renderQueued) return; renderQueued = true; reque
 function render() {
   const v = $('#view');
   const st = v.scrollTop;
-  v.innerHTML = VIEWS[S.view]();
+  v.innerHTML = tabsBar() + VIEWS[S.view]();
   v.scrollTop = st;
   AFTER[S.view] && AFTER[S.view]();
 }
-const LIVE = new Set(['overview', 'serving']);
+const LIVE = new Set(['overview', 'serving', 'insights']);
 setInterval(() => {
   if (!P || $('#app').hidden) return;
   const a = document.activeElement;
@@ -127,7 +154,7 @@ function pickUser(fn) { return P.users.find(fn) || P.users[0]; }
 function userLabel(u) { return `${u.id} · ${u.region}`; }
 function featuredUsers() {
   const picks = [
-    P.users.find((u) => u.region === 'US-CA' && !u.gpc && u.personalizedAdsToggle && u.att === 'authorized'),
+    P.users.find((u) => u.region === 'US-CA' && !u.gpc && u.personalizedAdsToggle && u.att === 'authorized' && u.age_band === '18_plus'),
     P.users.find((u) => u.region === 'US-CA' && u.gpc),
     P.users.find((u) => u.eu && u.personalizedAdsToggle && u.att === 'authorized'),
     P.users.find((u) => u.eu && !u.personalizedAdsToggle),
@@ -143,35 +170,100 @@ const userOptions = (sel) => featuredUsers().map((u) => `<option value="${u.id}"
 const VIEWS = {};
 const AFTER = {};
 
+/* ── home: what needs me, are controls green, what just happened ── */
+function attention() {
+  const out = [], r = S.role;
+  if (r === 'data_steward') for (const d of P.datasets.filter((x) => x.status === 'pending')) out.push({ t: `Review ${d.id}`, m: `New dataset, scanner proposed ${d.classification}`, go: 'catalog', sel: ['dataset', d.id] });
+  for (const q of P.accessRequests.filter((x) => x.status === 'open')) {
+    const cur = q.steps.find((s) => s.state === 'pending');
+    if (cur && cur.role === r) out.push({ t: `${q.id}: ${cur.name.toLowerCase()}`, m: `${q.requester} wants ${q.dataset} for ${q.purpose}`, go: 'access', sel: ['request', q.id] });
+  }
+  if (r === 'privacy_reviewer' || r === 'legal_reviewer') for (const d of P.dsrs.filter((x) => x.status !== 'completed')) out.push({ t: `Erasure ${d.idem}`, m: `Due ${date(d.due)}`, go: 'dsr', sel: ['dsr', d.idem] });
+  if (r === 'ml_engineer') {
+    for (const m of P.models.filter((x) => x.status === 'retrain_required')) out.push({ t: `Retrain ${E.mname(m)}`, m: 'An erased user was in its training data', go: 'models', sel: ['model', E.mname(m)] });
+    const ds = P.datasets.find((d) => d.id === S.newDs && d.status === 'approved') && !P.accessRequests.some((q) => q.dataset === S.newDs);
+    if (ds) out.push({ t: `Request access to ${S.newDs}`, m: 'Approved by the steward, no grant yet', go: 'catalog', sel: ['dataset', S.newDs] });
+  }
+  if (r === 'sre' && (!P.policyUp || P.breaker.state !== 'closed')) out.push({ t: 'Policy service degraded', m: 'Gateway is failing closed to non-personalized serving', go: 'serving' });
+  if (r === 'auditor' && !(S.audit.verify && S.audit.verify.ok)) out.push({ t: 'Verify the audit chain', m: `${fmt(P.ledger.entries.length)} entries since last verification`, go: 'audit' });
+  return out;
+}
+
+const ACTIVITY = {
+  'auth.login': (e) => `signed in as ${e.payload.role.replace('_', ' ')}`,
+  'catalog.registered': (e) => `registered ${e.payload.dataset} as ${e.payload.classification}`,
+  'catalog.approved': (e) => `approved ${e.payload.dataset}`,
+  'catalog.rejected': (e) => `rejected ${e.payload.dataset}`,
+  'access.requested': (e) => `requested ${e.payload.dataset} for ${e.payload.purpose}`,
+  'access.precheck': (e) => `pre-checked ${e.payload.request}: ${e.payload.allow ? 'allowed' : 'needs review'}`,
+  'access.approved': (e) => `approved the ${e.payload.step} review of ${e.payload.request}`,
+  'access.rejected': (e) => `rejected ${e.payload.request}`,
+  'access.granted': (e) => `granted ${e.payload.dataset} until ${e.payload.expires}`,
+  'access.revoked': (e) => `revoked ${e.payload.grant} at expiry`,
+  'policy.decision': (e) => `${e.payload.allow ? 'allowed' : 'denied'} ${e.payload.purpose} on ${e.payload.dataset}${e.payload.reasons.length ? ' (' + e.payload.reasons.join(', ') + ')' : ''}`,
+  'consent.change': (e) => `recorded ${e.payload.purpose} ${e.payload.status} from ${e.payload.source}`,
+  'model.registered': (e) => `registered ${e.payload.model}`,
+  'dsr.opened': () => 'opened an erasure request',
+  'dsr.step': (e) => `completed erasure step ${e.payload.step}`,
+  'dsr.completed': () => 'completed an erasure, evidence signed',
+  'dsr.rerun': () => 're-ran an erasure: no-op',
+  'chaos.killed': () => 'killed the policy service (chaos)',
+  'chaos.restored': () => 'restored the policy service',
+  'token.exchange': () => 'received a delegated token',
+  'agent.tool_call': (e) => `${e.payload.allow ? 'was allowed' : 'was denied'} tool ${e.payload.tool}`,
+  'platform.start': () => 'started the platform',
+};
+
 VIEWS.overview = () => {
-  const ds = P.datasets, classified = ds.filter((d) => d.status !== 'pending').length;
-  const openDsr = P.dsrs.filter((d) => d.status !== 'completed');
-  const lat = P.decisions.map((d) => d.decision.latency_ms).sort((a, b) => a - b);
-  const p99 = lat.length ? lat[Math.floor(lat.length * 0.99)] : 0;
+  const r = E.ROLES[S.role], hr = new Date().getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+  const items = attention();
   const lags = P.propagationLags.slice().sort((a, b) => a - b);
   const p95 = lags.length ? lags[Math.floor(lags.length * 0.95)] : null;
+  const openDsr = P.dsrs.filter((d) => d.status !== 'completed');
+  const s = P.serving, total = s.personalized + s.contextual;
+  const checks = [
+    ['Every dataset classified and approved', P.datasets.every((d) => d.status !== 'pending'), 'catalog'],
+    ['No personalized output without an allow', s.violations === 0, 'serving'],
+    ['Policy service healthy', P.policyUp && P.breaker.state === 'closed', 'serving'],
+    ['Consent reaches serving inside 5 s', p95 === null || p95 < 5000, 'consent'],
+    ['Subject requests inside SLA', openDsr.every((d) => d.due > Date.now()), 'dsr'],
+    ['Audit chain verified this session', !!(S.audit.verify && S.audit.verify.ok), 'audit'],
+  ];
+  const recent = P.ledger.entries.filter((e) => e.type !== 'policy.decision' || e.actor !== 'svc-ad-gateway').slice(-8).reverse();
+  return `<div class="hello"><h1>${greet}, ${h(r.name.split(' ')[0])}.</h1><p>${items.length ? `${items.length} item${items.length > 1 ? 's' : ''} need${items.length > 1 ? '' : 's'} you today.` : 'Nothing needs you right now.'}</p></div>
+  <div class="grid">
+    <div class="card c8"><h3>Needs your attention</h3>${items.length ? `<div class="inbox">${items.map((x) => `<button class="inbox-item" data-go="${x.go}"${x.sel ? ` data-sel="${x.sel[0]}:${h(x.sel[1])}"` : ''}><span><b>${h(x.t)}</b><span>${h(x.m)}</span></span><i>›</i></button>`).join('')}</div>` : `<div class="empty"><b>You're all caught up.</b>Approvals, reviews and incidents for your role appear here.</div>`}</div>
+    <div class="card c4"><h3>Controls</h3><ul class="checks">${checks.map(([t, ok, go]) => `<li data-go="${go}"><span class="tick ${ok ? 'ok' : 'no'}">${ok ? '✓' : '!'}</span>${t}</li>`).join('')}</ul></div>
+    ${kpi(s.violations, 'Personalized without allow', 'target: exactly zero', s.violations ? 'bad' : 'good')}
+    ${kpi(p95 === null ? 'n/a' : (p95 / 1000).toFixed(1) + ' s', 'Consent propagation p95', 'target: under 5 s')}
+    ${kpi(pct(s.personalized, total), 'Requests personalized', `${fmt(total)} served this session`)}
+    ${kpi(openDsr.length, 'Open subject requests', openDsr.length ? `next due ${date(Math.min(...openDsr.map((d) => d.due)))}` : 'all closed inside SLA')}
+    <div class="card c12"><h3>Governed AI workloads</h3><div class="scroll-x"><table class="table"><thead><tr><th>Workload</th><th>Consent checked per user</th><th>Datasets</th><th>Models</th><th>Owner</th></tr></thead><tbody>${Object.entries(E.WORKLOADS).map(([k, w]) => `<tr><td><b>${w.name}</b></td><td class="mono">${w.userPurpose}</td><td>${P.datasets.filter((d) => d.workload === k).length}</td><td class="mono">${P.models.filter((m) => m.workload === k).map(E.mname).join(', ') || 'none'}</td><td>${w.owner}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card c12"><h3>Recent activity <span class="right"><a href="#" data-go="audit">Audit ledger ›</a></span></h3><ul class="feed">${recent.map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(e.actor)}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}</span></li>`).join('')}</ul></div>
+  </div>`;
+};
+
+VIEWS.insights = () => {
   const reasons = {};
   for (const d of P.decisions) for (const r of d.decision.reasons) reasons[r.code] = (reasons[r.code] || 0) + 1;
   const byRegion = {};
   for (const u of P.users) { const c = P.cache.get(u.id); if (!c) continue; const b = byRegion[u.region] || (byRegion[u.region] = [0, 0]); b[1]++; if (c.consent.ads_personalization !== 'granted') b[0]++; }
-  const s = P.serving, total = s.personalized + s.contextual;
-  return head('Overview', 'One governance plane for every AI workload: identity, consent, policy, lineage, erasure and audit. Traffic below is a sampled stream through the real enforcement path.') + `
+  const lat = P.decisions.map((d) => d.decision.latency_ms).sort((a, b) => a - b);
+  const p99 = lat.length ? lat[Math.floor(lat.length * 0.99)] : 0;
+  return head('Insights', 'Why requests are denied and where people opt out.') + `
   <div class="grid">
-    ${kpi(pct(classified, ds.length), 'Datasets classified', `${ds.length - classified} pending steward review`)}
-    ${kpi(P.accessRequests.filter((r) => r.status === 'open').length + P.datasets.filter((d) => d.status === 'pending').length, 'Pending approvals', 'access requests and new datasets')}
-    ${kpi(openDsr.length, 'Open data subject requests', openDsr.length ? `next due ${date(Math.min(...openDsr.map((d) => d.due)))}` : 'all inside the 30 day SLA')}
-    ${kpi(s.violations, 'Personalized outputs without an allow', 'SLO: exactly zero', s.violations ? 'bad' : 'good')}
-    ${kpi(p99.toFixed(3) + ' ms', 'Policy decision p99', 'in-process PDP, this browser. SLO < 10 ms')}
-    ${kpi(p95 === null ? 'n/a' : (p95 / 1000).toFixed(2) + ' s', 'Consent propagation p95', 'outbox to Redis. SLO < 5 s')}
-    ${kpi(pct(s.personalized, total), 'Served personalized', `${fmt(total)} requests this session`)}
-    ${kpi(fmt(P.ledger.entries.length), 'Audit ledger entries', P.ledger.anchors.length ? `last Merkle anchor ${time(P.ledger.anchors.at(-1).at)}` : 'hash-chained, append-only')}
-    <div class="card c12"><h3>Governed AI workloads</h3><div class="scroll-x"><table class="table"><thead><tr><th>Workload</th><th>Purpose checked per user</th><th>Datasets</th><th>Models</th><th>Owner</th></tr></thead><tbody>${Object.entries(E.WORKLOADS).map(([k, w]) => `<tr><td><b>${w.name}</b></td><td class="mono">${w.userPurpose}</td><td class="mono">${P.datasets.filter((d) => d.workload === k).map((d) => d.id).join('<br>')}</td><td class="mono">${P.models.filter((m) => m.workload === k).map(E.mname).join('<br>') || 'none'}</td><td>${w.owner}</td></tr>`).join('')}</tbody></table></div></div>
-    <div class="card c6"><h3>Policy denials by reason <span class="right">last ${P.decisions.length} decisions</span></h3>${bars(Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 8), 'red') || '<p class="note">No denials yet.</p>'}</div>
-    <div class="card c6"><h3>Opted out of personalization, by region <span class="right">serving cache</span></h3>${bars(Object.entries(byRegion).sort().map(([k, [o, n]]) => [k, o / n * 100, (o / n * 100).toFixed(0) + '%']))}</div>
-    <div class="card c12"><h3>Serving mix <span class="right">last 60 s</span></h3>${seriesChart()}<div class="legend"><span><i style="background:#0071e3"></i>Personalized</span><span><i style="background:#86868b"></i>Non-personalized</span><span><i style="background:#ff3b30"></i>Fail-closed fallback</span></div></div>
-    <div class="card c12"><h3>Architecture</h3><p class="note">Hosted demo runs each component in the browser. The production mapping is in the design doc.</p>${archDiagram()}</div>
+    ${kpi(p99.toFixed(3) + ' ms', 'Policy decision p99', 'in-process, target under 10 ms')}
+    ${kpi(fmt(P.decisions.length), 'Decisions sampled', 'topic policy.decisions')}
+    ${kpi(fmt(P.ledger.entries.length), 'Audit entries', 'hash chained')}
+    ${kpi(P.ledger.anchors.length, 'WORM anchors', 'Merkle roots written')}
+    <div class="card c6"><h3>Denials by reason <span class="right">last ${P.decisions.length} decisions</span></h3>${bars(Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 8), 'red')}</div>
+    <div class="card c6"><h3>Opted out of personalization <span class="right">by region</span></h3>${bars(Object.entries(byRegion).sort().map(([k, [o, n]]) => [k, o / n * 100, (o / n * 100).toFixed(0) + '%']))}</div>
   </div>`;
 };
+
+VIEWS.architecture = () => head('Architecture', 'Three planes every workload plugs into. Each box opens the component. In the hosted demo each runs in the browser; the design doc maps it to production.') + `
+  <div class="grid"><div class="card c12">${archDiagram()}</div></div>`;
 
 function seriesChart() {
   const pts = S.series.slice(-60), W = 600, H = 150, n = Math.max(pts.length - 1, 1);
@@ -382,7 +474,7 @@ VIEWS.access = () => {
   return head('Access requests', 'Durable approval workflows. Each step is an activity in a Temporal workflow, so a restart resumes exactly where it stopped, and expiry revokes access automatically.') + `
   <div class="grid">
     <div class="card c5"><h3>Requests</h3>${P.accessRequests.length ? `<table class="table"><tbody>${P.accessRequests.map((r) => `<tr class="click${sel && r.id === sel.id ? ' sel' : ''}" data-request="${r.id}"><td class="mono">${r.id}</td><td>${h(r.dataset)}<br><span class="note">${r.purpose}, ${r.region}, ${r.days} days</span></td><td>${pill(r.status)}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No requests yet. Register a dataset in the catalog and request access.</p>'}
-      <h3>Active grants</h3><table class="table"><tbody>${P.grants.map((g) => `<tr><td class="mono">${g.principal}</td><td class="mono">${g.dataset}<br><span class="note">${g.purpose}, ${g.region}</span></td><td>${g.expires > Date.now() ? 'until ' + date(g.expires) : pill('deny', 'expired')}</td></tr>`).join('')}</tbody></table>
+      <h3>Active grants</h3><table class="table"><tbody>${P.grants.map((g) => `<tr><td class="mono">${g.principal}</td><td class="mono">${g.dataset}<br><span class="note">${g.purpose}, ${g.region}</span></td><td style="white-space:nowrap">${g.expires > Date.now() ? 'until ' + date(g.expires) : pill('deny', 'expired')}</td></tr>`).join('')}</tbody></table>
     </div>
     <div class="card c7">${sel ? requestDetail(sel) : '<h3>Workflow</h3><p class="note">Select a request.</p>'}</div>
   </div>`;
@@ -394,7 +486,7 @@ function requestDetail(r) {
   <ol class="steps">${r.steps.map((s) => `<li class="${s.state}"><span class="dot">${s.state === 'done' ? '✓' : s.state === 'rejected' ? '×' : ''}</span><div><b>${s.name}</b>${s.detail ? `<p>${h(s.detail)}</p>` : ''}<p>${s.role === 'system' ? 'Automatic' : 'Assigned to <code>' + s.role + '</code>'}${s.by ? ', by ' + h(s.by) : ''}</p></div><span>${s.state !== 'pending' ? pill(s.state === 'done' ? 'done' : s.state) : ''}</span></li>`).join('')}</ol>
   ${cur && cur.role !== 'system' ? `<div class="row"><button class="btn primary" data-act="approve-step" ${can(cur.role) ? '' : 'disabled'}>Approve ${cur.key} review</button><button class="btn danger" data-act="reject-step" ${can(cur.role) ? '' : 'disabled'}>Reject</button></div>${roleNote(cur.role)}` : ''}
   ${r.status === 'granted' ? `<div class="row"><button class="btn" data-act="expire-grant">Simulate expiry</button></div>` : ''}
-  ${r.precheck ? decisionBox(r.precheck, ' · pre-check on the raw dataset') : ''}`;
+  ${r.precheck ? decisionBox(r.precheck, ' · automatic pre-check') : ''}`;
 }
 
 async function requestAccess() {
@@ -419,12 +511,13 @@ async function advanceRequest(approve) {
   cur.by = E.ROLES[S.role].name;
   if (!approve) { cur.state = 'rejected'; r.status = 'rejected'; await P.ledger.append('access.rejected', S.token.claims.sub, { request: r.id, step: cur.key }); render(); return; }
   cur.state = 'done';
-  cur.detail = cur.key === 'privacy' ? 'DPIA reference DPIA-2026-118. Condition: minimized view, US processing only.' : 'Restricted source reviewed. Legitimate interest assessment attached. 90 day limit.';
+  cur.detail = cur.key === 'privacy' ? (P.dataset(r.dataset).classification === 'restricted' ? 'DPIA reference DPIA-2026-118. Condition: minimized view, US processing only.' : 'DPIA reference DPIA-2026-121. Purpose-limited grant, US processing only.') : 'Restricted source reviewed. Legitimate interest assessment attached. 90 day limit.';
   await P.ledger.append('access.approved', S.token.claims.sub, { request: r.id, step: cur.key });
   const next = r.steps.find((s) => s.state === 'pending');
   if (next && next.key === 'grant') {
-    const view = r.dataset + '_ads';
-    if (!P.dataset(view)) P.datasets.push({ id: view, layer: 'features', owner: 'ads-ml', steward: 'Luis Ortega', classification: 'confidential', pii: ['user_id', 'coarse_location'], region: 'US', allowed_purposes: ['ads_personalization', 'model_training'], retention_days: 90, sources: ['maps'], status: 'approved', legal_basis: 'legitimate_interest', bucket: 'lake-us-west', conditions: 'Derived from ' + r.dataset + ': latitude/longitude reduced to geohash-5, IDFA dropped.' });
+    const restricted = P.dataset(r.dataset).classification === 'restricted';
+    const view = restricted ? r.dataset + '_ads' : r.dataset;
+    if (restricted && !P.dataset(view)) P.datasets.push({ id: view, layer: 'features', owner: 'ads-ml', steward: 'Luis Ortega', classification: 'confidential', pii: ['user_id', 'coarse_location'], region: 'US', allowed_purposes: ['ads_personalization', 'model_training'], retention_days: 90, sources: ['maps'], status: 'approved', legal_basis: 'legitimate_interest', bucket: 'lake-us-west', conditions: 'Derived from ' + r.dataset + ': latitude/longitude reduced to geohash-5, IDFA dropped.' });
     const g = { id: 'g-' + (104 + P.grants.length), principal: r.requester, dataset: view, purpose: r.purpose, region: r.region, expires: Date.now() + 864e5 * r.days };
     P.grants.push(g);
     next.state = 'done'; next.detail = `Granted ${view} to ${r.requester}: purpose ${r.purpose}, region ${r.region}, expires ${date(g.expires)}.`;
@@ -691,12 +784,35 @@ async function agentCall(kind) {
   render();
 }
 async function dmaCheck() {
-  const u = P.users.find((x) => x.eu && x.att === 'authorized' && P.cache.get(x.id) && P.cache.get(x.id).consent.ads_personalization === 'granted' && P.cache.get(x.id).consent.cross_service_combination !== 'granted');
+  const u = P.users.find((x) => x.eu && x.att === 'authorized' && x.age_band === '18_plus' && P.cache.get(x.id) && P.cache.get(x.id).consent.ads_personalization === 'granted' && P.cache.get(x.id).consent.cross_service_combination !== 'granted');
   const c = P.cache.get(u.id).consent;
   const rec = await P.evaluate({ principal: { sub: 'svc-ad-gateway' }, purpose: 'ads_personalization', dataset: P.dataset('ad_features_v7'), processing_region: 'EU', transfer_basis: 'SCC-2021', grant: true, user: P.userInput(u, c) });
   S.dma = { user: u.id, region: u.region, consent: c, decision: rec.decision };
   render();
 }
+
+/* ── regulations: the landscape, deadlines, and which controls answer each law ── */
+VIEWS.regulations = () => {
+  const f = S.regRegion || 'All';
+  const regions = ['All', 'EU', 'US', 'UK', 'JP', 'IN'];
+  const list = REGULATIONS.filter((r) => f === 'All' || r.region.startsWith(f));
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = REGULATIONS.flatMap((r) => r.dates.filter(([d]) => d >= today).map(([d, what]) => [d, r.name, what])).sort();
+  return head('Regulations', 'The laws that govern AI data use on a consumer platform with an app store, an ad network and on-device AI, and the controls that answer each one.') + `
+  <div class="grid">
+    <div class="card c12"><h3>Coming up <span class="right">from ${today}</span></h3><div class="timeline">${upcoming.map(([d, n, w]) => `<div class="tl"><span class="tl-date">${d}</span><b>${h(n)}</b><span>${h(w)}</span></div>`).join('') || '<p class="note">No upcoming dates.</p>'}</div></div>
+    <div class="card c12"><div class="row between"><h3>Laws</h3><div class="seg">${regions.map((r) => `<button class="${r === f ? 'on' : ''}" data-reg="${r}">${r}</button>`).join('')}</div></div>
+      <div class="regs">${list.map((r) => `<div class="reg">
+        <div class="row between"><b>${h(r.name)}</b><span class="row">${pill('blue', r.region)}${pill(/force|Enforced/.test(r.status) ? 'ok' : 'warn', r.status)}</span></div>
+        <p>${h(r.requires)}</p>
+        <ul class="dates">${r.dates.map(([d, w]) => `<li class="${d > today ? 'future' : ''}"><span>${d}</span>${h(w)}</li>`).join('')}</ul>
+        <div class="tags">${r.controls.map(([c, v]) => `<button class="pill ok ctrl" data-go="${v}">${h(c)}</button>`).join('')}</div>
+      </div>`).join('')}</div>
+    </div>
+    <div class="card c12"><h3>Industry watch <span class="right">public enforcement and what it teaches</span></h3><ul class="feed">${WATCH.slice().reverse().map(([d, where, what, lesson]) => `<li><span class="when">${d}</span><span><b>${h(where)}.</b> ${h(what)}<br><span class="note">${h(lesson)}</span></span></li>`).join('')}</ul></div>
+    <div class="card c12"><h3>Privacy engineering patterns <span class="right">from public platform research</span></h3><div class="scroll-x"><table class="table"><thead><tr><th>Pattern</th><th>What it is</th><th>In Custodian</th></tr></thead><tbody>${PATTERNS.map(([p, what, here, v]) => `<tr class="click" data-go="${v}"><td><b>${h(p)}</b></td><td>${h(what)}</td><td>${h(here)}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>`;
+};
 
 /* ── compliance ── */
 const MATRIX = [
@@ -711,8 +827,10 @@ const MATRIX = [
   ['Cross-service combination', 'DMA Art. 5(2)', 'Combination consent required for multi-source features', 'agent', 'Decision log'],
   ['Data governance for AI', 'EU AI Act Art. 10, 11', 'Point-in-time training sets and generated model cards', 'models', 'Model card, lineage run'],
   ['Accountability', 'GDPR Art. 5(2)', 'Hash-chained ledger with WORM Merkle anchors', 'audit', 'Chain verification report'],
+  ['No profiling ads to minors', 'DSA Art. 28(2); COPPA', 'Age range from the OS; unknown age treated as a minor; minor_no_profiling rule', 'policy', 'Decision log'],
+  ['Training consent', 'GDPR Art. 6; CPRA 1798.121; EU AI Act Art. 10', 'Per-user model_training consent checked at the training gate', 'training', 'Exclusion report in model card'],
 ];
-VIEWS.compliance = () => head('Compliance matrix', 'Control, the regulation it answers, how the platform implements it, and where the evidence lives. Click a row to open the control.') + `
+VIEWS.compliance = () => head('Controls', 'Control, the regulation it answers, how the platform implements it, and where the evidence lives. Click a row to open the control.') + `
   <div class="grid"><div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Control</th><th>Regulation</th><th>Implementation</th><th>Evidence</th></tr></thead><tbody>
   ${MATRIX.map(([c, r, i, v, e]) => `<tr class="click" data-go="${v}"><td><b>${c}</b></td><td>${r}</td><td>${i}</td><td>${e}</td></tr>`).join('')}
   </tbody></table></div></div>
@@ -740,9 +858,11 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
+  const t = e.target.closest('[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
   if (!t || $('#app').hidden) return;
-  if (t.dataset.go) return go(t.dataset.go);
+  if (t.dataset.reg) { S.regRegion = t.dataset.reg; return render(); }
+  if (t.dataset.sel) { const [k, v] = t.dataset.sel.split(/:(.*)/s); S.sel[k] = v; }
+  if (t.dataset.go) { e.preventDefault(); return go(t.dataset.go); }
   if (t.dataset.datatab) { S.data.tab = t.dataset.datatab; return render(); }
   if (t.dataset.datauser) { S.data.user = t.dataset.datauser; S.data.tab = 'raw'; return render(); }
   if (t.dataset.dataset) { S.sel.dataset = t.dataset.dataset; return render(); }
@@ -872,9 +992,8 @@ async function pause(ms) { await sleep(ms); if (stopAct) throw new Error('stoppe
 const ACTS = [
   ['Overview', 'KPIs and the architecture.', async (n) => {
     await as('sre'); go('overview'); S.traffic = true;
-    say(n, 'Live governance state. Zero personalized ads without an allow is the headline SLO.'); await pause(4500);
-    $('.view').scrollTo({ top: 9999, behavior: 'smooth' });
-    say(n, 'Control, data and evidence planes. Each box opens the component.'); await pause(4000);
+    say(n, 'Home: what needs this role, whether every control is green, and what just happened.'); await pause(4500);
+    go('architecture'); say(n, 'Control, data and evidence planes. Every AI workload plugs into the same three.'); await pause(4500);
     S.data.tab = 'raw'; go('data'); say(n, 'The data itself: a raw event carries an advertising ID and precise location.'); await pause(4500);
     S.data.tab = 'minimized'; render(); say(n, 'The minimized view a model may read: geohash, no IDFA, hourly timestamps.'); await pause(4500);
   }],
@@ -888,6 +1007,7 @@ const ACTS = [
     await as('ml_engineer'); say(n, 'The engineer requests access for ads personalization. The workflow pre-checks policy first.');
     if (!P.accessRequests.some((r) => r.dataset === 'iphone_app_events_v2')) await requestAccess(); else go('access');
     await pause(3200);
+    S.sel.request = P.accessRequests.find((q) => q.dataset === 'iphone_app_events_v2').id;
     await as('privacy_reviewer'); go('access'); say(n, 'Privacy review: approve with a minimization condition.'); await pause(2200); await advanceRequest(true); await pause(1800);
     await as('legal_reviewer'); go('access'); say(n, 'Restricted source, so legal reviews too. Then the grant: purpose ads, US only, 90 days.'); await pause(2200); await advanceRequest(true); await pause(3000);
   }],
@@ -905,7 +1025,7 @@ const ACTS = [
   }],
   ['Real-time consent', 'A California user turns on GPC; the next ad is contextual.', async (n) => {
     await as('sre');
-    const u = P.users.find((x) => x.region === 'US-CA' && !x.gpc && x.personalizedAdsToggle && x.att === 'authorized' && P.userById.has(x.id));
+    const u = P.users.find((x) => x.region === 'US-CA' && !x.gpc && x.personalizedAdsToggle && x.att === 'authorized' && x.age_band === '18_plus' && P.userById.has(x.id));
     S.consentUser = u.id; S.flow = null; go('consent');
     say(n, `${u.id} in California currently gets personalized ads.`); await pause(1500);
     await ACTIONS['serve-user'](); await pause(2000);
@@ -943,7 +1063,8 @@ const ACTS = [
     await agentCall('export'); say(n, 'Exporting history to a partner: denied for scope and purpose. Both identities are in the ledger.'); await pause(4500);
   }],
   ['Close', 'Compliance matrix and the at-scale plan.', async (n) => {
-    go('compliance'); say(n, 'Every control mapped to its article and its evidence.'); await pause(5000);
+    go('regulations'); say(n, 'The landscape: what is due next, each law, and the controls that answer it.'); await pause(5500);
+    go('compliance'); say(n, 'Every control mapped to its article and its evidence.'); await pause(4500);
   }],
 ];
 

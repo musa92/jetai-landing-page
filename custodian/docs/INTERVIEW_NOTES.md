@@ -54,3 +54,10 @@ For each component: what it does, the main tradeoff, which requirement it covers
 
 **What I would say about the hosted demo**
 - It runs the real decision logic, the real hash chain and the real saga in the browser so it can be shown from a link; the infrastructure mapping is one-to-one with this doc, and `policies/ads.rego` is the bundle the engine mirrors.
+
+**Platform context worth knowing (public sources in docs/REGULATIONS.md)**
+- Consent prompts are now a competition topic, not only privacy: ATT fines in France (2025) and Italy (2025) were about neutrality between first-party and third-party prompts. Design consent so the platform's own ads meet the same bar, and keep evidence.
+- DMA Art. 5(2): combining data across a gatekeeper's services for ads needs explicit consent. Custodian tags every dataset with its source services and enforces it per user.
+- Minors: DSA Art. 28 bans profiling ads to minors; COPPA amendments and state app store laws push age ranges, not birthdates. Treat unknown age as a minor.
+- EU AI Act: high-risk dates moved to Dec 2027 by the 2026 Omnibus, but training-data governance and documentation are still the work; Art. 50 transparency applies from Aug 2026.
+- Engineering patterns to reference: private federated learning with DP, DP aggregate trends via synthetic data, contextual-only ad surfaces, verifiable transparency logs. Custodian mirrors the last two directly (serving fallback, hash-chained ledger).
