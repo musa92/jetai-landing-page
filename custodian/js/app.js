@@ -1,6 +1,7 @@
 /* Custodian console: renders engine.js state, runs live traffic, and drives the
    scripted demo acts. Plain ES modules, no build step. */
-import * as E from './engine.js?v=20261023-2';
+import * as E from './engine.js?v=20261023-3';
+import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261023-1';
 import { REGULATIONS, WATCH, PATTERNS } from './regulations.js?v=20261023-1';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -45,7 +46,7 @@ async function signIn(role, quiet) {
   const r = E.ROLES[role];
   S.token = await E.issueToken({ sub: r.name.toLowerCase().replace(' ', '.'), name: r.name, roles: [role], aud: 'custodian-console', amr: ['pwd', 'otp'] }, 900);
   if (P) await P.ledger.append('auth.login', S.token.claims.sub, { role, client: 'custodian-console', flow: 'authorization_code+pkce' });
-  if (!quiet) toast(`Signed in as ${r.name}, ${r.title.toLowerCase()}`);
+  if (!quiet) toast(`Signed in as ${r.name}, ${r.title}`);
   $('#signin').hidden = true; $('#app').hidden = false;
   if (!P) await boot();
   renderChrome(); render();
@@ -265,6 +266,7 @@ const ACTIVITY = {
   'token.exchange': () => 'received a delegated token',
   'agent.tool_call': (e) => `${e.payload.allow ? 'was allowed' : 'was denied'} tool ${e.payload.tool}`,
   'platform.start': () => 'started the platform',
+  'data.read': (e) => `read sensitive columns in ${nm(e.payload.dataset)}`,
 };
 
 function upcomingDeadlines(n) {
@@ -454,7 +456,7 @@ async function changeConsent(kind, on) {
 
 /* ── data explorer: example rows behind every number ── */
 EXPORTS.users = () => [['user_id', 'region', 'att', 'personalized_ads', 'gpc', 'age_band', 'services', 'ads_personalization', 'model_training'], ...P.users.filter((x) => match('users', x.id, x.region, x.att, x.age_band)).map((x) => { const c = P.cache.get(x.id); return [x.id, x.region, x.att, x.personalizedAdsToggle, x.gpc, x.age_band, x.services.join(' '), c && c.consent.ads_personalization, c && c.consent.model_training]; })];
-VIEWS.data = () => {
+function peopleView() {
   const d = S.data;
   const u = P.userById.get(d.user) || P.users[0];
   const tabs = [['users', 'Users'], ['raw', 'Raw events'], ['minimized', 'Minimized view'], ['consent', 'Consent records'], ['snapshots', 'Iceberg snapshots']];
@@ -494,13 +496,69 @@ VIEWS.data = () => {
     ${Object.values(P.tables).flatMap((t) => t.snapshots.map((sn, i) => `<tr><td class="mono">${i === 0 ? t.name : ''}</td><td class="mono">${i === 0 ? t.bucket : ''}</td><td class="mono">${sn.id}${sn === t.current ? ' ' + pill('blue', 'current') : ''}</td><td>${sn.op}</td><td>${sn.files}</td><td>${fmt(sn.members.size)}</td><td>${sn.members.has(u.id) ? pill('blue', 'present') : ''}</td></tr>`)).join('')}
     </tbody></table></div>`;
   }
-  return head('Data explorer', 'The records behind every number: people, raw events, the minimized view a model may read, consent, and table history.', 'All 10,000 users are synthetic and generated from a fixed seed. Raw events mirror what an iOS collector writes; the minimized view is what governance allows a model to read.') + `
+  return `
   <div class="grid"><div class="card c12">
     <div class="row between"><div class="seg">${tabs.map(([k, t]) => `<button class="${d.tab === k ? 'on' : ''}" data-datatab="${k}">${t}</button>`).join('')}</div>
     <label class="field" style="min-width:200px">User<select data-bind="data.user">${[u, ...featuredUsers()].filter((x, i, a) => a.findIndex((y) => y.id === x.id) === i).map((x) => `<option value="${x.id}"${x.id === u.id ? ' selected' : ''}>${h(userLabel(x))}</option>`).join('')}</select></label></div>
     ${body}
   </div></div>`;
 };
+
+/* ── data explorer: dataset gallery and viewer, or one person's data ── */
+const LAYER = { raw: 'Raw', cleaned: 'Cleaned', features: 'Features' };
+function rowEstimate(d) {
+  const t = P.tables[d.id];
+  if (!t) return d.layer === 'features' ? 12000 : 48000;
+  return t.current.members.size * (d.layer === 'features' ? 1 : 186);
+}
+const compact = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(n);
+
+function datasetSample(d) {
+  const k = SAMPLES[sampleKind(d.id)];
+  const unmasked = UNMASKED_ROLES.has(S.role);
+  const masked = k.cols.filter((c) => MASKED_TAGS.has(c.pii) && !unmasked);
+  const rows = k.rows(P, d);
+  return { cols: k.cols, rows, masked, view: rows.map((r) => r.map((v, i) => (MASKED_TAGS.has(k.cols[i].pii) && !unmasked ? mask(v, k.cols[i].pii) : v))) };
+}
+
+VIEWS.data = () => {
+  const mode = S.data.mode || 'datasets';
+  const sw = `<div class="seg">${[['datasets', 'Datasets'], ['people', 'People']].map(([k, t]) => `<button class="${mode === k ? 'on' : ''}" data-datamode="${k}">${t}</button>`).join('')}</div>`;
+  const hd = head('Data explorer', 'Open any dataset to see its rows, schema and governance, or follow one person across every system.', 'Rows are generated from the 10,000 synthetic people, never real data. Columns tagged as sensitive are masked unless your role is allowed to see them (dynamic masking, enforced at read time).');
+  if (mode === 'people') return hd + `<div class="tabs-wrap">${sw}</div>` + peopleView();
+  const ds = S.data.ds && P.dataset(S.data.ds);
+  if (ds) return hd + `<div class="tabs-wrap">${sw}</div>` + datasetViewer(ds);
+  const list = P.datasets.filter((d) => match('gallery', d.id, nm(d.id), d.classification, d.workload && E.WORKLOADS[d.workload].name));
+  return hd + `<div class="tabs-wrap">${sw}</div>` + `<div class="grid"><div class="card c12">${tools('gallery', list.length, P.datasets.length, 'Search datasets')}
+    <div class="gallery">${list.map((d) => `<button class="ds-card" data-opends="${d.id}">
+      <div class="row between"><span class="ds-layer">${LAYER[d.layer] || d.layer} · ${d.region}</span>${pill(d.classification)}</div>
+      <b>${h(nm(d.id))}</b><span class="id">${h(d.id)}</span>
+      <p>${d.workload ? E.WORKLOADS[d.workload].name : 'Shared across workloads'}</p>
+      <div class="ds-foot"><span>${compact(rowEstimate(d))} rows</span><span>${SAMPLES[sampleKind(d.id)].cols.length} columns</span><span>${d.status === 'approved' ? 'Readable' : pill('pending', 'Pending')}</span></div>
+    </button>`).join('')}</div></div></div>`;
+};
+
+function datasetViewer(d) {
+  const smp = datasetSample(d), t = P.tables[d.id], role = E.ROLES[S.role];
+  const blocked = d.status !== 'approved';
+  return `<div class="grid">
+    <div class="card c12">
+      <div class="row between"><button class="btn" data-opends="">‹ All datasets</button><div class="row"><button class="btn" data-go="catalog" data-sel="dataset:${d.id}">Open in catalog</button><button class="btn" data-go="lineage">Lineage</button><button class="btn" data-act="export" data-key="sample">Export sample</button></div></div>
+      <div class="ds-head"><div><h2>${h(nm(d.id))}</h2><span class="id">${h(d.id)}</span></div><div class="tags">${pill(d.classification)}${pill('blue', d.region)}${pill(d.status)}</div></div>
+      <dl class="ds-meta"><div><dt>Rows</dt><dd>${compact(rowEstimate(d))}</dd></div><div><dt>Owner</dt><dd>${h(d.owner)}</dd></div><div><dt>Steward</dt><dd>${h(d.steward)}</dd></div><div><dt>Allowed for</dt><dd>${d.allowed_purposes.map(nm).join(', ')}</dd></div><div><dt>Retention</dt><dd>${d.retention_days} days</dd></div><div><dt>Location</dt><dd class="mono">s3://${d.bucket}</dd></div>${t ? `<div><dt>Snapshot</dt><dd class="mono">${t.current.id}</dd></div>` : ''}</dl>
+    </div>
+    <div class="card c12">
+      <h3>Sample rows <span class="right">${smp.rows.length} of ${compact(rowEstimate(d))}</span></h3>
+      ${blocked ? `<div class="decision deny"><h4>Not readable yet</h4><ul><li>This dataset is pending steward approval. No job or person can read it until it is approved.</li></ul></div>` : `
+      ${smp.masked.length ? `<div class="mask-note">${icon('privacy')}<span><b>${smp.masked.length} column${smp.masked.length > 1 ? 's' : ''} masked for ${h(role.title.replace(/^(\w)(\w+) /, (m, a, b) => a + b + ' '))}s:</b> ${smp.masked.map((c) => c.name).join(', ')}. Data stewards and privacy reviewers see values; every unmasked read is audited.</span></div>` : UNMASKED_ROLES.has(S.role) && smp.cols.some((c) => MASKED_TAGS.has(c.pii)) ? `<div class="mask-note open">${icon('privacy')}<span><b>Unmasked view.</b> Your role can see sensitive columns. This read is recorded in the audit ledger.</span></div>` : ''}
+      <div class="scroll-x"><table class="table data-table"><thead><tr>${smp.cols.map((c) => `<th>${c.name}<span class="ctype">${c.type}${c.pii ? ` · <em class="${MASKED_TAGS.has(c.pii) ? 'hot' : ''}">${c.pii}</em>` : ''}</span></th>`).join('')}</tr></thead><tbody>
+        ${smp.view.map((r) => `<tr>${r.map((v, i) => `<td class="${/message|query_text/.test(smp.cols[i].name) ? 'text' : 'mono'}${MASKED_TAGS.has(smp.cols[i].pii) && !UNMASKED_ROLES.has(S.role) ? ' masked' : ''}">${h(v === true ? 'true' : v === false ? 'false' : v)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>`}
+    </div>
+  </div>`;
+}
+EXPORTS.gallery = () => [['dataset', 'name', 'layer', 'region', 'classification', 'workload', 'rows_estimate', 'status'], ...P.datasets.map((d) => [d.id, nm(d.id), d.layer, d.region, d.classification, d.workload || 'shared', rowEstimate(d), d.status])];
+EXPORTS.sample = () => { const d = P.dataset(S.data.ds); const smp = datasetSample(d); return [smp.cols.map((c) => c.name), ...smp.view]; };
 
 /* ── catalog ── */
 const catalogRows = () => P.datasets.filter((d) => match('catalog', d.id, nm(d.id), d.classification, d.owner, d.region, d.workload && E.WORKLOADS[d.workload].name, d.pii.join(' ')));
@@ -968,7 +1026,8 @@ function openPalette() {
   const pick = async (x) => {
     closePalette(); if (!x) return;
     if (x.sel) S.sel[x.sel[0]] = x.sel[1];
-    if (x.person) { S.data.user = x.person; S.data.tab = 'raw'; }
+    if (x.person) { S.data.user = x.person; S.data.tab = 'raw'; S.data.mode = 'people'; }
+    if (x.kind === 'Dataset') { S.data.mode = 'datasets'; S.data.ds = x.sel[1]; x.go = 'data'; }
     if (x.go) go(x.go);
     if (x.act === 'demo') openActs();
     if (x.act === 'verify') await ACTIONS.verify();
@@ -1045,8 +1104,10 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
+  const t = e.target.closest('[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
   if (!t || $('#app').hidden) return;
+  if (t.dataset.datamode) { S.data.mode = t.dataset.datamode; return render(); }
+  if (t.dataset.opends !== undefined) { S.data.ds = t.dataset.opends || null; if (S.data.ds && UNMASKED_ROLES.has(S.role)) P.ledger.append('data.read', S.token.claims.sub, { dataset: S.data.ds, unmasked: true, rows: 'sample' }); $('#view').scrollTop = 0; return render(); }
   if (t.dataset.reg) { S.regRegion = t.dataset.reg; return render(); }
   if (t.dataset.sel) { const [k, v] = t.dataset.sel.split(/:(.*)/s); S.sel[k] = v; }
   if (t.dataset.go) { e.preventDefault(); return go(t.dataset.go); }
@@ -1191,8 +1252,8 @@ const ACTS = [
     await as('sre'); go('overview'); S.traffic = true;
     say(n, 'Home: what needs this role, whether every control is green, and what just happened.'); await pause(4500);
     go('architecture'); say(n, 'Control, data and evidence planes. Every AI workload plugs into the same three.'); await pause(4500);
-    S.data.tab = 'raw'; go('data'); say(n, 'The data itself: a raw event carries an advertising ID and precise location.'); await pause(4500);
-    S.data.tab = 'minimized'; render(); say(n, 'The minimized view a model may read: geohash, no IDFA, hourly timestamps.'); await pause(4500);
+    S.data.mode = 'datasets'; S.data.ds = 'iphone_app_events_raw'; go('data'); say(n, 'Open a dataset: raw iPhone events. Sensitive columns are masked for this role.'); await pause(4500);
+    S.data.mode = 'people'; S.data.tab = 'minimized'; render(); say(n, 'Per person: the minimized view a model may read, with geohash, no IDFA and hourly timestamps.'); await pause(4500);
   }],
   ['Governed onboarding', 'Register iphone_app_events_v2, scan, review, grant with conditions.', async (n) => {
     await as('ml_engineer'); go('catalog'); S.newDs = 'iphone_app_events_v2';
