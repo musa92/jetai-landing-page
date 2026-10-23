@@ -139,3 +139,16 @@ test('minors and unknown ages never get profiling-based ads', () => {
     assert.ok(d.reasons.some((r) => r.code === 'minor_no_profiling'), age_band);
   }
 });
+
+test('artifacts inherit classification and ABAC guards weights and endpoints', async () => {
+  const { artifacts, decideArtifact } = await import('../js/engine.js');
+  const p = P();
+  const a = artifacts(p);
+  const eu = a.find((x) => x.region === 'EU');
+  assert.equal(decideArtifact({ principal: 'maya.chen', action: 'download', resource: eu }).reasons.some((r) => r.code === 'eu_artifact_residency'), true);
+  assert.equal(decideArtifact({ principal: 'vendor-labeler', action: 'download', resource: a[1] }).allow, false);
+  assert.equal(decideArtifact({ principal: 'maya.chen', action: 'deploy', resource: a[2] }).reasons.some((r) => r.code === 'not_deployer'), true);
+  assert.equal(decideArtifact({ principal: 'svc-model-deployer', action: 'deploy', resource: a[2] }).allow, true);
+  assert.equal(decideArtifact({ principal: 'svc-ad-gateway', action: 'invoke', endpoint: 'assistant-llm-inference', region: 'US' }).allow, false);
+  assert.equal(decideArtifact({ principal: 'svc-assistant', action: 'invoke', endpoint: 'assistant-llm-inference', region: 'US' }).allow, true);
+});

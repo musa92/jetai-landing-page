@@ -1,7 +1,7 @@
 /* Custodian console: renders engine.js state, runs live traffic, and drives the
    scripted demo acts. Plain ES modules, no build step. */
-import * as E from './engine.js?v=20261023-3';
-import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261023-1';
+import * as E from './engine.js?v=20261023-4';
+import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261023-3';
 import { REGULATIONS, WATCH, PATTERNS } from './regulations.js?v=20261023-1';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -54,7 +54,7 @@ async function signIn(role, quiet) {
 
 async function boot() {
   P = new E.Platform({ users: 10000 });
-  await P.ledger.append('platform.start', 'system', { users: P.users.length, policy: 'ads-1.4.0' });
+  await P.ledger.append('platform.start', 'system', { users: P.users.length, policy: 'core-1.4.0' });
   for (const d of P.datasets) await P.ledger.append('catalog.registered', 'data-steward', { dataset: d.id, classification: d.classification });
   await seedWork();
   P.ledger.listeners.push(() => { if (S.view === 'audit') scheduleRender(); });
@@ -89,6 +89,7 @@ const ICON = {
   ops: '<path d="M2.5 10h3l2-5 3 10 2-5h5"/>',
   trust: '<path d="M10 3v14M5 17h10M3.5 7h13M6 7l-2.5 5a2.5 2.5 0 0 0 5 0zm8 0-2.5 5a2.5 2.5 0 0 0 5 0z"/>',
   settings: '<circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2m0 11v2m7.5-7.5h-2m-11 0h-2m12.8-5.3-1.4 1.4m-7.8 7.8-1.4 1.4m10.6 0-1.4-1.4M6.1 6.1 4.7 4.7"/>',
+  dev: '<path d="m7 6-4 4 4 4m6-8 4 4-4 4M11.5 4l-3 12"/>',
   search: '<circle cx="9" cy="9" r="5.5"/><path d="m13 13 4 4"/>',
   bell: '<path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5.5 1.5 5.5h-13S5 12 5 8M8 16a2 2 0 0 0 4 0"/>',
 };
@@ -96,11 +97,12 @@ const icon = (k) => `<svg class="ic" viewBox="0 0 20 20" fill="none" stroke="cur
 
 const SECTIONS = [
   ['home', 'Home', [['overview', 'Overview']]],
-  ['data', 'Data', [['data', 'Explorer'], ['catalog', 'Catalog'], ['lineage', 'Lineage']]],
+  ['data', 'Data', [['data', 'Explorer'], ['catalog', 'Catalog'], ['pipelines', 'Pipelines'], ['lineage', 'Lineage']]],
   ['access', 'Access', [['access', 'Requests'], ['policy', 'Policies'], ['agent', 'Agents']]],
   ['privacy', 'Privacy', [['consent', 'Consent'], ['dsr', 'Subject requests']]],
-  ['models', 'Models', [['models', 'Registry'], ['training', 'Training gate']]],
-  ['ops', 'Operations', [['serving', 'Serving'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
+  ['models', 'Models', [['lifecycle', 'Lifecycle'], ['models', 'Registry'], ['artifacts', 'Artifacts and endpoints'], ['training', 'Training gate']]],
+  ['ops', 'Operations', [['serving', 'Serving'], ['services', 'Services'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
+  ['dev', 'Developers', [['api', 'REST API'], ['sdk', 'SDKs']]],
   ['trust', 'Trust', [['regulations', 'Regulations'], ['compliance', 'Controls'], ['audit', 'Audit ledger']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations'], ['apikeys', 'API keys'], ['residency', 'Data residency']]],
 ];
@@ -131,7 +133,7 @@ function renderChrome() {
   $('#bar-title').innerHTML = `<span class="crumb">${sec[1]}</span>${sec[2].length > 1 ? `<span class="crumb-sep">›</span><span>${TITLES[S.view]}</span>` : ''}`;
   const ck = controlChecks(), passing = ck.filter((c) => c[1]).length;
   const critical = !P.policyUp || P.breaker.state !== 'closed' || P.serving.violations > 0;
-  $('#side-foot').innerHTML = `<span class="health ${critical ? 'bad' : passing === ck.length ? '' : 'warn'}"></span>${passing} of ${ck.length} controls passing<br>Policy ads-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
+  $('#side-foot').innerHTML = `<span class="health ${critical ? 'bad' : passing === ck.length ? '' : 'warn'}"></span>${passing} of ${ck.length} controls passing<br>Policy core-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
 }
 function tabsBar() {
   const sec = SECTIONS.find(([k]) => k === SECTION_OF[S.view]);
@@ -171,11 +173,11 @@ const NAMES = {
   app_events_clean: 'App events, cleaned', app_events_clean_eu: 'App events, cleaned (EU)',
   session_metrics_daily: 'Daily session metrics', ad_features_v7: 'Ad features v7', ad_features_v7_eu: 'Ad features v7 (EU)',
   assistant_conversations: 'Assistant conversations, raw', assistant_conversations_redacted: 'Assistant conversations, redacted',
-  search_clicks_v3: 'Search clicks v3', iphone_app_events_v2: 'iPhone app events v2', iphone_app_events_v2_ads: 'iPhone app events v2, ads view',
+  search_clicks_v3: 'Search clicks v3', sft_instructions_v3: 'Fine-tuning instructions v3', preference_pairs_v2: 'Human preference pairs v2', eval_safety_suite_v5: 'Safety eval suite v5', iphone_app_events_v2: 'iPhone app events v2', iphone_app_events_v2_ads: 'iPhone app events v2, ads view',
   consent_records: 'Consent records',
   ads_personalization: 'Personalized ads', analytics: 'Analytics', model_training: 'Model training', cross_service_combination: 'Cross-service data use', third_party_sharing: 'Sharing with partners', user_assist: 'Assistant help',
   'dev.patel': 'Dev Patel', 'maya.chen': 'Maya Chen', 'jonas.weber': 'Jonas Weber', 'amara.okafor': 'Amara Okafor', 'luis.ortega': 'Luis Ortega', 'priya.nair': 'Priya Nair', 'henrik.lund': 'Henrik Lund',
-  'svc-ads-trainer': 'Ads trainer', 'svc-assistant-trainer': 'Assistant trainer', 'svc-ad-gateway': 'Ad gateway', 'agent:assistant-7': 'Assistant agent',
+  'svc-ads-trainer': 'Ads trainer', 'svc-assistant-trainer': 'Assistant trainer', 'svc-ad-gateway': 'Ad gateway', 'svc-assistant': 'Assistant service', 'svc-model-deployer': 'Release pipeline', 'vendor-labeler': 'Labeling vendor', 'agent:assistant-7': 'Assistant agent',
   'consent-service': 'Consent service', 'dsr-service': 'Privacy requests', 'policy-service': 'Policy engine', 'data-steward': 'Data steward', workflow: 'Workflow engine', system: 'Custodian',
 };
 const REASONS = {
@@ -183,7 +185,7 @@ const REASONS = {
   gpc_signal: 'Global Privacy Control', minor_no_profiling: 'Minor or unknown age', purpose_not_permitted: 'Purpose not approved', restricted_for_ads: 'Restricted data',
   eu_transfer_blocked: 'EU data residency', no_active_grant: 'No access grant', dataset_not_approved: 'Dataset not approved', missing_input: 'Missing input, failed closed',
   gdpr_no_training_consent: 'No EU training consent', training_opt_out: 'Opted out of training', consent_unknown: 'Consent unknown', att_denied_ca: 'Tracking denied (CA)',
-  insufficient_scope: 'Token scope too narrow', no_table: 'No table', deleted: 'Erased',
+  insufficient_scope: 'Token scope too narrow', unknown_principal: 'Unknown identity', unknown_endpoint: 'Unknown endpoint', not_registered_consumer: 'Not a registered consumer', region_not_served: 'Region not served', insufficient_clearance: 'Insufficient clearance', external_principal: 'External party', not_deployer: 'Not the release pipeline', eu_artifact_residency: 'EU artifact residency', no_table: 'No table', deleted: 'Erased',
 };
 const nm = (id) => NAMES[id] || id;
 const rsn = (code) => REASONS[code] || code;
@@ -505,7 +507,7 @@ function peopleView() {
 };
 
 /* ── data explorer: dataset gallery and viewer, or one person's data ── */
-const LAYER = { raw: 'Raw', cleaned: 'Cleaned', features: 'Features' };
+const LAYER = { raw: 'Raw', cleaned: 'Cleaned', features: 'Features', 'post-training': 'Post-training' };
 function rowEstimate(d) {
   const t = P.tables[d.id];
   if (!t) return d.layer === 'features' ? 12000 : 48000;
@@ -559,6 +561,176 @@ function datasetViewer(d) {
 }
 EXPORTS.gallery = () => [['dataset', 'name', 'layer', 'region', 'classification', 'workload', 'rows_estimate', 'status'], ...P.datasets.map((d) => [d.id, nm(d.id), d.layer, d.region, d.classification, d.workload || 'shared', rowEstimate(d), d.status])];
 EXPORTS.sample = () => { const d = P.dataset(S.data.ds); const smp = datasetSample(d); return [smp.cols.map((c) => c.name), ...smp.view]; };
+
+/* ── ML lifecycle: training and post-training, gated at every stage ── */
+VIEWS.lifecycle = () => {
+  const lc = E.lifecycle(P), cur = lc.find((x) => x.model === (S.lcModel || 'assistant-llm')) || lc[0];
+  return head('ML lifecycle', 'Every stage from data collection to inference, the policy that gated it, and what it produced. Post-training is governed like training.', 'Each stage emits OpenLineage events with its inputs (dataset and snapshot), the policy bundle version that allowed it, and its output artifact. Release requires a privacy and legal sign-off and a generated model card.') + `
+  <div class="grid"><div class="card c12">
+    <div class="row between"><div class="seg">${lc.map((x) => `<button class="${x === cur ? 'on' : ''}" data-lcmodel="${x.model}">${x.model}</button>`).join('')}</div><span class="note" style="margin:0">${cur.stages.length} stages · all gates passed</span></div>
+    <div class="lc">${cur.stages.map((st, i) => `<div class="lc-stage ${st.status}"><div class="lc-n">${i + 1}</div><div class="lc-body"><div class="row between"><b>${h(st.name)}</b>${pill(st.status === 'live' ? 'live' : 'done', st.status === 'live' ? 'Live' : 'Passed')}</div>
+      <dl class="kv"><dt>Inputs</dt><dd>${st.inputs.map((x) => `<span>${h(nm(x.split('@')[0]) !== x.split('@')[0] ? nm(x.split('@')[0]) + (x.includes('@') ? ' @' + x.split('@')[1] : '') : x)}</span>`).join('<br>')}</dd><dt>Gate</dt><dd>${h(st.gate)}</dd><dt>Policy</dt><dd class="mono">${st.policy}</dd><dt>Produced</dt><dd class="mono">${h(st.artifact)}</dd>${st.metrics ? `<dt>Results</dt><dd>${Object.entries(st.metrics).map(([k, v]) => `${k.replace(/_/g, ' ')}: <b>${v}</b>`).join('<br>')}</dd>` : ''}</dl></div></div>`).join('')}</div>
+  </div></div>`;
+};
+
+/* ── artifacts and endpoints: ABAC on weights and inference ── */
+VIEWS.artifacts = () => {
+  const arts = E.artifacts(P), a = S.art || (S.art = { principal: 'maya.chen', action: 'download', artifact: arts[1].id, endpoint: 'assistant-llm-inference', region: 'US' });
+  const res = arts.find((x) => x.id === a.artifact) || arts[0];
+  const d = E.decideArtifact({ principal: a.principal, action: a.action, resource: res, endpoint: a.endpoint, region: a.region });
+  const opt = (arr, cur) => arr.map((v) => `<option${v === cur ? ' selected' : ''}>${v}</option>`).join('');
+  const pr = E.PRINCIPALS[a.principal];
+  return head('Artifacts and endpoints', 'Model weights carry the sensitivity of the data they learned from. Who may download, deploy or call a model is decided by attributes, not lists.', 'Attribute-based access control: the principal\'s federated identity attributes (team, clearance, region, kind) are checked against the resource\'s attributes (classification inherited from training data, region) and the action. Endpoints accept only registered consumers presenting OAuth client credentials or delegated tokens.') + `
+  <div class="grid">
+    <div class="card c7"><h3>Model artifacts</h3><div class="scroll-x"><table class="table"><thead><tr><th>Artifact</th><th>Kind</th><th>Inherited class</th><th>Region</th><th>Trained on</th></tr></thead><tbody>
+      ${arts.map((x) => `<tr class="click${x.id === res.id ? ' sel' : ''}" data-artifact="${x.id}"><td class="mono">${x.id}<span class="id">${x.size}</span></td><td>${x.kind}</td><td>${pill(x.classification)}</td><td>${x.region}</td><td>${x.from.map(nm).join(', ')}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h3>Inference endpoints</h3><div class="scroll-x"><table class="table"><thead><tr><th>Endpoint</th><th>Model</th><th>Regions</th><th>Consumers</th><th>Auth</th></tr></thead><tbody>
+      ${E.ENDPOINTS.map((x) => `<tr><td class="mono">${x.id}</td><td class="mono">${x.model}</td><td>${x.regions.join(', ')}</td><td>${x.consumers.map(nm).join(', ')}</td><td>${x.auth}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="card c5"><h3>Access decision</h3>
+      <div class="fields">
+        <label class="field">Principal<select data-bind="art.principal">${opt(Object.keys(E.PRINCIPALS), a.principal)}</select></label>
+        <label class="field">Action<select data-bind="art.action">${opt(['download', 'deploy', 'invoke'], a.action)}</select></label>
+        ${a.action === 'invoke' ? `<label class="field">Endpoint<select data-bind="art.endpoint">${opt(E.ENDPOINTS.map((x) => x.id), a.endpoint)}</select></label><label class="field">Traffic region<select data-bind="art.region">${opt(['US', 'EU'], a.region)}</select></label>` : `<label class="field">Artifact<select data-bind="art.artifact">${opt(arts.map((x) => x.id), res.id)}</select></label>`}
+      </div>
+      ${pr ? `<p class="note">Identity attributes from the IdP: team <b>${pr.team}</b>, clearance <b>${pr.clearance}</b>, region <b>${pr.region}</b>, ${pr.kind}.</p>` : ''}
+      ${decisionBox(d)}
+    </div>
+  </div>`;
+};
+
+/* ── pipelines: batch and streaming jobs that produce governed inputs ── */
+VIEWS.pipelines = () => {
+  const sel = E.PIPELINES.find((x) => x.id === S.pipe) || E.PIPELINES[0];
+  const dropped = Object.entries(sel.dropped).filter(([, v]) => v > 0);
+  return head('Pipelines', 'The jobs that turn raw data into governed, ML-ready inputs. Every record dropped is dropped for a reason you can see.', 'Streaming jobs run on Flink, batch jobs on Spark. Governance operators (region tagging, consent filtering with a point-in-time join, minimization, redaction) are library stages shared by every job, so policy is applied the same way everywhere. Each run emits OpenLineage with input and output snapshot IDs.') + `
+  <div class="grid">
+    ${kpi(E.PIPELINES.length, 'Governed jobs', `${E.PIPELINES.filter((x) => x.mode === 'streaming').length} streaming, ${E.PIPELINES.filter((x) => x.mode === 'batch').length} batch`)}
+    ${kpi(compact(E.PIPELINES.reduce((a, x) => a + x.records_in, 0)), 'Records processed today', 'across all jobs')}
+    ${kpi(compact(E.PIPELINES.reduce((a, x) => a + Object.values(x.dropped).reduce((b, v) => b + v, 0), 0)), 'Records excluded by policy', 'each with a reason')}
+    ${kpi(Math.max(...E.PIPELINES.filter((x) => x.lag_s).map((x) => x.lag_s)).toFixed(1) + ' s', 'Max streaming lag', 'target under 10 s', 'good')}
+    <div class="card c7"><div class="scroll-x"><table class="table"><thead><tr><th>Job</th><th>Engine</th><th>Schedule</th></tr></thead><tbody>
+      ${E.PIPELINES.map((x) => `<tr class="click${x === sel ? ' sel' : ''}" data-pipe="${x.id}"><td><span class="mono">${x.id}</span> ${pill('ok', x.status)}<span class="id">${h(nm(x.input))} → ${h(nm(x.output))}</span></td><td>${x.engine}<span class="id">${x.mode}</span></td><td style="white-space:nowrap">${x.schedule}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="card c5"><h3 class="mono">${sel.id} <span class="right">${sel.engine} · ${sel.mode}</span></h3>
+      <div class="dag">${sel.stages.map((st, i) => `<span class="dag-node">${h(st)}</span>${i < sel.stages.length - 1 ? '<span class="dag-arrow">→</span>' : ''}`).join('')}</div>
+      <dl class="kv"><dt>Input</dt><dd>${named(sel.input)}</dd><dt>Output</dt><dd>${named(sel.output)}</dd><dt>Records in</dt><dd>${fmt(sel.records_in)}</dd><dt>${sel.lag_s ? 'Lag' : 'Last run'}</dt><dd>${sel.lag_s ? sel.lag_s + ' s' : sel.duration}</dd></dl>
+      <h3>Excluded by reason</h3>${dropped.length ? bars(dropped.map(([k, v]) => [rsn(k) === k ? k.replace(/_/g, ' ') : rsn(k), v]), 'red') : '<p class="note">Nothing excluded in this run.</p>'}
+    </div>
+  </div>`;
+};
+
+/* ── services: fault-tolerant serving on Kubernetes ── */
+VIEWS.services = () => head('Services', 'The platform\'s own services, where they run, and how much error budget each has left this month.', 'Each service runs on EKS in us-west-2, with EU-facing services also in eu-west-1 so EU data is processed in the EU. Multi-zone replicas, pod disruption budgets and circuit breakers keep enforcement available; if the policy engine is unreachable, callers fail closed.') + `
+  <div class="grid">
+    ${kpi(E.SERVICES.length, 'Services', 'Go, Kotlin, Java, Scala, Python')}
+    ${kpi(E.SERVICES.reduce((a, x) => a + x.replicas, 0), 'Pods', '2 regions, 3 zones each')}
+    ${kpi(P.policyUp ? '99.99%' : 'Degraded', 'Policy engine availability', 'SLO 99.99%', P.policyUp ? 'good' : 'bad')}
+    ${kpi('0', 'Pages this week', 'on-call: SRE rotation')}
+    <div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Service</th><th>Stack</th><th>Clusters</th><th>Replicas</th><th>p99</th><th>Error rate</th><th>SLO</th><th>Error budget left</th><th>Version</th></tr></thead><tbody>
+      ${E.SERVICES.map((x) => { const down = x.name === 'policy-engine' && !P.policyUp; const b = down ? 0.41 : x.budget; return `<tr><td class="mono">${x.name}</td><td>${x.lang}</td><td class="mono">${x.cluster}</td><td>${down ? '0/' + x.replicas : x.replicas}</td><td>${x.p99} ms</td><td>${down ? '100%' : x.err + '%'}</td><td>${x.slo}%</td><td><div class="budget"><div style="width:${b * 100}%" class="${b < 0.5 ? 'low' : ''}"></div></div><span class="id">${Math.round(b * 100)}%</span></td><td class="mono">${x.version}</td></tr>`; }).join('')}
+    </tbody></table></div></div>
+  </div>`;
+
+/* ── developers: REST API and SDKs, with a live call ── */
+const API = [
+  ['POST', '/v1/decisions', 'Evaluate a policy decision', 'decide'],
+  ['GET', '/v1/consent/{user_id}', 'Current consent per purpose', 'consent'],
+  ['GET', '/v1/lineage/models/{model}', 'Datasets and snapshots that trained a model', 'lineage'],
+  ['GET', '/v1/lineage/subjects/{user_id}', 'Every location holding a person\'s data', 'locate'],
+  ['POST', '/v1/access-requests', 'Open an access request workflow', 'request'],
+  ['POST', '/v1/dsr/erasure', 'Start an erasure saga (idempotent)', 'erasure'],
+  ['POST', '/v1/artifacts/{id}:authorize', 'ABAC check for download, deploy or invoke', 'artifact'],
+  ['GET', '/v1/audit/verify', 'Verify the ledger hash chain', 'verify'],
+];
+VIEWS.api = () => {
+  const cur = API.find((x) => x[3] === S.apiOp) || API[0];
+  return head('REST API', 'Everything in the console is an API first. Teams embed governance in their own services and pipelines.', 'OpenAPI 3.1. Authenticate with OAuth 2.0 client credentials; every call carries a purpose and is decided by policy and written to the audit ledger. Rate limited per client; idempotency keys on every POST.') + `
+  <div class="grid">
+    <div class="card c5"><h3>Endpoints <span class="right">api.custodian.acme.internal</span></h3><div class="api-list">${API.map(([m, path, what, k]) => `<button class="api-row${k === cur[3] ? ' on' : ''}" data-apiop="${k}"><span class="verb ${m.toLowerCase()}">${m}</span><span><span class="mono">${path}</span><small>${what}</small></span></button>`).join('')}</div></div>
+    <div class="card c7"><h3><span class="verb ${cur[0].toLowerCase()}">${cur[0]}</span> <span class="mono">${cur[1]}</span></h3><p class="note">${cur[2]}</p>
+      <pre class="code">${h(apiRequest(cur[3]))}</pre>
+      <div class="row"><button class="btn primary" data-act="api-try">Send request</button><span class="note" style="margin:0">Runs against this workspace's live engine.</span></div>
+      ${S.apiResp && S.apiResp.op === cur[3] ? `<pre class="code">${h(S.apiResp.body)}</pre>` : ''}
+    </div>
+  </div>`;
+};
+function apiRequest(op) {
+  const u = S.consentUser;
+  const req = {
+    decide: `POST /v1/decisions\nAuthorization: Bearer <client-credentials token>\nIdempotency-Key: 7f1c...\n\n{\n  "principal": "svc-ad-gateway",\n  "purpose": "ads_personalization",\n  "dataset": "ad_features_v7",\n  "processing_region": "US",\n  "subject": "${u}"\n}`,
+    consent: `GET /v1/consent/${u}\nAuthorization: Bearer <token, scope consent:read>`,
+    lineage: `GET /v1/lineage/models/adrank@3\nAuthorization: Bearer <token, scope lineage:read>`,
+    locate: `GET /v1/lineage/subjects/${u}\nAuthorization: Bearer <token, scope dsr:operate>`,
+    request: `POST /v1/access-requests\n\n{\n  "dataset": "assistant_conversations_redacted",\n  "purpose": "model_training",\n  "region": "US",\n  "duration_days": 30,\n  "justification": "Evaluate a smaller assistant model"\n}`,
+    erasure: `POST /v1/dsr/erasure\nIdempotency-Key: dsr-erasure:${u}\n\n{ "subject": "${u}", "verified": true }`,
+    artifact: `POST /v1/artifacts/ckpt%2Fadrank%2Fv3-eu:authorize\n\n{ "principal": "maya.chen", "action": "download" }`,
+    verify: `GET /v1/audit/verify\nAuthorization: Bearer <token, role auditor>`,
+  };
+  return req[op];
+}
+async function apiTry() {
+  const op = S.apiOp || 'decide', u = P.userById.get(S.consentUser);
+  let body;
+  if (op === 'decide') { const r = await P.evaluate({ principal: { sub: 'svc-ad-gateway' }, purpose: 'ads_personalization', dataset: P.dataset('ad_features_v7'), processing_region: 'US', grant: true, user: P.userInput(u, P.cache.get(u.id).consent) }); body = { allow: r.decision.allow, reasons: r.decision.reasons.map((x) => ({ code: x.code, regulation: x.cite })), bundle: r.decision.version, decision_id: 'dec_' + Date.now().toString(36), latency_ms: +r.decision.latency_ms.toFixed(3) }; }
+  if (op === 'consent') body = { subject: u.id, region: u.region, purposes: P.consent.snapshot(u.id), as_of: new Date().toISOString() };
+  if (op === 'lineage') { const m = P.models.find((x) => x.id === 'adrank' && x.version === 3); body = { model: 'adrank@3', inputs: m.trainedOn, policy_bundle: 'core-1.3.2', card: 'model-cards/adrank/3' }; }
+  if (op === 'locate') body = { subject: u.id, locations: P.locate(u.id).map((x) => ({ kind: x.kind, name: x.name, snapshots: x.snapshots })) };
+  if (op === 'request') body = { id: 'AR-' + (2041 + P.accessRequests.length), status: 'open', workflow: 'access-request', next_step: 'privacy_review' };
+  if (op === 'erasure') body = { status: 'accepted', idempotency_key: 'dsr-erasure:' + u.id, due: date(Date.now() + 864e5 * 30), note: 'Run it from Privacy > Subject requests to watch the saga.' };
+  if (op === 'artifact') { const d = E.decideArtifact({ principal: 'maya.chen', action: 'download', resource: E.artifacts(P).find((x) => x.region === 'EU') }); body = { allow: d.allow, reasons: d.reasons.map((x) => x.code), bundle: d.version }; }
+  if (op === 'verify') { const v = await P.ledger.verify(); body = { intact: v.ok, entries_checked: v.checked, broken_at: v.brokenAt ?? null }; }
+  S.apiResp = { op, body: `HTTP/1.1 200 OK\nContent-Type: application/json\nX-Request-Id: req_${Math.random().toString(36).slice(2, 10)}\n\n${JSON.stringify(body, null, 2)}` };
+  render();
+}
+const SDK = {
+  Python: `from custodian import Client
+
+client = Client.from_client_credentials(
+    client_id="svc-ads-trainer", scopes=["read:ad_features_v7"])
+
+# Ask before you read. Raises PolicyDenied with reasons on deny.
+decision = client.decide(purpose="model_training",
+                         dataset="ad_features_v7", region="US")
+
+# Point-in-time, consent-filtered training set from an Iceberg snapshot.
+train = client.training_set("ad_features_v7", as_of=snapshot_ts)
+print(train.excluded_by_reason)  # {'ccpa_opt_out': 1394, ...}
+
+with client.lineage.run("train_adrank") as run:
+    run.input("ad_features_v7", snapshot=train.snapshot_id)
+    run.output_model("adrank", version=4)`,
+  Kotlin: `val custodian = Custodian.clientCredentials("svc-ad-gateway")
+
+// Serving path: fail closed on deny, unknown or timeout.
+suspend fun rank(req: AdRequest): Ranking {
+    val decision = custodian.decide(
+        purpose = Purpose.ADS_PERSONALIZATION,
+        subject = req.userId,
+        dataset = "ad_features_v7",
+        timeout = 8.milliseconds,
+    ).getOrElse { return contextual.rank(req) }
+
+    return if (decision.allow) personalized.rank(req) else contextual.rank(req)
+}`,
+  Go: `c, _ := custodian.NewClient(ctx, custodian.ClientCredentials("svc-model-deployer"))
+
+// ABAC on model artifacts before a deploy.
+ok, reasons, err := c.AuthorizeArtifact(ctx, custodian.ArtifactRequest{
+    Artifact: "ckpt/adrank/v3",
+    Action:   custodian.Deploy,
+})
+if err != nil || !ok {
+    return fmt.Errorf("deploy blocked: %v", reasons)
+}`,
+};
+VIEWS.sdk = () => {
+  const lang = S.sdkLang || 'Python';
+  return head('SDKs', 'Client libraries for the languages our services are written in. The same calls work in pipelines, services and notebooks.', 'SDKs wrap the REST API with token refresh, retries with backoff, decision caching with short TTLs for hot paths, and OpenTelemetry spans. Java and Scala clients share the Kotlin core.') + `
+  <div class="grid"><div class="card c12"><div class="row between"><div class="seg">${Object.keys(SDK).map((k) => `<button class="${k === lang ? 'on' : ''}" data-sdk="${k}">${k}</button>`).join('')}</div><span class="note mono" style="margin:0">${lang === 'Python' ? 'pip install custodian-sdk' : lang === 'Kotlin' ? 'implementation("com.acme:custodian-kotlin:3.2.0")' : 'go get acme.internal/custodian-go@v1.9.0'}</span></div>
+    <pre class="code">${h(SDK[lang])}</pre></div></div>`;
+};
 
 /* ── catalog ── */
 const catalogRows = () => P.datasets.filter((d) => match('catalog', d.id, nm(d.id), d.classification, d.owner, d.region, d.workload && E.WORKLOADS[d.workload].name, d.pii.join(' ')));
@@ -674,7 +846,7 @@ VIEWS.policy = () => {
   const ds = P.dataset(S.sim.dataset);
   const cache = P.cache.get(u.id);
   const input = { principal: { sub: S.sim.principal, roles: ['service'] }, purpose: S.sim.purpose, dataset: ds, processing_region: S.sim.region, grant: S.sim.principal === 'svc-ad-gateway' ? true : P.hasGrant(S.sim.principal, ds.id, S.sim.purpose), user: cache ? P.userInput(u, cache.consent) : null };
-  const live = E.decide(input, 'ads-1.4.0'), shadow = E.decide(input, 'ads-1.5.0');
+  const live = E.decide(input, 'core-1.4.0'), shadow = E.decide(input, 'core-1.5.0');
   const opt = (arr, cur) => arr.map((v) => `<option${v === cur ? ' selected' : ''}>${v}</option>`).join('');
   return head('Policies', 'The rules every AI workload follows, written as code, tested, and previewed before rollout.', 'Policy as code in Rego. The policy engine decides; gateways, the training gate, workflows and the lakehouse enforce. Every decision carries reasons and the bundle version. Shadow bundles run beside the live one to show impact before rollout.') + `
   <div class="grid">
@@ -690,12 +862,12 @@ VIEWS.policy = () => {
       <p class="note">Shadow bundle</p>${decisionBox(shadow)}${live.allow !== shadow.allow ? '<p class="note"><span class="pill warn">disagree</span> Rolling out 1.5.0 would change this decision.</p>' : ''}
     </div>
     <div class="card c7"><h3>Bundles</h3>
-      <table class="table"><tbody><tr><td class="mono">ads-1.4.0</td><td>${pill('live')}</td><td>${E.POLICY_BUNDLES['ads-1.4.0'].rules.length} rules, opa test: 5 passing</td></tr><tr><td class="mono">ads-1.5.0</td><td>${pill('shadow')}</td><td>${E.POLICY_BUNDLES['ads-1.5.0'].rules.length} rules, evaluated alongside live, never enforced</td></tr></tbody></table>
+      <table class="table"><tbody><tr><td class="mono">core-1.4.0</td><td>${pill('live')}</td><td>${E.POLICY_BUNDLES['core-1.4.0'].rules.length} rules, opa test: 5 passing</td></tr><tr><td class="mono">core-1.5.0</td><td>${pill('shadow')}</td><td>${E.POLICY_BUNDLES['core-1.5.0'].rules.length} rules, evaluated alongside live, never enforced</td></tr></tbody></table>
       <h3>Shadow mode diff</h3><p class="note">Evaluate both bundles over every user on the personalization path and show where they would disagree before rollout.</p>
       <div class="row"><button class="btn primary" data-act="shadow">Run shadow comparison</button></div>
       ${S.shadow ? `<p class="note">${fmt(S.shadow.total)} users evaluated in ${S.shadow.ms.toFixed(0)} ms. ${fmt(S.shadow.flips)} decisions would change (${pct(S.shadow.flips, S.shadow.total)}), all allow to deny.</p>${bars(Object.entries(S.shadow.by).sort((a, b) => b[1] - a[1]).map(([k, v]) => [rsn(k), v]), 'red')}` : ''}
     </div>
-    <div class="card c12"><h3>policies/ads.rego <span class="right">ads-1.4.0</span></h3><pre class="code">${highlightRego(regoSource || 'loading...')}</pre></div>
+    <div class="card c12"><h3>policies/ads.rego <span class="right">core-1.4.0</span></h3><pre class="code">${highlightRego(regoSource || 'loading...')}</pre></div>
     <div class="card c12"><h3>Decision log <span class="right">topic policy.decisions</span></h3><div class="scroll-x"><table class="table"><thead><tr><th>Time</th><th>Principal</th><th>Dataset</th><th>Purpose</th><th>User</th><th>Live</th><th>Reasons</th><th>Shadow</th></tr></thead><tbody>
       ${P.decisions.slice(0, 12).map((d) => `<tr><td>${time(d.at)}</td><td class="mono">${h(d.input.principal.sub)}</td><td class="mono">${h(d.input.dataset.id)}</td><td class="mono">${h(d.input.purpose)}</td><td class="mono">${d.input.user ? d.input.user.id : ''}</td><td>${pill(d.decision.allow ? 'allow' : 'deny')}</td><td class="mono">${d.decision.reasons.map((r) => r.code).join(', ')}</td><td>${d.disagree ? pill('warn', 'differs') : ''}</td></tr>`).join('')}
     </tbody></table></div></div>
@@ -707,7 +879,7 @@ function runShadow() {
   for (const u of P.users) {
     const c = P.cache.get(u.id); if (!c) continue;
     const input = { principal: { sub: 'svc-ad-gateway' }, purpose: 'ads_personalization', dataset: ds, processing_region: u.eu ? 'EU' : 'US', transfer_basis: null, grant: true, user: P.userInput(u, c.consent) };
-    const a = E.decide(input, 'ads-1.4.0'), b = E.decide(input, 'ads-1.5.0');
+    const a = E.decide(input, 'core-1.4.0'), b = E.decide(input, 'core-1.5.0');
     if (a.allow !== b.allow) { flips++; for (const r of b.reasons) if (!a.reasons.some((x) => x.code === r.code)) by[r.code] = (by[r.code] || 0) + 1; }
   }
   S.shadow = { total: P.users.length, flips, by, ms: performance.now() - t };
@@ -745,7 +917,7 @@ function trainResult(r) {
 EXPORTS.models = () => [['model', 'workload', 'stage', 'status', 'score', 'trained_on'], ...P.models.map((m) => [E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status, m.auc, m.trainedOn.map((t) => t.table + '@' + t.snapshot).join(' ')])];
 VIEWS.models = () => {
   const sel = P.models.find((m) => E.mname(m) === S.sel.model) || P.models.at(-1);
-  const card = sel.card || E.modelCard({ ...sel, excluded: {}, eligible: sel.members.size }, P.dataset(sel.trainedOn[0].table), { version: 'ads-1.3.2' });
+  const card = sel.card || E.modelCard({ ...sel, excluded: {}, eligible: sel.members.size }, P.dataset(sel.trainedOn[0].table), { version: 'core-1.3.2' });
   return head('Models', 'Every model, what it may be used for, and the data it learned from.', 'Model cards are generated at registration from lineage and the training gate. When an erased person was in a model\'s training data, the model is flagged for retraining.') + `
   <div class="grid">
     <div class="card c5">${tools('models', P.models.filter((m) => match('models', E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status)).length, P.models.length, 'Search models')}<table class="table"><thead><tr><th>Model</th><th>Stage</th><th>Status</th><th>Score</th></tr></thead><tbody>
@@ -1104,8 +1276,13 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
+  const t = e.target.closest('[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
   if (!t || $('#app').hidden) return;
+  if (t.dataset.lcmodel) { S.lcModel = t.dataset.lcmodel; return render(); }
+  if (t.dataset.artifact) { S.art.artifact = t.dataset.artifact; S.art.action = S.art.action === 'invoke' ? 'download' : S.art.action; return render(); }
+  if (t.dataset.pipe) { S.pipe = t.dataset.pipe; return render(); }
+  if (t.dataset.apiop) { S.apiOp = t.dataset.apiop; return render(); }
+  if (t.dataset.sdk) { S.sdkLang = t.dataset.sdk; return render(); }
   if (t.dataset.datamode) { S.data.mode = t.dataset.datamode; return render(); }
   if (t.dataset.opends !== undefined) { S.data.ds = t.dataset.opends || null; if (S.data.ds && UNMASKED_ROLES.has(S.role)) P.ledger.append('data.read', S.token.claims.sub, { dataset: S.data.ds, unmasked: true, rows: 'sample' }); $('#view').scrollTop = 0; return render(); }
   if (t.dataset.reg) { S.regRegion = t.dataset.reg; return render(); }
@@ -1141,6 +1318,7 @@ document.addEventListener('input', (e) => {
 });
 
 const ACTIONS = {
+  'api-try': apiTry,
   'as-auditor': () => signIn('auditor'),
   export: (t) => {
     const k = t.dataset.key, rows = EXPORTS[k] ? EXPORTS[k]() : [];
@@ -1280,6 +1458,8 @@ const ACTS = [
     await ACTIONS.train(); say(n, 'Allowed. Users are excluded by reason using consent as known at the snapshot.'); await pause(4500);
     go('lineage'); say(n, 'Lineage records the exact Iceberg snapshot the model read.'); await pause(3500);
     go('models'); say(n, 'Model card generated on registration: purpose, provenance, exclusions.'); await pause(4000);
+    S.lcModel = 'assistant-llm'; go('lifecycle'); say(n, 'Post-training is governed too: fine-tuning, preference data and safety evals each pass a gate.'); await pause(4500);
+    S.art = { principal: 'maya.chen', action: 'download', artifact: 'ckpt/adrank/v3-eu', endpoint: 'assistant-llm-inference', region: 'US' }; go('artifacts'); say(n, 'Weights inherit sensitivity and region from their data: EU-trained weights cannot leave the EU.'); await pause(4500);
   }],
   ['Real-time consent', 'A California user turns on GPC; the next ad is contextual.', async (n) => {
     await as('sre');

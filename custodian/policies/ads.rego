@@ -1,4 +1,4 @@
-# Custodian ads policy bundle, version ads-1.4.0 (live).
+# Custodian ads policy bundle, version core-1.4.0 (live).
 # Decision document: { allow, reasons[], version }. Enforcement happens in each
 # service (PEP); this bundle only decides (PDP). js/engine.js mirrors it rule
 # for rule so the hosted demo runs without an OPA server.
@@ -6,7 +6,7 @@ package custodian.ads
 
 import rego.v1
 
-version := "ads-1.4.0"
+version := "core-1.4.0"
 
 default allow := false
 

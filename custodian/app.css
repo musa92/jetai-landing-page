@@ -426,3 +426,30 @@ code, .mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0; }
 .ctype em.hot { color: var(--red); }
 .data-table td.masked { color: var(--ink-3); }
 .data-table td.text { min-width: 280px; white-space: normal; }
+
+/* lifecycle */
+.lc { display: grid; gap: 0; margin-top: 18px !important; }
+.lc-stage { display: grid; grid-template-columns: 36px 1fr; gap: 14px; position: relative; padding-bottom: 14px; }
+.lc-stage::before { content: ""; position: absolute; left: 17px; top: 34px; bottom: 0; width: 2px; background: #d1f0da; }
+.lc-stage:last-child::before { display: none; }
+.lc-n { width: 34px; height: 34px; border-radius: 50%; background: #34c759; color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 13px; }
+.lc-stage.live .lc-n { background: var(--blue); box-shadow: 0 0 0 5px var(--blue-soft); }
+.lc-body { border: 1px solid var(--hair); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; }
+.lc-body b { font: 600 15px var(--display); }
+/* pipelines */
+.dag { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dag-node { padding: 6px 10px; border-radius: 8px; background: #f5f5f7; border: 1px solid var(--hair); font-size: 12px; }
+.dag-arrow { color: var(--ink-3); font-size: 12px; }
+/* services */
+.budget { width: 100px; height: 6px; border-radius: 3px; background: #ececf0; overflow: hidden; }
+.budget div { height: 100%; background: #34c759; }
+.budget div.low { background: #ff9f0a; }
+/* api */
+.api-list { display: grid; gap: 2px; }
+.api-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 8px; border: 0; border-radius: 9px; background: none; text-align: left; }
+.api-row:hover { background: #fafafc; }
+.api-row.on { background: var(--blue-soft); }
+.api-row small { display: block; font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.verb { flex: none; display: inline-block; min-width: 46px; text-align: center; font: 600 11px/20px var(--mono); border-radius: 6px; padding: 0 6px; }
+.verb.get { background: var(--green-soft); color: var(--green); }
+.verb.post { background: var(--blue-soft); color: var(--blue); }

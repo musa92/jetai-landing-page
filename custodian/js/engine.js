@@ -231,13 +231,13 @@ const RULES_V15 = [
 ];
 
 export const POLICY_BUNDLES = {
-  'ads-1.4.0': { version: 'ads-1.4.0', rules: RULES_V14, status: 'live' },
-  'ads-1.5.0': { version: 'ads-1.5.0', rules: RULES_V15, status: 'shadow' },
+  'core-1.4.0': { version: 'core-1.4.0', rules: RULES_V14, status: 'live' },
+  'core-1.5.0': { version: 'core-1.5.0', rules: RULES_V15, status: 'shadow' },
 };
 
 const REQUIRED = ['principal', 'purpose', 'dataset', 'processing_region'];
 
-export function decide(input, bundleVersion = 'ads-1.4.0') {
+export function decide(input, bundleVersion = 'core-1.4.0') {
   const t = (globalThis.performance || Date).now();
   const bundle = POLICY_BUNDLES[bundleVersion];
   const missing = REQUIRED.filter((k) => input[k] === undefined || input[k] === null);
@@ -402,7 +402,7 @@ export class Platform {
     this.cache = new Map();                       // Redis: user -> {consent, version, at}
     for (const u of this.users) this.cache.set(u.id, { consent: this.consent.snapshot(u.id), at: this.t0, offset: 0 });
     this.ledger = new Ledger();
-    this.datasets = datasetsSeed();
+    this.datasets = [...datasetsSeed(), ...POST_TRAINING_DATASETS.map((d) => ({ ...d }))];
     this.grants = [
       { id: 'g-101', principal: 'svc-ads-trainer', dataset: 'ad_features_v7', purpose: 'model_training', region: 'US', expires: Date.now() + 864e5 * 60 },
       { id: 'g-102', principal: 'svc-ads-trainer', dataset: 'app_events_clean', purpose: 'model_training', region: 'US', expires: Date.now() + 864e5 * 60 },
@@ -452,8 +452,8 @@ export class Platform {
   /** PDP call with audit + decision log. Throws when the policy service is down. */
   async evaluate(input, { log = true, actor = input.principal && input.principal.sub } = {}) {
     if (!this.policyUp) throw new Error('policy service unavailable');
-    const d = decide(input, 'ads-1.4.0');
-    const shadow = decide(input, 'ads-1.5.0');
+    const d = decide(input, 'core-1.4.0');
+    const shadow = decide(input, 'core-1.5.0');
     const rec = { at: Date.now(), input, decision: d, shadow, disagree: d.allow !== shadow.allow };
     this.decisions.unshift(rec);
     if (this.decisions.length > 400) this.decisions.length = 400;
@@ -739,3 +739,110 @@ export function sampleEvents(user, n = 8, now = Date.now()) {
 export function minimize(row) {
   return { event_id: row.event_id, user_id: row.user_id, event_name: row.event_name, geohash5: geohash(+row.latitude, +row.longitude, 5), query_category: row.query ? 'local_business' : null, ad_impression_id: row.ad_impression_id, ts: row.ts.slice(0, 13) + ':00Z' };
 }
+
+/* ───────────────────────── ML lifecycle, artifacts, endpoints ─────────────────────────
+   Post-training is where governance usually gets thin: fine-tuning sets, human
+   preference labels and eval suites are datasets too, and model weights inherit
+   the sensitivity of everything they learned from. */
+
+export const CLASS_RANK = { public: 0, internal: 1, confidential: 2, restricted: 3 };
+const RANK_NAME = ['public', 'internal', 'confidential', 'restricted'];
+
+export const POST_TRAINING_DATASETS = [
+  { id: 'sft_instructions_v3', layer: 'post-training', owner: 'assistant-ml', steward: 'Luis Ortega', classification: 'confidential', pii: ['user_id'], region: 'US', allowed_purposes: ['model_training'], retention_days: 365, sources: ['assistant'], status: 'approved', legal_basis: 'legitimate_interest', bucket: 'lake-us-west', workload: 'assistant_llm' },
+  { id: 'preference_pairs_v2', layer: 'post-training', owner: 'assistant-ml', steward: 'Luis Ortega', classification: 'confidential', pii: ['annotator_id'], region: 'US', allowed_purposes: ['model_training'], retention_days: 365, sources: ['labeling-vendor'], status: 'approved', legal_basis: 'contract', bucket: 'lake-us-west', workload: 'assistant_llm' },
+  { id: 'eval_safety_suite_v5', layer: 'post-training', owner: 'responsible-ai', steward: 'Luis Ortega', classification: 'internal', pii: [], region: 'US', allowed_purposes: ['model_training', 'analytics'], retention_days: 730, sources: ['red-team'], status: 'approved', legal_basis: 'legitimate_interest', bucket: 'lake-us-west', workload: 'assistant_llm' },
+];
+
+/* Lifecycle of each governed model: every stage names its inputs, the policy
+   bundle that gated it, and the artifact it produced. */
+export function lifecycle(p) {
+  const v1 = p.tables.assistant_conversations_redacted.current.id;
+  return [
+    { model: 'assistant-llm', stages: [
+      { key: 'collect', name: 'Data collection', inputs: ['assistant_conversations'], gate: 'catalog.approved, PII scan', policy: 'core-1.4.0', artifact: 'assistant_conversations@' + p.tables.assistant_conversations.current.id, status: 'done' },
+      { key: 'pretrain', name: 'Pre-training', inputs: ['assistant_conversations_redacted@' + v1], gate: 'purpose model_training, per-user consent', policy: 'core-1.4.0', artifact: 'ckpt/assistant-base-7b/step-120k', status: 'done' },
+      { key: 'sft', name: 'Supervised fine-tuning', inputs: ['sft_instructions_v3'], gate: 'dataset approved for model_training', policy: 'core-1.4.0', artifact: 'ckpt/assistant-sft-7b/r3', status: 'done' },
+      { key: 'pref', name: 'Preference tuning', inputs: ['preference_pairs_v2'], gate: 'vendor contract, annotator IDs pseudonymized', policy: 'core-1.4.0', artifact: 'ckpt/assistant-dpo-7b/r2', status: 'done' },
+      { key: 'eval', name: 'Safety and privacy evaluation', inputs: ['eval_safety_suite_v5'], gate: 'memorization probe, PII extraction test, refusal suite', policy: 'release-2.1', artifact: 'eval/assistant-7b/r2', status: 'done', metrics: { pii_extraction_rate: '0.00%', canary_exposure: 'below threshold', refusal_accuracy: '97.4%' } },
+      { key: 'release', name: 'Release review', inputs: ['eval/assistant-7b/r2'], gate: 'privacy and legal sign-off, model card', policy: 'release-2.1', artifact: 'assistant-llm v1', status: 'done' },
+      { key: 'serve', name: 'Inference', inputs: ['assistant-llm v1'], gate: 'endpoint ABAC, delegated tokens', policy: 'core-1.4.0', artifact: 'endpoint assistant-llm-inference', status: 'live' },
+    ] },
+    { model: 'adrank', stages: [
+      { key: 'collect', name: 'Data collection', inputs: ['iphone_app_events_raw', 'iphone_app_events_raw_eu'], gate: 'region tagging at ingest', policy: 'core-1.4.0', artifact: 'raw tables', status: 'done' },
+      { key: 'pretrain', name: 'Training (federated, DP)', inputs: ['ad_features_v7', 'ad_features_v7_eu'], gate: 'per-user ads consent, ATT, minors', policy: 'core-1.4.0', artifact: 'ckpt/adrank/v3', status: 'done' },
+      { key: 'eval', name: 'Evaluation', inputs: ['holdout slices by region'], gate: 'AUC within 0.01 across regions, DP budget epsilon 4.0', policy: 'release-2.1', artifact: 'eval/adrank/v3', status: 'done', metrics: { auc: '0.781', epsilon: '3.6 of 4.0', slice_gap: '0.008' } },
+      { key: 'release', name: 'Release review', inputs: ['eval/adrank/v3'], gate: 'privacy sign-off, model card', policy: 'release-2.1', artifact: 'adrank v3', status: 'done' },
+      { key: 'serve', name: 'Inference', inputs: ['adrank v3'], gate: 'per-request consent and policy, fail closed', policy: 'core-1.4.0', artifact: 'endpoint adrank-serving', status: 'live' },
+    ] },
+  ];
+}
+
+/* Artifacts inherit the highest classification of their training inputs. */
+export function artifacts(p) {
+  const cls = (ids) => RANK_NAME[Math.max(0, ...ids.map((id) => CLASS_RANK[(p.dataset(id) || {}).classification] ?? 1))];
+  return [
+    { id: 'ckpt/assistant-base-7b/step-120k', model: 'assistant-llm', kind: 'checkpoint', size: '13.8 GB', region: 'US', classification: cls(['assistant_conversations_redacted']), from: ['assistant_conversations_redacted'] },
+    { id: 'ckpt/assistant-dpo-7b/r2', model: 'assistant-llm', kind: 'weights', size: '13.8 GB', region: 'US', classification: cls(['assistant_conversations_redacted', 'sft_instructions_v3', 'preference_pairs_v2']), from: ['sft_instructions_v3', 'preference_pairs_v2'] },
+    { id: 'ckpt/adrank/v3', model: 'adrank', kind: 'weights', size: '48 MB', region: 'US', classification: cls(['ad_features_v7']), from: ['ad_features_v7'] },
+    { id: 'ckpt/adrank/v3-eu', model: 'adrank', kind: 'weights', size: '48 MB', region: 'EU', classification: cls(['ad_features_v7_eu']), from: ['ad_features_v7_eu'] },
+  ];
+}
+
+export const ENDPOINTS = [
+  { id: 'adrank-serving', model: 'adrank v3', regions: ['us-west-2', 'eu-west-1'], consumers: ['svc-ad-gateway'], purpose: 'ads_personalization', auth: 'mTLS + OAuth client credentials' },
+  { id: 'assistant-llm-inference', model: 'assistant-llm v1', regions: ['us-west-2'], consumers: ['svc-assistant', 'agent:assistant-7'], purpose: 'user_assist', auth: 'OAuth token exchange (delegated)' },
+];
+
+export const PRINCIPALS = {
+  'maya.chen': { kind: 'human', team: 'assistant-ml', clearance: 'confidential', region: 'US', roles: ['ml_engineer'] },
+  'dev.patel': { kind: 'human', team: 'growth-analytics', clearance: 'internal', region: 'US', roles: ['ml_engineer'] },
+  'svc-model-deployer': { kind: 'service', team: 'ml-platform', clearance: 'restricted', region: 'US', roles: ['deployer'] },
+  'svc-ad-gateway': { kind: 'service', team: 'ads-serving', clearance: 'confidential', region: 'US', roles: ['service'] },
+  'svc-assistant': { kind: 'service', team: 'assistant', clearance: 'confidential', region: 'US', roles: ['service'] },
+  'vendor-labeler': { kind: 'external', team: 'labeling-vendor', clearance: 'internal', region: 'US', roles: ['contractor'] },
+};
+
+/** ABAC over principal attributes, resource attributes and action. Fails closed. */
+export function decideArtifact({ principal, action, resource, endpoint, region }) {
+  const t = (globalThis.performance || Date).now();
+  const pr = PRINCIPALS[principal];
+  const reasons = [];
+  if (!pr) reasons.push(R('identity.known', 'unknown_principal', `${principal} is not a federated identity known to the platform.`, 'Zero trust'));
+  else {
+    if (action === 'invoke') {
+      const ep = ENDPOINTS.find((e) => e.id === endpoint);
+      if (!ep) reasons.push(R('endpoint.known', 'unknown_endpoint', `No endpoint ${endpoint}.`, 'Fail closed'));
+      else {
+        if (!ep.consumers.includes(principal)) reasons.push(R('endpoint.consumer', 'not_registered_consumer', `${principal} is not a registered consumer of ${ep.id}.`, 'Least privilege'));
+        if (!ep.regions.some((r) => r.startsWith(region === 'EU' ? 'eu' : 'us'))) reasons.push(R('endpoint.region', 'region_not_served', `${ep.id} is not deployed for ${region} traffic.`, 'GDPR Art. 44'));
+      }
+    } else {
+      const a = resource;
+      if (CLASS_RANK[pr.clearance] < CLASS_RANK[a.classification]) reasons.push(R('abac.clearance', 'insufficient_clearance', `${a.classification} artifact needs ${a.classification} clearance; ${principal} has ${pr.clearance}.`, 'ABAC'));
+      if (pr.kind === 'external') reasons.push(R('abac.external', 'external_principal', 'External parties never receive model weights.', 'Data processing agreement'));
+      if (action === 'deploy' && !pr.roles.includes('deployer')) reasons.push(R('abac.deploy', 'not_deployer', 'Only the release pipeline may deploy, after release review.', 'Separation of duties'));
+      if (a.region === 'EU' && pr.region !== 'EU' && action === 'download') reasons.push(R('residency.artifact', 'eu_artifact_residency', 'Weights trained on EU data stay in EU infrastructure.', 'GDPR Art. 44-46'));
+    }
+  }
+  return { allow: reasons.length === 0, reasons, version: 'artifacts-1.2.0', latency_ms: (globalThis.performance || Date).now() - t };
+}
+
+/* Batch and streaming jobs that turn raw data into governed, ML-ready inputs. */
+export const PIPELINES = [
+  { id: 'consent-stream', engine: 'Flink', mode: 'streaming', schedule: 'continuous', input: 'consent.events', output: 'redis:consent', stages: ['deserialize', 'validate schema', 'apply to cache', 'emit lag metric'], records_in: 1840221, dropped: { schema_invalid: 12 }, lag_s: 1.4, status: 'healthy' },
+  { id: 'events-ingest-us', engine: 'Flink', mode: 'streaming', schedule: 'continuous', input: 'collector.app_events', output: 'iphone_app_events_raw', stages: ['tag region', 'tag consent version', 'route to regional bucket', 'write Iceberg'], records_in: 48200118, dropped: { wrong_region: 0, malformed: 311 }, lag_s: 3.2, status: 'healthy' },
+  { id: 'clean-and-minimize', engine: 'Spark', mode: 'batch', schedule: 'hourly', input: 'iphone_app_events_raw', output: 'app_events_clean', stages: ['read snapshot', 'drop IDFA', 'precise to geohash-5', 'bucket queries', 'write snapshot', 'emit OpenLineage'], records_in: 2010442, dropped: { att_denied_idfa_cleared: 1244180, malformed: 902 }, duration: '6m 41s', status: 'healthy' },
+  { id: 'features-consent-filter', engine: 'Spark', mode: 'batch', schedule: 'daily 02:00', input: 'app_events_clean', output: 'ad_features_v7', stages: ['point-in-time consent join', 'exclude by policy', 'aggregate 7d features', 'write snapshot', 'emit OpenLineage'], records_in: 6488, dropped: { ccpa_opt_out: 1394, att_denied: 3038, minor_no_profiling: 412, gpc_signal: 327 }, duration: '18m 03s', status: 'healthy' },
+  { id: 'assistant-redaction', engine: 'Spark', mode: 'batch', schedule: 'daily 03:00', input: 'assistant_conversations', output: 'assistant_conversations_redacted', stages: ['detect PII (NER + regex)', 'replace with tokens', 'drop opted-out users', 'canary insertion', 'write snapshot'], records_in: 415220, dropped: { training_opt_out: 21880, deleted: 14 }, duration: '24m 10s', status: 'healthy' },
+  { id: 'retention-sweeper', engine: 'Spark', mode: 'batch', schedule: 'daily 04:00', input: 'all governed tables', output: 'expired snapshots', stages: ['find rows past retention_days', 'delete', 'expire snapshots', 'remove orphan files', 'write evidence'], records_in: 920144, dropped: {}, duration: '9m 52s', status: 'healthy' },
+];
+
+export const SERVICES = [
+  { name: 'policy-engine', lang: 'Go (OPA)', cluster: 'eks-us-west-2, eks-eu-west-1', replicas: 12, p99: 2.1, err: 0.002, slo: 99.99, budget: 0.86, version: 'core-1.4.0 / 2026.10.21' },
+  { name: 'consent-service', lang: 'Kotlin (Spring Boot)', cluster: 'eks-us-west-2, eks-eu-west-1', replicas: 8, p99: 11.4, err: 0.01, slo: 99.95, budget: 0.71, version: '3.18.2' },
+  { name: 'catalog-api', lang: 'Java (Spring)', cluster: 'eks-us-west-2', replicas: 4, p99: 38, err: 0.03, slo: 99.9, budget: 0.93, version: '5.4.0' },
+  { name: 'lineage-service', lang: 'Scala (Akka)', cluster: 'eks-us-west-2', replicas: 4, p99: 54, err: 0.02, slo: 99.9, budget: 0.88, version: '2.9.1' },
+  { name: 'workflow-workers', lang: 'Python (Temporal)', cluster: 'eks-us-west-2, eks-eu-west-1', replicas: 6, p99: 120, err: 0.04, slo: 99.9, budget: 0.79, version: '1.33.0' },
+  { name: 'audit-ledger', lang: 'Go', cluster: 'eks-us-west-2, eks-eu-west-1', replicas: 3, p99: 6.8, err: 0, slo: 99.99, budget: 1, version: '1.7.3' },
+];

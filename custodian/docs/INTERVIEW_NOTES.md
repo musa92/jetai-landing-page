@@ -61,3 +61,15 @@ For each component: what it does, the main tradeoff, which requirement it covers
 - Minors: DSA Art. 28 bans profiling ads to minors; COPPA amendments and state app store laws push age ranges, not birthdates. Treat unknown age as a minor.
 - EU AI Act: high-risk dates moved to Dec 2027 by the 2026 Omnibus, but training-data governance and documentation are still the work; Art. 50 transparency applies from Aug 2026.
 - Engineering patterns to reference: private federated learning with DP, DP aggregate trends via synthetic data, contextual-only ad surfaces, verifiable transparency logs. Custodian mirrors the last two directly (serving fallback, hash-chained ledger).
+
+## Role requirements mapped to the demo
+
+| Requirement | Where to show it |
+|---|---|
+| Governance and lineage of datasets, models and policies across training and post-training | Models > Lifecycle (every stage: inputs with snapshot IDs, gate, policy version, artifact); Data > Lineage; Models > Registry cards |
+| OAuth 2.0, ABAC, federated identity for training data, model artifacts and inference endpoints | Access > Policies (data ABAC); Models > Artifacts and endpoints (weights inherit classification, download/deploy/invoke decisions on IdP attributes); Access > Agents (RFC 8693); Settings > Organization (Okta OIDC, SCIM) |
+| Backend services embedding GDPR, CCPA, DMA | Policy rules with article citations; Trust > Regulations and Controls; Operations > Services (Go, Kotlin, Java, Scala, Python) |
+| Batch and streaming pipelines turning raw data into governed ML-ready inputs | Data > Pipelines (Flink streaming, Spark batch, governance stages, exclusions by reason) |
+| REST APIs, SDKs and web tools for approvals and compliance reviews | Developers > REST API (live "Send request"), Developers > SDKs; Access > Requests; Home inbox |
+| Fault-tolerant serving on AWS/GCP/Kubernetes with integrity and auditability | Operations > Services (EKS per region, SLOs, error budgets); Operations > Serving chaos drill (fail closed); Trust > Audit ledger |
+| Work with security, legal, privacy | Role-based reviews (privacy, legal, steward, auditor), release review in the lifecycle |
