@@ -2,6 +2,7 @@
    scripted demo acts. Plain ES modules, no build step. */
 import * as E from './engine.js?v=20261023-4';
 import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261023-3';
+import { RANGES, history, tsChart, initChartHover, spark } from './charts.js?v=20261023-3';
 import { REGULATIONS, WATCH, PATTERNS } from './regulations.js?v=20261023-1';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -31,6 +32,7 @@ const S = {
   agent: { user: null, userToken: null, agentToken: null, results: [] },
   dma: null, actsDone: new Set(), act: null,
   data: { tab: 'users', region: 'all', user: null },
+  bulk: new Set(), range: '24h', chaosLog: [], drawer: null,
 };
 
 /* ───────────────────────── boot: gate, sign-in ───────────────────────── */
@@ -89,6 +91,7 @@ const ICON = {
   ops: '<path d="M2.5 10h3l2-5 3 10 2-5h5"/>',
   trust: '<path d="M10 3v14M5 17h10M3.5 7h13M6 7l-2.5 5a2.5 2.5 0 0 0 5 0zm8 0-2.5 5a2.5 2.5 0 0 0 5 0z"/>',
   settings: '<circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2m0 11v2m7.5-7.5h-2m-11 0h-2m12.8-5.3-1.4 1.4m-7.8 7.8-1.4 1.4m10.6 0-1.4-1.4M6.1 6.1 4.7 4.7"/>',
+  risk: '<path d="M10 3 2.5 16.5h15z"/><path d="M10 8.5v3.5m0 2.2v.1"/>',
   dev: '<path d="m7 6-4 4 4 4m6-8 4 4-4 4M11.5 4l-3 12"/>',
   search: '<circle cx="9" cy="9" r="5.5"/><path d="m13 13 4 4"/>',
   bell: '<path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5.5 1.5 5.5h-13S5 12 5 8M8 16a2 2 0 0 0 4 0"/>',
@@ -101,7 +104,8 @@ const SECTIONS = [
   ['access', 'Access', [['access', 'Requests'], ['policy', 'Policies'], ['agent', 'Agents']]],
   ['privacy', 'Privacy', [['consent', 'Consent'], ['dsr', 'Subject requests']]],
   ['models', 'Models', [['lifecycle', 'Lifecycle'], ['models', 'Registry'], ['artifacts', 'Artifacts and endpoints'], ['training', 'Training gate']]],
-  ['ops', 'Operations', [['serving', 'Serving'], ['services', 'Services'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
+  ['risk', 'Risk', [['risks', 'Risk register'], ['assessments', 'Assessments'], ['vendors', 'Vendors'], ['incidents', 'Incidents'], ['reports', 'Reports']]],
+  ['ops', 'Operations', [['observability', 'Dashboard'], ['serving', 'Serving'], ['services', 'Services'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
   ['dev', 'Developers', [['api', 'REST API'], ['sdk', 'SDKs']]],
   ['trust', 'Trust', [['regulations', 'Regulations'], ['compliance', 'Controls'], ['audit', 'Audit ledger']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations'], ['apikeys', 'API keys'], ['residency', 'Data residency']]],
@@ -118,6 +122,7 @@ function counts() {
     privacy: P.dsrs.filter((d) => d.status !== 'completed').length || '',
     models: P.models.filter((m) => m.status === 'retrain_required').length || '',
     ops: !P.policyUp || P.breaker.state !== 'closed' ? '!' : '',
+    risk: G.incidents.filter((x) => x.status !== 'Resolved').length ? '!' : (G.assessments.filter((a) => a.status === 'In review').length || ''),
   };
 }
 function renderChrome() {
@@ -155,13 +160,14 @@ function render() {
   v.scrollTop = st;
   if (keep) { const el = v.querySelector(`[data-filter="${keep}"]`); if (el) { el.focus(); el.setSelectionRange(caret, caret); } }
   AFTER[S.view] && AFTER[S.view]();
+  if (S.drawer) drawDrawer();
 }
-const LIVE = new Set(['overview', 'serving', 'insights']);
+const LIVE = new Set(['overview', 'serving', 'insights', 'observability', 'incidents']);
 setInterval(() => {
   if (!P || $('#app').hidden) return;
   const a = document.activeElement;
   if (a && $('#view').contains(a) && /INPUT|SELECT|TEXTAREA/.test(a.tagName)) return;
-  if (LIVE.has(S.view)) render();
+  if (LIVE.has(S.view) && !document.querySelector('.ts:hover')) render();
   renderChrome();
 }, 1000);
 
@@ -200,6 +206,7 @@ const F = {};
 const match = (key, ...fields) => { const q = (F[key] || '').trim().toLowerCase(); return !q || fields.some((x) => String(x ?? '').toLowerCase().includes(q)); };
 const tools = (key, shown, total, ph) => `<div class="tools"><label class="search">${icon('search')}<input data-filter="${key}" value="${h(F[key] || '')}" placeholder="${h(ph)}"></label><span class="note">${shown === total ? `${fmt(total)} results` : `${fmt(shown)} of ${fmt(total)}`}</span><span class="spacer"></span><button class="btn" data-act="export" data-key="${key}">Export CSV</button></div>`;
 const EXPORTS = {};
+const pager = (key, pages) => pages < 2 ? '' : `<div class="pager"><button class="btn" data-page="${key}:${(S[key] || 1) - 1}" ${(S[key] || 1) <= 1 ? 'disabled' : ''}>‹ Previous</button><span class="note">Page ${S[key] || 1} of ${pages}</span><button class="btn" data-page="${key}:${(S[key] || 1) + 1}" ${(S[key] || 1) >= pages ? 'disabled' : ''}>Next ›</button></div>`;
 function csv(rows) { return rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n'); }
 
 const can = (...roles) => roles.includes(S.role);
@@ -268,6 +275,8 @@ const ACTIVITY = {
   'token.exchange': () => 'received a delegated token',
   'agent.tool_call': (e) => `${e.payload.allow ? 'was allowed' : 'was denied'} tool ${e.payload.tool}`,
   'platform.start': () => 'started the platform',
+  'report.generated': (e) => `generated the ${e.payload.report} report`,
+  'assessment.signoff': (e) => `signed off ${e.payload.assessment} for ${e.payload.as}`,
   'data.read': (e) => `read sensitive columns in ${nm(e.payload.dataset)}`,
 };
 
@@ -294,7 +303,7 @@ function controlChecks() {
 
 function ring(f) {
   const r = 22, c = 2 * Math.PI * r, color = f === 1 ? '#34c759' : f >= 0.8 ? '#0071e3' : '#ff9f0a';
-  return `<svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}" fill="none" stroke="#ececf0" stroke-width="6"/><circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 28 28)"/><text x="28" y="32" text-anchor="middle">${Math.round(f * 100)}</text></svg>`;
+  return `<svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}" fill="none" style="stroke:var(--fill-2)" stroke-width="6"/><circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 28 28)"/><text x="28" y="32" text-anchor="middle">${Math.round(f * 100)}</text></svg>`;
 }
 
 VIEWS.overview = () => {
@@ -341,6 +350,16 @@ VIEWS.insights = () => {
 VIEWS.architecture = () => head('Architecture', 'Three planes every AI workload plugs into. Select a box to open it.', 'In this hosted demo each component runs in the browser. Production mapping: Keycloak, OPA, Postgres with outbox, Redpanda, Redis, Temporal, Iceberg on S3, Marquez, MLflow, S3 Object Lock. See docs/DESIGN.md.') + `
   <div class="grid"><div class="card c12">${archDiagram()}</div></div>`;
 
+function liveChart() {
+  const pts = S.series.slice(-60);
+  if (pts.length < 2) return '<p class="note" style="height:180px">Collecting live traffic...</p>';
+  const now = Date.now(), at = (i) => now - (pts.length - 1 - i) * 1000;
+  return tsChart([
+    { name: 'Personalized', color: '#0071e3', points: pts.map((p, i) => [at(i), p.personalized]) },
+    { name: 'Non-personalized', color: '#8e8e93', points: pts.map((p, i) => [at(i), p.contextual]) },
+    { name: 'Fail-closed fallback', color: '#ff3b30', points: pts.map((p, i) => [at(i), p.fallback]) },
+  ], { range: 'live', fmt: (v) => String(Math.round(v)) });
+}
 function seriesChart() {
   const pts = S.series.slice(-60), W = 600, H = 150, n = Math.max(pts.length - 1, 1);
   const max = Math.max(4, ...pts.map((p) => p.personalized + p.contextual));
@@ -371,7 +390,7 @@ VIEWS.serving = () => {
     ${kpi((fr * 100).toFixed(1) + '%', 'Fail-closed fallback rate', 'policy unavailable or circuit open', fr > 0 ? 'bad' : '')}
     ${kpi(s.violations, 'Personalized without allow', `of ${fmt(total)} served`, s.violations ? 'bad' : 'good')}
     ${kpi(P.policyUp ? (P.breaker.state === 'open' ? 'Open' : 'Closed') : 'Down', 'Policy service, circuit', P.policyUp ? `breaker ${P.breaker.state}` : 'killed by chaos', P.policyUp && P.breaker.state === 'closed' ? 'good' : 'bad')}
-    <div class="card c8"><h3>Serving mix <span class="right">per second, last 60 s</span></h3>${seriesChart()}<div class="legend"><span><i style="background:#0071e3"></i>Personalized</span><span><i style="background:#86868b"></i>Non-personalized</span><span><i style="background:#ff3b30"></i>Fail-closed fallback</span></div></div>
+    <div class="card c8"><h3>Serving mix <span class="right">requests per second, last 60 s</span></h3>${liveChart()}</div>
     <div class="card c4"><h3>Chaos</h3><p class="note">Kill the policy service. The gateway must fail closed, not open.</p>
       <div class="row"><button class="btn ${P.policyUp ? 'danger' : 'primary'}" data-act="chaos" ${can('sre') ? '' : 'disabled'}>${P.policyUp ? 'Kill policy service' : 'Restore policy service'}</button>
       <button class="btn" data-act="traffic">${S.traffic ? 'Pause traffic' : 'Resume traffic'}</button></div>${roleNote('sre')}
@@ -732,16 +751,205 @@ VIEWS.sdk = () => {
     <pre class="code">${h(SDK[lang])}</pre></div></div>`;
 };
 
+/* ── risk and compliance: register, assessments, vendors, incidents, reports ── */
+const G = {
+  risks: [
+    { id: 'R-101', title: 'Re-identification from precise location in raw events', cat: 'Privacy', L: 3, I: 5, owner: 'Luis Ortega', controls: ['restricted_for_ads', 'minimized views', 'dynamic masking'], status: 'Mitigated', treat: 'Raw location is restricted; models read geohash-5 only.' },
+    { id: 'R-102', title: 'Training on users who withdrew consent after snapshot', cat: 'Privacy', L: 2, I: 5, owner: 'Maya Chen', controls: ['point-in-time consent join', 'retrain_required on erasure'], status: 'Mitigated', treat: 'Bitemporal consent and erasure flags force retraining.' },
+    { id: 'R-103', title: 'Model memorizes personal data from assistant conversations', cat: 'AI safety', L: 2, I: 4, owner: 'Amara Okafor', controls: ['redaction pipeline', 'canary insertion', 'PII extraction eval'], status: 'Monitoring', treat: 'Release blocked unless extraction rate is 0.00%.' },
+    { id: 'R-104', title: 'Cross-service data combination without DMA consent', cat: 'Regulatory', L: 3, I: 4, owner: 'Jonas Weber', controls: ['dma_no_combination_consent', 'source tags'], status: 'Mitigated', treat: 'Policy denies multi-source features for EU users without consent.' },
+    { id: 'R-105', title: 'EU data processed outside the EU', cat: 'Regulatory', L: 2, I: 5, owner: 'Priya Nair', controls: ['eu_transfer_blocked', 'eu_artifact_residency', 'regional clusters'], status: 'Mitigated', treat: 'EU buckets, EU clusters, EU weights stay in EU.' },
+    { id: 'R-106', title: 'Policy engine outage leads to personalization without consent', cat: 'Operational', L: 2, I: 5, owner: 'Priya Nair', controls: ['fail closed', 'circuit breaker', 'chaos drills'], status: 'Mitigated', treat: 'Gateway serves non-personalized results when the engine is unreachable.' },
+    { id: 'R-107', title: 'Profiling ads shown to minors', cat: 'Regulatory', L: 2, I: 5, owner: 'Jonas Weber', controls: ['minor_no_profiling', 'age range signal'], status: 'Mitigated', treat: 'Unknown age is treated as a minor.' },
+    { id: 'R-108', title: 'Labeling vendor retains preference data beyond contract', cat: 'Third party', L: 3, I: 3, owner: 'Amara Okafor', controls: ['DPA', 'annual vendor review', 'pseudonymized annotator IDs'], status: 'Open', treat: 'Deletion certificate requested; review due next month.' },
+    { id: 'R-109', title: 'Audit records altered by a privileged insider', cat: 'Security', L: 1, I: 5, owner: 'Henrik Lund', controls: ['hash chain', 'WORM Merkle anchors', 'daily verification'], status: 'Mitigated', treat: 'Tampering is detectable and provable against anchors.' },
+  ],
+  assessments: [
+    { id: 'DPIA-2026-118', type: 'DPIA', title: 'iPhone app events v2 for personalized ads', dataset: 'iphone_app_events_v2', status: 'Approved', progress: 100, owner: 'Jonas Weber', due: '2026-10-30', signoffs: ['Privacy', 'Legal', 'Security'],
+      sections: [['Purpose and necessity', 'Rank sponsored place results. Necessary data limited to coarse location and in-app engagement.'], ['Data and people', '1.2M US users with ads consent; no special-category data; minors excluded.'], ['Risks', 'Re-identification from location (R-101); training after withdrawal (R-102).'], ['Measures', 'Minimized view, geohash-5, IDFA dropped, 90 day grant, point-in-time consent.'], ['Residual risk', 'Low. No prior consultation needed (Art. 36).']] },
+    { id: 'AIIA-2026-031', type: 'AI impact assessment', title: 'Assistant LLM fine-tuning on redacted conversations', dataset: 'assistant_conversations_redacted', status: 'In review', progress: 70, owner: 'Amara Okafor', due: '2026-11-07', signoffs: ['Privacy'],
+      sections: [['System and intended purpose', 'In-app assistant for place questions. Not used for decisions with legal effect.'], ['Training data governance', 'Redacted conversations, opt-outs removed, canaries inserted (EU AI Act Art. 10).'], ['Evaluation', 'PII extraction 0.00%, memorization below threshold, refusal accuracy 97.4%.'], ['Transparency', 'Users told responses are AI-generated (Art. 50).'], ['Open items', 'Legal sign-off pending on vendor preference data (R-108).']] },
+    { id: 'TIA-2026-007', type: 'Transfer impact assessment', title: 'EU aggregate metrics to US analytics', dataset: 'session_metrics_daily', status: 'Draft', progress: 35, owner: 'Jonas Weber', due: '2026-11-20', signoffs: [],
+      sections: [['Transfer', 'Aggregated, non-personal session metrics from eu-west to us-west.'], ['Basis', 'SCCs module 1 if any personal data remains; aiming for anonymous aggregates.'], ['Open items', 'Confirm k-anonymity threshold of 50 per cell.']] },
+    { id: 'LIA-2026-012', type: 'Legitimate interest assessment', title: 'Fraud signals in ad click data', dataset: 'app_events_clean', status: 'Approved', progress: 100, owner: 'Luis Ortega', due: '2026-09-15', signoffs: ['Privacy', 'Legal'],
+      sections: [['Interest', 'Detect invalid ad clicks.'], ['Necessity', 'Click timing and device signals only.'], ['Balancing', 'Expected by users; minimal impact; opt-out honored.']] },
+  ],
+  vendors: [
+    { name: 'Northwind Labeling', service: 'Human preference labeling', data: 'Prompts and responses (redacted), annotator IDs', region: 'US', dpa: true, scc: false, tier: 'High', review: '2026-03-02', status: 'Review due' },
+    { name: 'Contoso Cloud', service: 'Infrastructure (Kubernetes, object storage)', data: 'All governed data, encrypted', region: 'US, EU', dpa: true, scc: true, tier: 'Critical', review: '2026-08-14', status: 'Approved' },
+    { name: 'Fabrikam Support', service: 'Customer support desk', data: 'Account email, ticket text', region: 'EU', dpa: true, scc: true, tier: 'Medium', review: '2026-06-01', status: 'Approved' },
+    { name: 'Tailspin Analytics', service: 'Aggregate product analytics', data: 'Aggregates only (k >= 50)', region: 'US', dpa: true, scc: false, tier: 'Low', review: '2026-05-20', status: 'Approved' },
+    { name: 'Litware Translation', service: 'Localization of assistant replies', data: 'Synthetic strings only', region: 'EU', dpa: false, scc: false, tier: 'Low', review: '—', status: 'Onboarding' },
+  ],
+  incidents: [
+    { id: 'INC-0412', title: 'Consent consumer lag above SLO in eu-west-1', sev: 'SEV-3', status: 'Resolved', opened: Date.now() - 864e5 * 9, resolved: Date.now() - 864e5 * 9 + 36e5 * 2, personal: false, owner: 'Priya Nair',
+      timeline: [['Detected', 'Consent propagation p95 reached 7.8 s'], ['Mitigated', 'Consumers scaled from 4 to 8'], ['Resolved', 'p95 back to 1.6 s; no personalization without allow']] },
+  ],
+};
+const RISK_COLOR = (score) => (score >= 15 ? 'deny' : score >= 8 ? 'warn' : 'ok');
+
+function openIncident(inc) { G.incidents.unshift({ id: 'INC-' + (413 + G.incidents.length), opened: Date.now(), status: 'Open', timeline: [['Detected', inc.detect]], ...inc }); renderChrome(); }
+function resolveIncident(match, note) { const i = G.incidents.find((x) => x.status !== 'Resolved' && x.title === match); if (i) { i.status = 'Resolved'; i.resolved = Date.now(); i.timeline.push(['Resolved', note]); } renderChrome(); }
+
+VIEWS.risks = () => {
+  const list = G.risks.filter((r) => match('risks', r.id, r.title, r.cat, r.owner, r.status));
+  const sel = G.risks.find((r) => r.id === S.riskSel);
+  const cell = (L, I) => G.risks.filter((r) => r.L === L && r.I === I);
+  return head('Risk register', 'What could go wrong with AI data use, how likely and how bad, who owns it, and the controls that reduce it.', 'Likelihood and impact on a 1 to 5 scale; score is their product. Each risk links to the policy rules and platform controls that treat it, so the register stays tied to what is actually enforced.') + `
+  <div class="grid">
+    ${kpi(G.risks.length, 'Risks tracked', `${G.risks.filter((r) => r.status === 'Open').length} open`)}
+    ${kpi(G.risks.filter((r) => r.L * r.I >= 15).length, 'High risks', 'score 15 or more', G.risks.some((r) => r.L * r.I >= 15 && r.status === 'Open') ? 'bad' : '')}
+    ${kpi(new Set(G.risks.flatMap((r) => r.controls)).size, 'Linked controls', 'enforced in policy or platform')}
+    ${kpi(G.risks.filter((r) => r.status === 'Mitigated').length + ' / ' + G.risks.length, 'Mitigated', 'residual risk accepted')}
+    <div class="card c4"><h3>Heat map</h3><div class="heat"><span class="hy">Likelihood</span>${[5, 4, 3, 2, 1].map((L) => `<span class="hl">${L}</span>` + [1, 2, 3, 4, 5].map((I) => { const c = cell(L, I); return `<span class="hc s${L * I >= 15 ? 3 : L * I >= 8 ? 2 : 1}${c.length ? ' has' : ''}" title="${c.map((r) => r.id).join(', ')}">${c.length || ''}</span>`; }).join('')).join('')}<span></span>${[1, 2, 3, 4, 5].map((I) => `<span class="hl">${I}</span>`).join('')}<span class="hx">Impact</span></div></div>
+    <div class="card c8">${tools('risks', list.length, G.risks.length, 'Search risks, owners, categories')}<div class="scroll-x"><table class="table"><thead><tr><th>Risk</th><th>Category</th><th>Score</th><th>Owner</th><th>Status</th></tr></thead><tbody>
+      ${list.map((r) => `<tr class="click${sel === r ? ' sel' : ''}" data-drawer="risk:${r.id}"><td><b>${h(r.title)}</b><span class="id">${r.id}</span></td><td>${r.cat}</td><td>${pill(RISK_COLOR(r.L * r.I), String(r.L * r.I))}<span class="id">L${r.L} × I${r.I}</span></td><td>${r.owner}</td><td>${pill(r.status === 'Open' ? 'warn' : r.status === 'Monitoring' ? 'blue' : 'ok', r.status)}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>`;
+};
+EXPORTS.risks = () => [['id', 'title', 'category', 'likelihood', 'impact', 'score', 'owner', 'controls', 'status'], ...G.risks.map((r) => [r.id, r.title, r.cat, r.L, r.I, r.L * r.I, r.owner, r.controls.join('; '), r.status])];
+
+VIEWS.assessments = () => {
+  const sel = G.assessments.find((a) => a.id === S.asmSel) || G.assessments[0];
+  return head('Assessments', 'Privacy and AI impact assessments, from draft to sign-off, each tied to the dataset or model it covers.', 'DPIAs (GDPR Art. 35), AI impact assessments (EU AI Act), transfer impact assessments and legitimate interest assessments share one workflow: owner drafts, reviewers sign off by role, approval unlocks the access request or release it gates.') + `
+  <div class="grid">
+    <div class="card c5"><div class="row between"><h3>All assessments</h3><button class="btn primary" data-act="new-asm">New assessment</button></div>
+      <div class="asm-list">${G.assessments.map((a) => `<button class="asm${a === sel ? ' on' : ''}" data-asm="${a.id}"><div class="row between"><b>${h(a.title)}</b>${pill(a.status === 'Approved' ? 'ok' : a.status === 'In review' ? 'warn' : '', a.status)}</div><span class="id">${a.id} · ${a.type}</span><div class="prog"><div style="width:${a.progress}%"></div></div><span class="note">Owner ${a.owner} · due ${a.due}</span></button>`).join('')}</div></div>
+    <div class="card c7"><div class="row between"><div><h3>${h(sel.title)}</h3><span class="id">${sel.id} · ${sel.type} · ${named(sel.dataset)}</span></div>${pill(sel.status === 'Approved' ? 'ok' : sel.status === 'In review' ? 'warn' : '', sel.status)}</div>
+      <div class="qa">${sel.sections.map(([q, a]) => `<div><b>${h(q)}</b><p>${h(a)}</p></div>`).join('')}</div>
+      <h3>Sign-off</h3><div class="signoffs">${['Privacy', 'Legal', 'Security'].map((r) => `<span class="so${sel.signoffs.includes(r) ? ' done' : ''}">${sel.signoffs.includes(r) ? '✓' : '○'} ${r}</span>`).join('')}</div>
+      ${sel.status !== 'Approved' ? `<div class="row"><button class="btn primary" data-act="signoff" ${can('privacy_reviewer', 'legal_reviewer') ? '' : 'disabled'}>Sign off as ${S.role === 'legal_reviewer' ? 'Legal' : 'Privacy'}</button></div>${roleNote('privacy_reviewer', 'legal_reviewer')}` : ''}
+    </div>
+  </div>`;
+};
+
+VIEWS.vendors = () => {
+  const list = G.vendors.filter((v) => match('vendors', v.name, v.service, v.data, v.region, v.tier, v.status));
+  return head('Vendors', 'Every processor and sub-processor that touches governed data, what they receive, and the agreements that cover it.', 'Vendor records feed the records of processing (Art. 30) and transfer impact assessments. Tier drives review frequency: critical and high every 6 months, others yearly.') + `
+  <div class="grid">
+    ${kpi(G.vendors.length, 'Vendors', 'processors and sub-processors')}${kpi(G.vendors.filter((v) => v.dpa).length + ' / ' + G.vendors.length, 'With signed DPA', 'GDPR Art. 28')}${kpi(G.vendors.filter((v) => v.scc).length, 'Covered by SCCs', 'for EU transfers')}${kpi(G.vendors.filter((v) => v.status === 'Review due').length, 'Reviews due', 'this month', G.vendors.some((v) => v.status === 'Review due') ? 'bad' : '')}
+    <div class="card c12">${tools('vendors', list.length, G.vendors.length, 'Search vendors, services, data')}<div class="scroll-x"><table class="table"><thead><tr><th>Vendor</th><th>Data received</th><th>Region</th><th>DPA</th><th>SCCs</th><th>Tier</th><th>Last review</th><th>Status</th></tr></thead><tbody>
+      ${list.map((v) => `<tr><td><b>${v.name}</b><span class="id">${v.service}</span></td><td>${v.data}</td><td>${v.region}</td><td>${v.dpa ? pill('ok', 'Signed') : pill('warn', 'Pending')}</td><td>${v.scc ? 'Yes' : 'No'}</td><td>${pill(v.tier === 'Critical' || v.tier === 'High' ? 'warn' : '', v.tier)}</td><td>${v.review}</td><td>${pill(v.status === 'Approved' ? 'ok' : 'warn', v.status)}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>`;
+};
+EXPORTS.vendors = () => [['vendor', 'service', 'data', 'region', 'dpa', 'scc', 'tier', 'last_review', 'status'], ...G.vendors.map((v) => [v.name, v.service, v.data, v.region, v.dpa, v.scc, v.tier, v.review, v.status])];
+
+VIEWS.incidents = () => {
+  const open = G.incidents.filter((i) => i.status !== 'Resolved');
+  const sel = G.incidents.find((i) => i.id === S.incSel) || open[0] || G.incidents[0];
+  const clock = (i) => { const left = i.opened + 72 * 36e5 - Date.now(); const hh = Math.floor(left / 36e5), mm = Math.floor((left % 36e5) / 6e4); return `${hh}h ${String(mm).padStart(2, '0')}m`; };
+  return head('Incidents', 'Data and governance incidents, who is on them, and whether a regulator or users must be told.', 'Incidents open automatically from platform signals (policy engine outage, ledger verification failure) or by hand. If personal data may be affected, the 72 hour GDPR Art. 33 notification clock starts at detection.') + `
+  <div class="grid">
+    ${kpi(open.length, 'Open incidents', open.length ? open.map((i) => i.sev).join(', ') : 'none', open.length ? 'bad' : 'good')}
+    ${kpi(open.filter((i) => i.personal).length, 'Possibly notifiable', 'personal data may be affected')}
+    ${kpi(G.incidents.length, 'Incidents this quarter', 'including resolved')}
+    ${kpi('1.9 h', 'Mean time to resolve', 'last 90 days')}
+    <div class="card c5"><div class="row between"><h3>All incidents</h3><button class="btn" data-act="declare">Declare incident</button></div><table class="table"><tbody>${G.incidents.map((i) => `<tr class="click${i === sel ? ' sel' : ''}" data-inc="${i.id}"><td><b>${h(i.title)}</b><span class="id">${i.id} · ${new Date(i.opened).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</span></td><td>${pill(i.sev === 'SEV-1' ? 'deny' : i.sev === 'SEV-2' ? 'warn' : '', i.sev)}</td><td>${pill(i.status === 'Resolved' ? 'ok' : 'deny', i.status)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="card c7">${sel ? `<div class="row between"><div><h3>${h(sel.title)}</h3><span class="id">${sel.id} · owner ${sel.owner}</span></div>${pill(sel.status === 'Resolved' ? 'ok' : 'deny', sel.status)}</div>
+      ${sel.personal && sel.status !== 'Resolved' ? `<div class="clock"><span>Regulator notification due in</span><b>${clock(sel)}</b><span>GDPR Art. 33, from detection</span></div>` : `<p class="note">${sel.personal ? 'Personal data assessed; notification decision recorded.' : 'No personal data affected: not notifiable. Recorded for accountability.'}</p>`}
+      <ol class="steps">${sel.timeline.map(([k, v]) => `<li class="done"><span class="dot">✓</span><div><b>${k}</b><p>${h(v)}</p></div><span></span></li>`).join('')}</ol>
+      ${sel.status !== 'Resolved' ? `<div class="row"><button class="btn primary" data-act="resolve-inc">Mark resolved</button></div>` : ''}` : '<p class="note">No incidents.</p>'}</div>
+  </div>`;
+};
+
+const REPORTS = [
+  ['ropa', 'Records of processing', 'GDPR Art. 30', 'Every dataset: purposes, categories, recipients, retention, transfers.'],
+  ['dsr', 'Subject request SLA report', 'GDPR Art. 12', 'Every request with opened, due and closed dates.'],
+  ['models', 'Model cards bundle', 'EU AI Act Art. 11', 'Cards for every registered model with training data provenance.'],
+  ['evidence', 'Audit evidence pack', 'GDPR Art. 5(2)', 'Ledger verification result, Merkle anchors and entry count.'],
+  ['vendors', 'Processor register', 'GDPR Art. 28', 'Vendors, data received, agreements and review dates.'],
+  ['risks', 'Risk register export', 'ISO/IEC 42001', 'Risks, scores, owners and linked controls.'],
+];
+VIEWS.reports = () => head('Reports', 'One-click evidence for regulators, auditors and internal review, generated from live platform state.', 'Reports are built from the same records the platform enforces with, so they cannot drift from reality. Each generation is written to the audit ledger.') + `
+  <div class="grid"><div class="card c12"><div class="reports">${REPORTS.map(([k, t, law, what]) => `<div class="report"><span class="ds-layer">${law}</span><b>${t}</b><p>${what}</p><button class="btn" data-act="report" data-key="${k}">Generate</button></div>`).join('')}</div></div></div>`;
+async function generateReport(k) {
+  let rows, name = k, type = 'text/csv', body;
+  if (k === 'ropa') rows = [['dataset', 'purposes', 'data_categories', 'region', 'retention_days', 'legal_basis', 'recipients', 'transfers'], ...P.datasets.map((d) => [d.id, d.allowed_purposes.join(' '), d.pii.join(' '), d.region, d.retention_days, d.legal_basis, d.owner, d.region === 'EU' ? 'none outside EU' : 'n/a'])];
+  if (k === 'dsr') rows = [['request', 'kind', 'opened', 'due', 'closed', 'status'], ...P.dsrs.map((d) => [d.idem, d.kind, new Date(d.opened).toISOString(), new Date(d.due).toISOString(), d.closed ? new Date(d.closed).toISOString() : '', d.status])];
+  if (k === 'vendors') rows = EXPORTS.vendors();
+  if (k === 'risks') rows = EXPORTS.risks();
+  if (k === 'models') { type = 'application/json'; body = JSON.stringify(P.models.map((m) => m.card || E.modelCard({ ...m, excluded: {}, eligible: m.members.size }, P.dataset(m.trainedOn[0].table), { version: 'core-1.3.2' })), null, 2); }
+  if (k === 'evidence') { type = 'application/json'; const v = await P.ledger.verify(); const a = await P.ledger.anchor(); body = JSON.stringify({ generated: new Date().toISOString(), entries: P.ledger.entries.length, verification: v, latest_anchor: a, anchors: P.ledger.anchors.length }, null, 2); }
+  const blob = new Blob([body || csv(rows)], { type });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `custodian-${name}-${date(Date.now())}.${type === 'text/csv' ? 'csv' : 'json'}`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  await P.ledger.append('report.generated', S.token.claims.sub, { report: k });
+  toast('Report generated and recorded in the audit ledger');
+}
+
+/* ── observability: Grafana-style dashboard over live and historical metrics ── */
+function rangeBar() { return `<div class="seg range">${Object.keys(RANGES).map((k) => `<button class="${k === S.range ? 'on' : ''}" data-range="${k}">${k}</button>`).join('')}</div>`; }
+function chaosSpikes() { return (S.chaosLog || []).map((t) => ({ ago: Date.now() - t, factor: 6, width: 2 })); }
+VIEWS.observability = () => {
+  const r = S.range, last = S.series.at(-1) || { personalized: 0, contextual: 0, fallback: 0 };
+  const rps = (last.personalized + last.contextual) * 60;
+  const lat = P.decisions.map((d) => d.decision.latency_ms).sort((a, b) => a - b);
+  const p99 = lat.length ? lat[Math.floor(lat.length * 0.99)] : 0.2;
+  const lag = lagP95();
+  const fbLive = last.personalized + last.contextual ? (last.fallback / (last.personalized + last.contextual)) * 100 : 0;
+  const allow = history('allow', r, { base: 520 }), deny = history('deny', r, { base: 1650 });
+  const p99s = history('p99', r, { base: 2.1, jitter: 0.25, daily: 0.15 });
+  const fbs = history('fb', r, { base: 0.05, jitter: 0.9, daily: 0, live: fbLive > 0 ? fbLive : null, spikes: chaosSpikes().map((x) => ({ ...x, factor: 400 })) });
+  const lastV = (pts) => pts[pts.length - 1][1];
+  const panel = (title, value, sub, chart, cls = 'c6') => `<div class="card ${cls} panel"><div class="row between"><h3>${title}</h3><span class="pv">${value}</span></div><span class="note">${sub}</span>${chart}</div>`;
+  return head('Dashboard', 'Live health of every control, with history. Hover any chart to inspect a moment.', 'Metrics are exported by each service as Prometheus series and traced with OpenTelemetry. History here is modeled from the last 30 days; the most recent point is live from this session.') + `
+  <div class="dash-bar">${rangeBar()}<span class="live-dot"></span><span class="note" style="margin:0">Live · refreshing every second · ${RANGES[r].label}</span></div>
+  <div class="grid">
+    ${panel('Policy decisions per minute', fmt(Math.round(lastV(allow) + lastV(deny))), 'Allowed vs denied on the personalization path', tsChart([{ name: 'Allowed', color: '#34c759', points: allow }, { name: 'Denied', color: '#ff9f0a', points: deny }], { range: r, stacked: true }))}
+    ${panel('Decision latency', lastV(p99s).toFixed(1) + ' ms', 'p50 and p99 at the policy engine, SLO under 10 ms', tsChart([{ name: 'p99', color: '#0071e3', points: p99s }, { name: 'p50', color: '#64d2ff', points: history('p50', r, { base: 0.6, jitter: 0.2, daily: 0.1 }) }], { range: r, threshold: { value: 10, label: 'SLO 10 ms' }, fmt: (v) => v.toFixed(1) }))}
+    ${panel('Consent propagation p95', lag === null ? 'measuring' : (lag / 1000).toFixed(1) + ' s', 'Postgres to Redis, SLO under 5 s', tsChart([{ name: 'p95', color: '#bf5af2', points: history('lag', r, { base: 1.7, jitter: 0.3, daily: 0.2, live: lag === null ? null : lag / 1000, spikes: [{ ago: 864e5 * 9, factor: 4.4, width: 2 }] }) }], { range: r, area: true, threshold: { value: 5, label: 'SLO 5 s' }, fmt: (v) => v.toFixed(1) + 's' }))}
+    ${panel('Fail-closed fallback rate', lastV(fbs).toFixed(2) + '%', 'Requests served non-personalized because policy was unreachable', tsChart([{ name: 'Fallback', color: '#ff3b30', points: fbs }], { range: r, area: true, fmt: (v) => (v < 1 ? v.toFixed(2) : v.toFixed(0)) + '%' }))}
+    ${panel('Pipeline throughput', '53.4M', 'Records per hour across Flink and Spark jobs', tsChart([{ name: 'Streaming', color: '#0071e3', points: history('stream', r, { base: 2.1e6 }) }, { name: 'Batch', color: '#5e5ce6', points: history('batch', r, { base: 0.9e6, jitter: 0.4, daily: 0.6 }) }], { range: r, stacked: true }), 'c6')}
+    ${panel('Audit ledger appends', fmt(P.ledger.entries.length), 'Entries per minute; anchors every 30 s', tsChart([{ name: 'Appends', color: '#30b0c7', points: history('ledger', r, { base: 64, jitter: 0.3 }) }], { range: r, area: true }), 'c6')}
+    ${panel('Error budget remaining', Math.round(Math.min(...E.SERVICES.map((x) => x.budget)) * 100) + '%', 'Lowest across platform services this month', tsChart(E.SERVICES.slice(0, 4).map((x, i) => ({ name: x.name, color: ['#0071e3', '#34c759', '#ff9f0a', '#bf5af2'][i], points: history('eb' + x.name, r, { base: x.budget * 100, jitter: 0.02, daily: 0 }) })), { range: r, max: 100, fmt: (v) => Math.round(v) + '%' }), 'c12')}
+  </div>`;
+};
+
+/* ── slide-over drawer for any object: overview, activity, access ── */
+function openDrawer(kind, id) { if (kind === 'dataset') S.sel.dataset = id; S.drawer = { kind, id, tab: (S.drawer && S.drawer.id === id && S.drawer.tab) || 'overview' }; drawDrawer(); }
+function closeDrawer() { S.drawer = null; const d = $('#drawer'); if (d) d.remove(); const b = $('#drawer-back'); if (b) b.remove(); }
+function drawDrawer() {
+  if (!S.drawer) return;
+  const { kind, id, tab } = S.drawer;
+  let title = id, sub = '', overview = '', acts = [], access = '';
+  if (kind === 'dataset') {
+    const d = P.dataset(id); title = nm(id); sub = `${id} · ${d.classification} · ${d.region}`;
+    overview = datasetDetail(d) + `<div class="row"><button class="btn" data-go="data" data-opends-go="${id}">View sample rows</button><button class="btn" data-go="lineage">Lineage</button></div>`;
+    acts = P.ledger.entries.filter((e) => e.payload.dataset === id || e.payload.dataset === id + '_ads');
+    const grants = P.grants.filter((g) => g.dataset === id);
+    access = grants.length ? `<table class="table"><tbody>${grants.map((g) => `<tr><td>${nm(g.principal)}</td><td>${nm(g.purpose)}, ${g.region}</td><td>until ${date(g.expires)}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No active grants. Access requires an approved request.</p>';
+  }
+  if (kind === 'risk') {
+    const r = G.risks.find((x) => x.id === id); title = r.title; sub = `${r.id} · ${r.cat} · score ${r.L * r.I}`;
+    overview = `<dl class="kv"><dt>Likelihood</dt><dd>${r.L} of 5</dd><dt>Impact</dt><dd>${r.I} of 5</dd><dt>Owner</dt><dd>${r.owner}</dd><dt>Status</dt><dd>${r.status}</dd><dt>Treatment</dt><dd>${h(r.treat)}</dd><dt>Controls</dt><dd><div class="tags">${r.controls.map((c) => pill('ok', c)).join('')}</div></dd></dl>`;
+    acts = []; access = `<p class="note">Risk owners: ${r.owner}. Reviewers: privacy, legal, security.</p>`;
+  }
+  const actHtml = acts.length ? `<ul class="feed">${acts.slice(-12).reverse().map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(nm(e.actor))}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}<span class="id">#${e.seq} · ${e.hash.slice(0, 12)}</span></span></li>`).join('')}</ul>` : '<p class="note">No recorded activity yet.</p>';
+  let el = $('#drawer');
+  if (!el) {
+    const back = document.createElement('div'); back.className = 'sheet-back'; back.id = 'drawer-back'; back.onclick = closeDrawer;
+    el = document.createElement('aside'); el.className = 'sheet drawer'; el.id = 'drawer';
+    document.body.append(back, el);
+  }
+  el.innerHTML = `<div class="sheet-head"><div><h3>${h(title)}</h3><span class="id">${h(sub)}</span></div><span class="spacer"></span><button class="btn" data-closedrawer>Close</button></div>
+    <div style="padding:0 20px"><div class="seg">${[['overview', 'Overview'], ['activity', 'Activity'], ['access', 'Access']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-drawertab="${k}">${t}</button>`).join('')}</div></div>
+    <div class="sheet-body drawer-body">${tab === 'overview' ? overview : tab === 'activity' ? actHtml : access}</div>`;
+}
+
 /* ── catalog ── */
-const catalogRows = () => P.datasets.filter((d) => match('catalog', d.id, nm(d.id), d.classification, d.owner, d.region, d.workload && E.WORKLOADS[d.workload].name, d.pii.join(' ')));
+const VIEWS_SAVED = { all: ['All datasets', () => true], pending: ['Pending review', (d) => d.status === 'pending'], restricted: ['Restricted', (d) => d.classification === 'restricted'], eu: ['EU', (d) => d.region === 'EU'], post: ['Post-training', (d) => d.layer === 'post-training'] };
+const catalogRows = () => P.datasets.filter((d) => VIEWS_SAVED[S.catView || 'all'][1](d)).filter((d) => match('catalog', d.id, nm(d.id), d.classification, d.owner, d.region, d.workload && E.WORKLOADS[d.workload].name, d.pii.join(' ')));
 EXPORTS.catalog = () => [['dataset', 'name', 'workload', 'classification', 'pii', 'region', 'allowed_purposes', 'retention_days', 'status', 'owner'], ...catalogRows().map((d) => [d.id, nm(d.id), d.workload || 'shared', d.classification, d.pii.join(' '), d.region, d.allowed_purposes.join(' '), d.retention_days, d.status, d.owner])];
 VIEWS.catalog = () => {
   const sel = P.dataset(S.sel.dataset);
   const exists = P.dataset(S.newDs);
   return head('Catalog', 'Every dataset that feeds an AI workload, who owns it, how sensitive it is, and what it may be used for.', 'Registration runs a PII scanner on schema and samples and proposes tags. Datasets start pending and cannot be read by any job until a steward approves them.') + `
   <div class="grid">
-    <div class="card c12">${tools('catalog', catalogRows().length, P.datasets.length, 'Search datasets, owners, PII')}<div class="scroll-x"><table class="table"><thead><tr><th>Dataset</th><th>Workload</th><th>Classification</th><th>PII</th><th>Region</th><th>Allowed purposes</th><th>Retention</th><th>Status</th></tr></thead><tbody>
-      ${catalogRows().map((d) => `<tr class="click${d.id === S.sel.dataset ? ' sel' : ''}" data-dataset="${d.id}"><td>${named(d.id)}</td><td>${d.workload ? E.WORKLOADS[d.workload].name : 'shared'}</td><td>${pill(d.classification)}</td><td><div class="tags">${d.pii.map((t) => pill('', t)).join('')}</div></td><td>${d.region}</td><td>${d.allowed_purposes.map(nm).join(', ')}</td><td>${d.retention_days} d</td><td>${pill(d.status)}</td></tr>`).join('')}
+    <div class="card c12"><div class="row between"><div class="seg">${Object.entries(VIEWS_SAVED).map(([k, [t, f]]) => `<button class="${(S.catView || 'all') === k ? 'on' : ''}" data-catview="${k}">${t} <span class="cnt">${P.datasets.filter(f).length}</span></button>`).join('')}</div></div>
+      ${tools('catalog', catalogRows().length, P.datasets.length, 'Search datasets, owners, PII')}
+      ${S.bulk.size ? `<div class="bulk"><b>${S.bulk.size} selected</b><button class="btn" data-act="bulk-approve" ${can('data_steward') ? '' : 'disabled'}>Approve</button><button class="btn" data-act="bulk-review">Request review</button><button class="btn" data-act="bulk-export">Export</button><button class="btn" data-act="bulk-clear">Clear</button></div>` : ''}
+      <div class="scroll-x"><table class="table"><thead><tr><th class="cb"><input type="checkbox" data-bulkall ${S.bulk.size && S.bulk.size === catalogRows().length ? 'checked' : ''}></th><th>Dataset</th><th>Workload</th><th>Classification</th><th>PII</th><th>Region</th><th>Allowed purposes</th><th>Retention</th><th>Status</th></tr></thead><tbody>
+      ${catalogRows().map((d) => `<tr class="click${S.bulk.has(d.id) ? ' sel' : ''}" data-drawer="dataset:${d.id}"><td class="cb"><input type="checkbox" data-bulk="${d.id}" ${S.bulk.has(d.id) ? 'checked' : ''}></td><td>${named(d.id)}</td><td>${d.workload ? E.WORKLOADS[d.workload].name : 'shared'}</td><td>${pill(d.classification)}</td><td><div class="tags">${d.pii.map((t) => pill('', t)).join('')}</div></td><td>${d.region}</td><td>${d.allowed_purposes.map(nm).join(', ')}</td><td>${d.retention_days} d</td><td>${pill(d.status)}</td></tr>`).join('')}
     </tbody></table></div></div>
     <div class="card c6"><h3>Register a dataset</h3><p class="note">Schema and samples from the iOS collector. The scanner proposes PII tags; a steward confirms them.</p>
       <div class="fields"><label class="field">Name<input data-bind="newDs" value="${h(S.newDs)}"></label><label class="field">Source<input value="ios-collector (maps)" disabled></label></div>
@@ -750,7 +958,7 @@ VIEWS.catalog = () => {
       </tbody></table></div>
       <div class="row"><button class="btn primary" data-act="register" ${can('ml_engineer', 'data_steward') && !exists ? '' : 'disabled'}>Register and scan</button>${exists ? `<span class="note" style="margin:0">${h(S.newDs)} is registered.</span>` : ''}</div>${roleNote('ml_engineer', 'data_steward')}
     </div>
-    <div class="card c6"><h3>${sel ? h(sel.id) : 'Dataset details'}</h3>${sel ? datasetDetail(sel) : '<p class="note">Select a dataset.</p>'}</div>
+    <div class="card c6"><h3>${sel ? h(nm(sel.id)) : 'Dataset details'}</h3>${sel ? datasetDetail(sel) : '<p class="note">Select a dataset to open its details.</p>'}</div>
   </div>`;
 };
 function datasetDetail(d) {
@@ -1022,7 +1230,9 @@ VIEWS.audit = () => {
   if (!can('auditor')) return head('Audit ledger') + `<div class="grid"><div class="card c12 locked"><b>Auditor access only</b>Ledger queries are restricted to the auditor role.<div class="row" style="justify-content:center;margin-top:16px"><button class="btn primary" data-act="as-auditor">Switch to Henrik Lund, auditor</button></div></div></div>`;
   const a = S.audit;
   const all = a.subjectRows || P.ledger.entries.slice().reverse();
-  const rows = all.filter((e) => match('audit', e.type, e.actor, nm(e.actor), JSON.stringify(e.payload), e.subject)).slice(0, 80);
+  const filtered = all.filter((e) => match('audit', e.type, e.actor, nm(e.actor), JSON.stringify(e.payload), e.subject));
+  const pages = Math.max(1, Math.ceil(filtered.length / 25)); S.auditPage = Math.min(S.auditPage || 1, pages);
+  const rows = filtered.slice((S.auditPage - 1) * 25, S.auditPage * 25);
   return head('Audit ledger', 'A record of every decision that cannot be rewritten without detection.', 'Append-only and hash-chained: each entry commits to the one before it. Merkle roots are written to object-locked storage, so a rewrite of history is provable. People appear only as keyed pseudonyms.') + `
   <div class="grid">
     ${kpi(fmt(P.ledger.entries.length), 'Entries', 'hash chained')}
@@ -1039,6 +1249,7 @@ VIEWS.audit = () => {
       <div class="scroll-x"><table class="table"><thead><tr><th>#</th><th>Time</th><th>Type</th><th>Actor</th><th>Subject</th><th>Payload</th><th>Hash</th></tr></thead><tbody>
       ${rows.map((e) => `<tr class="${a.verify && !a.verify.ok && e.seq === a.verify.brokenAt ? 'bad' : ''}"><td class="mono">${e.seq}</td><td>${time(e.ts)}</td><td class="mono">${e.type}</td><td class="mono">${h(e.actor)}</td><td class="mono">${e.subject || ''}</td><td class="mono" style="max-width:360px">${h(JSON.stringify(e.payload))}</td><td class="hash">${e.hash.slice(0, 10)}<br>prev ${e.prev.slice(0, 10)}</td></tr>`).join('')}
       </tbody></table></div>
+      ${pager('auditPage', pages)}
     </div>
   </div>`;
 };
@@ -1276,8 +1487,19 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
+  const t = e.target.closest('[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
   if (!t || $('#app').hidden) return;
+  if (t.dataset.range) { S.range = t.dataset.range; return render(); }
+  if (t.dataset.page) { const [k, v] = t.dataset.page.split(':'); S[k] = +v; return render(); }
+  if (t.dataset.catview) { S.catView = t.dataset.catview; S.bulk.clear(); return render(); }
+  if (t.dataset.bulkall !== undefined) { const all = catalogRows().map((d) => d.id); if (S.bulk.size === all.length) S.bulk.clear(); else all.forEach((id) => S.bulk.add(id)); return render(); }
+  if (t.dataset.bulk) { e.stopPropagation(); S.bulk.has(t.dataset.bulk) ? S.bulk.delete(t.dataset.bulk) : S.bulk.add(t.dataset.bulk); return render(); }
+  if (t.dataset.drawer) { const [k, v] = t.dataset.drawer.split(':'); if (k === 'risk') S.riskSel = v; return openDrawer(k, v); }
+  if (t.dataset.drawertab) { S.drawer.tab = t.dataset.drawertab; return drawDrawer(); }
+  if (t.dataset.closedrawer !== undefined) return closeDrawer();
+  if (t.dataset.asm) { S.asmSel = t.dataset.asm; return render(); }
+  if (t.dataset.inc) { S.incSel = t.dataset.inc; return render(); }
+  if (t.dataset.opendsGo) { S.data.mode = 'datasets'; S.data.ds = t.dataset.opendsGo; closeDrawer(); return go('data'); }
   if (t.dataset.lcmodel) { S.lcModel = t.dataset.lcmodel; return render(); }
   if (t.dataset.artifact) { S.art.artifact = t.dataset.artifact; S.art.action = S.art.action === 'invoke' ? 'download' : S.art.action; return render(); }
   if (t.dataset.pipe) { S.pipe = t.dataset.pipe; return render(); }
@@ -1286,6 +1508,7 @@ document.addEventListener('click', async (e) => {
   if (t.dataset.datamode) { S.data.mode = t.dataset.datamode; return render(); }
   if (t.dataset.opends !== undefined) { S.data.ds = t.dataset.opends || null; if (S.data.ds && UNMASKED_ROLES.has(S.role)) P.ledger.append('data.read', S.token.claims.sub, { dataset: S.data.ds, unmasked: true, rows: 'sample' }); $('#view').scrollTop = 0; return render(); }
   if (t.dataset.reg) { S.regRegion = t.dataset.reg; return render(); }
+  if (t.dataset.go && S.drawer) closeDrawer();
   if (t.dataset.sel) { const [k, v] = t.dataset.sel.split(/:(.*)/s); S.sel[k] = v; }
   if (t.dataset.go) { e.preventDefault(); return go(t.dataset.go); }
   if (t.dataset.datatab) { S.data.tab = t.dataset.datatab; return render(); }
@@ -1318,6 +1541,15 @@ document.addEventListener('input', (e) => {
 });
 
 const ACTIONS = {
+  report: (t) => generateReport(t.dataset.key),
+  'bulk-approve': async () => { let n = 0; for (const id of S.bulk) { const d = P.dataset(id); if (d.status === 'pending') { d.status = 'approved'; n++; await P.ledger.append('catalog.approved', S.token.claims.sub, { dataset: id, bulk: true }); } } S.bulk.clear(); toast(n ? `Approved ${n} dataset${n > 1 ? 's' : ''}` : 'Nothing pending in the selection'); render(); renderChrome(); },
+  'bulk-review': () => { toast(`Review requested from the data steward for ${S.bulk.size} datasets`); S.bulk.clear(); render(); },
+  'bulk-export': () => { const ids = [...S.bulk]; const rows = [['dataset', 'classification', 'region', 'status'], ...ids.map((id) => { const d = P.dataset(id); return [id, d.classification, d.region, d.status]; })]; const url = URL.createObjectURL(new Blob([csv(rows)], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = 'custodian-selection.csv'; a.click(); },
+  'bulk-clear': () => { S.bulk.clear(); render(); },
+  'new-asm': () => { const id = 'DPIA-2026-' + (119 + G.assessments.length); G.assessments.unshift({ id, type: 'DPIA', title: 'Search clicks v3 for search quality', dataset: 'search_clicks_v3', status: 'Draft', progress: 15, owner: E.ROLES[S.role].name, due: date(Date.now() + 864e5 * 21), signoffs: [], sections: [['Purpose and necessity', 'Improve search ranking quality with click feedback.'], ['Data and people', 'Query text and clicks for US users; free text may contain personal data.'], ['Open items', 'Decide redaction for query text before any training use.']] }); S.asmSel = id; toast(`${id} created as a draft`); render(); },
+  signoff: async () => { const a = G.assessments.find((x) => x.id === S.asmSel) || G.assessments[0]; const r = S.role === 'legal_reviewer' ? 'Legal' : 'Privacy'; if (!a.signoffs.includes(r)) a.signoffs.push(r); a.progress = Math.min(100, a.progress + 15); a.status = a.signoffs.includes('Privacy') && a.signoffs.includes('Legal') ? 'Approved' : 'In review'; if (a.status === 'Approved') a.progress = 100; await P.ledger.append('assessment.signoff', S.token.claims.sub, { assessment: a.id, as: r }); toast(`${r} sign-off recorded on ${a.id}`); render(); },
+  declare: () => { openIncident({ title: 'Suspected over-collection in search clicks v3', sev: 'SEV-2', personal: true, owner: E.ROLES[S.role].name, detect: 'Reported by a reviewer: query text may include emails' }); S.incSel = G.incidents[0].id; render(); },
+  'resolve-inc': () => { const i = G.incidents.find((x) => x.id === S.incSel) || G.incidents.find((x) => x.status !== 'Resolved'); if (i) { i.status = 'Resolved'; i.resolved = Date.now(); i.timeline.push(['Resolved', 'Closed by ' + E.ROLES[S.role].name]); } render(); renderChrome(); },
   'api-try': apiTry,
   'as-auditor': () => signIn('auditor'),
   export: (t) => {
@@ -1330,6 +1562,8 @@ const ACTIONS = {
     P.policyUp = !P.policyUp;
     if (P.policyUp) P.breaker = { state: 'half-open', failures: 0, openedAt: 0 };
     await P.ledger.append(P.policyUp ? 'chaos.restored' : 'chaos.killed', S.token.claims.sub, { service: 'policy-service' });
+    if (!P.policyUp) { S.chaosLog.push(Date.now()); openIncident({ title: 'Policy engine unavailable', sev: 'SEV-2', personal: false, owner: 'Priya Nair', detect: 'Circuit breaker opened; gateway failing closed' }); }
+    else resolveIncident('Policy engine unavailable', 'Policy engine restored; breaker closed. Zero personalized outputs without an allow during the outage.');
     toast(P.policyUp ? 'Policy service restored' : 'Policy service killed. Gateway failing closed.');
     render();
   },
@@ -1370,7 +1604,7 @@ const ACTIONS = {
     const url = URL.createObjectURL(new Blob([JSON.stringify(d.evidence, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a'); a.href = url; a.download = d.idem + '-evidence.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
-  verify: async () => { S.audit.verify = await P.ledger.verify(); toast(S.audit.verify.ok ? `Chain intact: ${fmt(S.audit.verify.checked)} entries` : `Tampering detected at entry #${S.audit.verify.brokenAt}`); render(); },
+  verify: async () => { S.audit.verify = await P.ledger.verify(); if (!S.audit.verify.ok && !G.incidents.some((i) => i.title === 'Audit ledger tampering detected' && i.status !== 'Resolved')) openIncident({ title: 'Audit ledger tampering detected', sev: 'SEV-1', personal: true, owner: 'Henrik Lund', detect: `Hash chain broken at entry #${S.audit.verify.brokenAt}` }); toast(S.audit.verify.ok ? `Chain intact: ${fmt(S.audit.verify.checked)} entries` : `Tampering detected at entry #${S.audit.verify.brokenAt}`); render(); },
   anchor: async () => { const a = await P.ledger.anchor(); toast('Merkle root ' + a.root.slice(0, 12) + ' written to WORM bucket'); render(); },
   tamper: () => {
     const e = P.ledger.entries.find((x) => x.type === 'policy.decision' && x.payload.allow === false) || P.ledger.entries[Math.floor(P.ledger.entries.length / 2)];
@@ -1394,10 +1628,11 @@ $('#btn-role').addEventListener('click', (e) => {
   const pop = document.createElement('div');
   pop.className = 'popover'; pop.id = 'pop';
   pop.style.top = r.bottom + 6 + 'px'; pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
-  pop.innerHTML = Object.entries(E.ROLES).map(([k, x]) => `<button class="${k === S.role ? 'on' : ''}" data-role="${k}"><span class="av">${initials(x.name)}</span><span>${h(x.name)}<small>${h(x.title)}</small></span></button>`).join('') + '<hr><button data-role="__out">Sign out</button><button data-role="__lock">Lock</button>';
+  pop.innerHTML = Object.entries(E.ROLES).map(([k, x]) => `<button class="${k === S.role ? 'on' : ''}" data-role="${k}"><span class="av">${initials(x.name)}</span><span>${h(x.name)}<small>${h(x.title)}</small></span></button>`).join('') + `<hr><button data-role="__theme">${document.documentElement.dataset.theme === 'dark' ? 'Light appearance' : 'Dark appearance'}</button><button data-role="__out">Sign out</button><button data-role="__lock">Lock</button>`;
   pop.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-role]'); if (!b) return;
     closePop();
+    if (b.dataset.role === '__theme') { const dk = document.documentElement.dataset.theme !== 'dark'; document.documentElement.dataset.theme = dk ? 'dark' : 'light'; try { localStorage.setItem('custodian.theme', dk ? 'dark' : 'light'); } catch { /* storage blocked */ } return render(); }
     if (b.dataset.role === '__out') { store.del('custodian.role'); return showSignin(); }
     if (b.dataset.role === '__lock') { store.del('custodian.role'); location.href = '/custodian/__logout'; return; }
     signIn(b.dataset.role);
@@ -1474,7 +1709,9 @@ const ACTS = [
     await as('sre'); go('serving'); S.traffic = true;
     say(n, 'Chaos: kill the policy service.'); await pause(2000);
     if (P.policyUp) await ACTIONS.chaos();
-    say(n, 'Fallback spikes, the breaker opens, and personalized-without-allow stays at zero.'); await pause(7000);
+    say(n, 'Fallback spikes, the breaker opens, and personalized-without-allow stays at zero.'); await pause(6000);
+    go('incidents'); say(n, 'An incident opened automatically. No personal data affected, so no regulator clock.'); await pause(4000);
+    go('serving');
     await ACTIONS.chaos(); say(n, 'Restored. The breaker half-opens, then closes, and personalization returns.'); await pause(5000);
   }],
   ['Right to erasure', 'EU user deletion saga with snapshot expiry and evidence.', async (n) => {
@@ -1529,10 +1766,13 @@ async function runAct(i) {
 $('#btn-demo').addEventListener('click', openActs);
 $('#btn-search').addEventListener('click', openPalette);
 $('#btn-bell').addEventListener('click', openBell);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePop(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closePop(); closeDrawer(); } });
 document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k' && !$('#app').hidden) { e.preventDefault(); openPalette(); } });
 
 /* ───────────────────────── start ───────────────────────── */
+
+try { const th = localStorage.getItem('custodian.theme'); if (th) document.documentElement.dataset.theme = th; } catch { /* storage blocked */ }
+initChartHover();
 
 (async () => {
   const role = store.get('custodian.role');
