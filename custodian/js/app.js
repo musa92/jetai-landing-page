@@ -269,7 +269,8 @@ const ACTIVITY = {
 
 function upcomingDeadlines(n) {
   const today = new Date().toISOString().slice(0, 10);
-  return REGULATIONS.flatMap((r) => r.dates.filter(([d]) => d >= today).map(([d, w]) => [d, r.name, w])).sort().slice(0, n);
+  // Next deadline per law, so one law never fills the list.
+  return REGULATIONS.map((r) => { const nx = r.dates.filter(([d]) => d >= today).sort()[0]; return nx && [nx[0], r.name, nx[1]]; }).filter(Boolean).sort().slice(0, n);
 }
 function lagP95() {
   const lags = P.propagationLags.slice().sort((a, b) => a - b);
@@ -304,7 +305,7 @@ VIEWS.overview = () => {
   return `<div class="hello"><h1>${greet}, ${h(r.name.split(' ')[0])}.</h1><p>${items.length ? `${items.length} item${items.length > 1 ? 's' : ''} need${items.length > 1 ? '' : 's'} you today.` : 'Nothing needs you right now.'}</p></div>
   <div class="grid">
     <div class="card c8"><h3>Needs your attention</h3>${items.length ? `<div class="inbox">${items.map((x) => `<button class="inbox-item" data-go="${x.go}"${x.sel ? ` data-sel="${x.sel[0]}:${h(x.sel[1])}"` : ''}><span><b>${h(x.t)}</b><span>${h(x.m)}</span></span><i>›</i></button>`).join('')}</div>` : `<div class="empty"><b>You're all caught up.</b>Approvals, reviews and incidents for your role appear here.</div>`}
-      <h3 class="sub-h">Coming up</h3><ul class="soon">${upcomingDeadlines(3).map(([d, n, w]) => `<li data-go="regulations"><span class="d">${d}</span><span><b>${h(n)}</b> ${h(w)}</span></li>`).join('')}</ul></div>
+      <h3 class="sub-h">Coming up</h3><ul class="soon">${upcomingDeadlines(3).map(([d, n, w]) => `<li data-go="regulations"><span class="d">${new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</span><span><b>${h(n)}</b> ${h(w)}</span></li>`).join('')}</ul></div>
     <div class="card c4"><div class="posture">${ring(checks.filter((c) => c[1]).length / checks.length)}<div><b>${checks.filter((c) => c[1]).length} of ${checks.length} controls passing</b><span>Governance posture, live</span></div></div><ul class="checks">${checks.map(([t, ok, go]) => `<li data-go="${go}"><span class="tick ${ok ? 'ok' : 'no'}">${ok ? '✓' : '!'}</span>${t}</li>`).join('')}</ul></div>
     ${kpi(s.violations, 'Personalized without allow', 'target: exactly zero', s.violations ? 'bad' : 'good')}
     ${kpi(p95 === null ? 'Measuring' : (p95 / 1000).toFixed(1) + ' s', 'Consent propagation p95', 'target: under 5 s')}
