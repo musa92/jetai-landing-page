@@ -759,7 +759,7 @@ export const POST_TRAINING_DATASETS = [
 export function lifecycle(p) {
   const v1 = p.tables.assistant_conversations_redacted.current.id;
   return [
-    { model: 'assistant-llm', stages: [
+    { model: 'assistant-llm', ...META['assistant-llm'], stages: [
       { key: 'collect', name: 'Data collection', inputs: ['assistant_conversations'], gate: 'catalog.approved, PII scan', policy: 'core-1.4.0', artifact: 'assistant_conversations@' + p.tables.assistant_conversations.current.id, status: 'done' },
       { key: 'pretrain', name: 'Pre-training', inputs: ['assistant_conversations_redacted@' + v1], gate: 'purpose model_training, per-user consent', policy: 'core-1.4.0', artifact: 'ckpt/assistant-base-7b/step-120k', status: 'done' },
       { key: 'sft', name: 'Supervised fine-tuning', inputs: ['sft_instructions_v3'], gate: 'dataset approved for model_training', policy: 'core-1.4.0', artifact: 'ckpt/assistant-sft-7b/r3', status: 'done' },
@@ -768,15 +768,90 @@ export function lifecycle(p) {
       { key: 'release', name: 'Release review', inputs: ['eval/assistant-7b/r2'], gate: 'privacy and legal sign-off, model card', policy: 'release-2.1', artifact: 'assistant-llm v1', status: 'done' },
       { key: 'serve', name: 'Inference', inputs: ['assistant-llm v1'], gate: 'endpoint ABAC, delegated tokens', policy: 'core-1.4.0', artifact: 'endpoint assistant-llm-inference', status: 'live' },
     ] },
-    { model: 'adrank', stages: [
+    { model: 'adrank', ...META.adrank, stages: [
       { key: 'collect', name: 'Data collection', inputs: ['iphone_app_events_raw', 'iphone_app_events_raw_eu'], gate: 'region tagging at ingest', policy: 'core-1.4.0', artifact: 'raw tables', status: 'done' },
       { key: 'pretrain', name: 'Training (federated, DP)', inputs: ['ad_features_v7', 'ad_features_v7_eu'], gate: 'per-user ads consent, ATT, minors', policy: 'core-1.4.0', artifact: 'ckpt/adrank/v3', status: 'done' },
       { key: 'eval', name: 'Evaluation', inputs: ['holdout slices by region'], gate: 'AUC within 0.01 across regions, DP budget epsilon 4.0', policy: 'release-2.1', artifact: 'eval/adrank/v3', status: 'done', metrics: { auc: '0.781', epsilon: '3.6 of 4.0', slice_gap: '0.008' } },
       { key: 'release', name: 'Release review', inputs: ['eval/adrank/v3'], gate: 'privacy sign-off, model card', policy: 'release-2.1', artifact: 'adrank v3', status: 'done' },
       { key: 'serve', name: 'Inference', inputs: ['adrank v3'], gate: 'per-request consent and policy, fail closed', policy: 'core-1.4.0', artifact: 'endpoint adrank-serving', status: 'live' },
     ] },
+    ...PORTFOLIO,
   ];
 }
+
+/* The rest of the governed model portfolio. Same gates, different data and risk.
+   Statuses: done, live, running (in progress), blocked (gate failed), waiting. */
+const st = (key, name, inputs, gate, artifact, status = 'done', metrics, policy = 'core-1.4.0') => ({ key, name, inputs, gate, policy: key === 'eval' || key === 'release' ? 'release-2.1' : policy, artifact, status, ...(metrics ? { metrics } : {}) });
+const META = {
+  'assistant-llm': { name: 'Assistant LLM', version: 'v1', purpose: 'Answers place questions in the in-app assistant.', owner: 'assistant-ml', method: 'Centralized, redacted data', risk: 'Limited', data: 'confidential', stage: 'Production', regions: 'US', updated: '2026-10-02' },
+  adrank: { name: 'Sponsored place ranking', version: 'v3', purpose: 'Ranks sponsored results for people who allow personalized ads.', owner: 'ads-ml', method: 'Federated, differential privacy', risk: 'Limited', data: 'confidential', stage: 'Production', regions: 'US, EU', updated: '2026-09-27' },
+};
+const PORTFOLIO = [
+  { model: 'assistant-llm-v2', name: 'Assistant LLM', version: 'v2 candidate', purpose: 'Next assistant release with longer context.', owner: 'assistant-ml', method: 'Centralized, redacted data', risk: 'Limited', data: 'confidential', stage: 'Evaluation', regions: 'US', updated: '2026-10-24', stages: [
+    st('collect', 'Data collection', ['assistant_conversations'], 'catalog.approved, PII scan', 'assistant_conversations@snapshot'),
+    st('pretrain', 'Pre-training', ['assistant_conversations_redacted'], 'purpose model_training, per-user consent', 'ckpt/assistant-base-13b/step-90k'),
+    st('sft', 'Supervised fine-tuning', ['sft_instructions_v3'], 'dataset approved for model_training', 'ckpt/assistant-sft-13b/r1'),
+    st('eval', 'Safety and privacy evaluation', ['eval_safety_suite_v5'], 'memorization probe, PII extraction test, refusal suite', 'eval/assistant-13b/r1', 'blocked', { canary_exposure: 'above threshold (3 of 200)', pii_extraction_rate: '0.04%', action: 'dedupe and retrain' }),
+    st('release', 'Release review', ['eval/assistant-13b/r1'], 'privacy and legal sign-off, model card', 'not started', 'waiting'),
+  ] },
+  { model: 'search-ranker', name: 'Search ranking', version: 'v5', purpose: 'Orders place search results by relevance.', owner: 'search-ml', method: 'Centralized, aggregated clicks', risk: 'Minimal', data: 'internal', stage: 'Production', regions: 'US, EU', updated: '2026-10-11', stages: [
+    st('collect', 'Data collection', ['search_clicks_v3'], 'catalog.approved, k-anonymity 50', 'search_clicks@snapshot'),
+    st('pretrain', 'Training', ['session_metrics_daily'], 'purpose analytics to model_training approved by DPIA-031', 'ckpt/search-ranker/v5'),
+    st('eval', 'Evaluation', ['holdout queries'], 'NDCG within 1% across regions and languages', 'eval/search-ranker/v5', 'done', { ndcg_at_10: '0.612', slice_gap: '0.006' }),
+    st('release', 'Release review', ['eval/search-ranker/v5'], 'privacy sign-off, model card', 'search-ranker v5'),
+    st('serve', 'Inference', ['search-ranker v5'], 'no per-user features, contextual only', 'endpoint search-ranking', 'live'),
+  ] },
+  { model: 'keyboard-next-word', name: 'Keyboard suggestions', version: 'v12', purpose: 'Suggests the next word while typing, on device.', owner: 'input-ml', method: 'Federated, differential privacy', risk: 'Minimal', data: 'on device only', stage: 'Production', regions: 'Global', updated: '2026-10-08', stages: [
+    st('collect', 'Device eligibility', ['opted-in devices'], 'analytics opt-in, charging, Wi-Fi, idle', 'cohort 2.1M devices'),
+    st('pretrain', 'Federated rounds', ['on-device text (never leaves device)'], 'clipped updates, secure aggregation, epsilon 2.0', 'ckpt/kbd/v12', 'done', { rounds: '1,800', epsilon: '1.9 of 2.0' }),
+    st('eval', 'Evaluation', ['federated eval cohort'], 'memorization probe on rare phrases', 'eval/kbd/v12', 'done', { top3_accuracy: '41.2%', canary_exposure: 'none' }),
+    st('release', 'Release review', ['eval/kbd/v12'], 'privacy sign-off', 'kbd v12'),
+    st('serve', 'On-device inference', ['kbd v12'], 'shipped in OS update, no server calls', 'OS 26.1', 'live'),
+  ] },
+  { model: 'speech-asr', name: 'Speech recognition', version: 'v8', purpose: 'Transcribes voice requests.', owner: 'speech-ml', method: 'Federated plus opt-in audio', risk: 'Limited', data: 'restricted', stage: 'Production', regions: 'US, EU, JP', updated: '2026-09-30', stages: [
+    st('collect', 'Data collection', ['opt-in audio samples'], 'explicit opt-in, graded by employees under NDA', 'audio_samples@snapshot'),
+    st('pretrain', 'Training', ['audio_samples (opt-in)', 'federated personalization'], 'per-user consent, 6 month retention', 'ckpt/asr/v8'),
+    st('eval', 'Evaluation', ['accent and dialect slices'], 'WER gap under 2 points across groups', 'eval/asr/v8', 'done', { wer: '4.8%', slice_gap: '1.6 pts' }),
+    st('release', 'Release review', ['eval/asr/v8'], 'privacy and legal sign-off, model card', 'asr v8'),
+    st('serve', 'Inference', ['asr v8'], 'on device first, server fallback with no audio retention', 'endpoint asr', 'live'),
+  ] },
+  { model: 'spam-filter', name: 'Message spam filter', version: 'v4', purpose: 'Flags unwanted messages from unknown senders.', owner: 'trust-safety', method: 'Centralized, reported messages', risk: 'Minimal', data: 'confidential', stage: 'Production', regions: 'US, EU', updated: '2026-08-19', stages: [
+    st('collect', 'Data collection', ['user spam reports'], 'only messages the user reported, sender hashed', 'spam_reports@snapshot'),
+    st('pretrain', 'Training', ['spam_reports'], 'legitimate interest assessment LIA-014', 'ckpt/spam/v4'),
+    st('eval', 'Evaluation', ['holdout reports'], 'false positive rate under 0.1%', 'eval/spam/v4', 'done', { precision: '99.2%', false_positive_rate: '0.06%' }),
+    st('release', 'Release review', ['eval/spam/v4'], 'privacy sign-off', 'spam v4'),
+    st('serve', 'Inference', ['spam v4'], 'on device', 'OS 26.0', 'live'),
+  ] },
+  { model: 'fraud-score', name: 'Payment fraud score', version: 'v2', purpose: 'Scores card transactions for fraud before approval.', owner: 'payments-risk', method: 'Centralized', risk: 'Limited', data: 'restricted', stage: 'Staging', regions: 'US', updated: '2026-10-20', stages: [
+    st('collect', 'Data collection', ['transaction_events'], 'PCI scope, tokenized card numbers only', 'transactions@snapshot'),
+    st('pretrain', 'Training', ['transaction_events', 'chargebacks'], 'contract basis, no ads purposes', 'ckpt/fraud/v2'),
+    st('eval', 'Fairness evaluation', ['holdout by region and card type'], 'decline rate parity, human review on decline', 'eval/fraud/v2', 'done', { auc: '0.947', decline_parity: '0.98' }),
+    st('release', 'Release review', ['eval/fraud/v2'], 'legal sign-off: automated decision notice (GDPR Art. 22)', 'awaiting legal', 'running'),
+  ] },
+  { model: 'photo-scenes', name: 'Photo scene recognition', version: 'v3', purpose: 'Labels photos for search, entirely on device.', owner: 'vision-ml', method: 'Licensed and synthetic images', risk: 'Minimal', data: 'internal', stage: 'Production', regions: 'Global', updated: '2026-07-14', stages: [
+    st('collect', 'Data collection', ['licensed image sets', 'synthetic renders'], 'license check, no user photos', 'images@snapshot'),
+    st('pretrain', 'Training', ['licensed image sets'], 'license allows model training', 'ckpt/scenes/v3'),
+    st('eval', 'Evaluation', ['skin tone and region slices'], 'accuracy gap under 2 points', 'eval/scenes/v3', 'done', { top1: '91.4%', slice_gap: '1.1 pts' }),
+    st('release', 'Release review', ['eval/scenes/v3'], 'model card', 'scenes v3'),
+    st('serve', 'On-device inference', ['scenes v3'], 'no server calls', 'OS 26.0', 'live'),
+  ] },
+  { model: 'eta-predictor', name: 'Arrival time prediction', version: 'v9', purpose: 'Predicts travel time from aggregated traffic.', owner: 'maps-ml', method: 'Aggregated, differential privacy', risk: 'Minimal', data: 'internal', stage: 'Production', regions: 'Global', updated: '2026-10-15', stages: [
+    st('collect', 'Data collection', ['road segment speeds (DP aggregates)'], 'trips split into segments, no full routes', 'segment_speeds@snapshot'),
+    st('pretrain', 'Training', ['segment_speeds'], 'no user identifiers in input', 'ckpt/eta/v9'),
+    st('eval', 'Evaluation', ['holdout cities'], 'MAPE under 9%', 'eval/eta/v9', 'done', { mape: '7.8%' }),
+    st('release', 'Release review', ['eval/eta/v9'], 'model card', 'eta v9'),
+    st('serve', 'Inference', ['eta v9'], 'contextual only', 'endpoint eta', 'live'),
+  ] },
+  { model: 'support-triage', name: 'Support ticket triage', version: 'v1', purpose: 'Routes support tickets to the right team with an LLM.', owner: 'support-eng', method: 'Fine-tuned from Assistant LLM', risk: 'Limited', data: 'restricted', stage: 'Review', regions: 'US', updated: '2026-10-23', stages: [
+    st('collect', 'Data collection', ['support_tickets'], 'catalog.approved, PII scan', 'support_tickets@snapshot'),
+    st('pretrain', 'Impact assessment', ['DPIA-044'], 'privacy review of ticket text in training', 'DPIA in review', 'running'),
+    st('sft', 'Supervised fine-tuning', ['support_tickets_redacted'], 'waits for DPIA approval', 'not started', 'waiting'),
+  ] },
+  { model: 'resume-screener', name: 'Resume screening', version: 'v0 proposal', purpose: 'Proposed ranking of job applicants.', owner: 'people-analytics', method: 'Proposed', risk: 'High', data: 'restricted', stage: 'Blocked', regions: 'US, EU', updated: '2026-10-05', stages: [
+    st('collect', 'Intake review', ['use case form UC-219'], 'EU AI Act Annex III (employment) is high risk: conformity assessment, human oversight, logging required', 'blocked at intake', 'blocked', { decision: 'Not approved until a conformity assessment and human review design exist' }),
+  ] },
+];
+
 
 /* Artifacts inherit the highest classification of their training inputs. */
 export function artifacts(p) {

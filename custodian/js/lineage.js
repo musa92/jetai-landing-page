@@ -1,7 +1,7 @@
 /* Lineage graph: sources, datasets, models and endpoints joined by the jobs that
    move data between them, plus column-level lineage with PII tag propagation.
    Mirrors what an OpenLineage backend (Marquez) holds. No DOM, Node-testable. */
-import { mname, PIPELINES, ENDPOINTS } from './engine.js?v=20261023-4';
+import { mname, PIPELINES, ENDPOINTS } from './engine.js?v=20261025-1';
 
 /* Systems that produce data, or feed policy inputs into jobs. */
 export const SOURCES = [

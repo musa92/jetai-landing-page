@@ -1,7 +1,7 @@
 /* Sample rows for every dataset in the catalog, generated deterministically from
    the synthetic population so the same dataset always shows the same rows.
    Columns carry their PII tag; the console masks tagged columns by role. */
-import { mulberry32, sampleEvents, minimize } from './engine.js?v=20261023-4';
+import { mulberry32, sampleEvents, minimize } from './engine.js?v=20261025-1';
 
 const NAMES = ['Ana', 'Ben', 'Chloe', 'Diego', 'Emma', 'Farah', 'Hiro', 'Ines', 'Jonah', 'Lea', 'Mateo', 'Nora', 'Omar', 'Priya', 'Sofia', 'Tom'];
 const INTENTS = ['find_place', 'route_help', 'hours_question', 'reservation', 'account_help', 'feedback'];

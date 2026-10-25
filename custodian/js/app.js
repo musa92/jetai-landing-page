@@ -1,10 +1,10 @@
 /* Custodian console: renders engine.js state, runs live traffic, and drives the
    scripted demo acts. Plain ES modules, no build step. */
-import * as E from './engine.js?v=20261023-4';
-import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261023-3';
+import * as E from './engine.js?v=20261025-1';
+import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261025-1';
 import { RANGES, history, tsChart, initChartHover, spark } from './charts.js?v=20261023-3';
 import { REGULATIONS, WATCH, PATTERNS } from './regulations.js?v=20261023-1';
-import * as L from './lineage.js?v=20261025-1';
+import * as L from './lineage.js?v=20261025-2';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -589,14 +589,35 @@ EXPORTS.gallery = () => [['dataset', 'name', 'layer', 'region', 'classification'
 EXPORTS.sample = () => { const d = P.dataset(S.data.ds); const smp = datasetSample(d); return [smp.cols.map((c) => c.name), ...smp.view]; };
 
 /* ── ML lifecycle: training and post-training, gated at every stage ── */
+const LC_STATE = { done: ['ok', 'Passed'], live: ['live', 'Live'], running: ['warn', 'In review'], blocked: ['deny', 'Blocked'], waiting: ['', 'Waiting'] };
+const LC_FILTERS = { all: ['All', () => true], prod: ['Production', (m) => m.stage === 'Production'], progress: ['In progress', (m) => ['Evaluation', 'Staging', 'Review'].includes(m.stage)], blocked: ['Blocked', (m) => m.stage === 'Blocked' || m.stages.some((x) => x.status === 'blocked')] };
+const lcHealth = (m) => (m.stages.some((x) => x.status === 'blocked') ? 'deny' : m.stages.some((x) => x.status === 'running' || x.status === 'waiting') ? 'warn' : 'ok');
 VIEWS.lifecycle = () => {
-  const lc = E.lifecycle(P), cur = lc.find((x) => x.model === (S.lcModel || 'assistant-llm')) || lc[0];
-  return head('ML lifecycle', 'Every stage from data collection to inference, the policy that gated it, and what it produced. Post-training is governed like training.', 'Each stage emits OpenLineage events with its inputs (dataset and snapshot), the policy bundle version that allowed it, and its output artifact. Release requires a privacy and legal sign-off and a generated model card.') + `
-  <div class="grid"><div class="card c12">
-    <div class="row between"><div class="seg">${lc.map((x) => `<button class="${x === cur ? 'on' : ''}" data-lcmodel="${x.model}">${x.model}</button>`).join('')}</div><span class="note" style="margin:0">${cur.stages.length} stages · all gates passed</span></div>
-    <div class="lc">${cur.stages.map((st, i) => `<div class="lc-stage ${st.status}"><div class="lc-n">${i + 1}</div><div class="lc-body"><div class="row between"><b>${h(st.name)}</b>${pill(st.status === 'live' ? 'live' : 'done', st.status === 'live' ? 'Live' : 'Passed')}</div>
-      <dl class="kv"><dt>Inputs</dt><dd>${st.inputs.map((x) => `<span>${h(nm(x.split('@')[0]) !== x.split('@')[0] ? nm(x.split('@')[0]) + (x.includes('@') ? ' @' + x.split('@')[1] : '') : x)}</span>`).join('<br>')}</dd><dt>Gate</dt><dd>${h(st.gate)}</dd><dt>Policy</dt><dd class="mono">${st.policy}</dd><dt>Produced</dt><dd class="mono">${h(st.artifact)}</dd>${st.metrics ? `<dt>Results</dt><dd>${Object.entries(st.metrics).map(([k, v]) => `${k.replace(/_/g, ' ')}: <b>${v}</b>`).join('<br>')}</dd>` : ''}</dl></div></div>`).join('')}</div>
-  </div></div>`;
+  const lc = E.lifecycle(P);
+  const list = lc.filter(LC_FILTERS[S.lcFilter || 'all'][1]).filter((m) => match('lifecycle', m.name, m.model, m.owner, m.stage, m.risk, m.method));
+  const cur = lc.find((x) => x.model === (S.lcModel || 'assistant-llm')) || lc[0];
+  const passed = cur.stages.filter((x) => x.status === 'done' || x.status === 'live').length;
+  return head('ML lifecycle', 'Every governed model, from data collection to inference: the gate at each stage, the policy that decided it, and what it produced.', 'Each stage emits OpenLineage events with its inputs (dataset and snapshot), the policy bundle version that allowed it, and its output artifact. A failed gate stops the model at that stage. Release requires privacy and legal sign-off and a generated model card. High-risk uses under the EU AI Act are stopped at intake until a conformity assessment exists.') + `
+  <div class="grid">
+    ${kpi(lc.length, 'Governed models', `${lc.filter((m) => m.stage === 'Production').length} in production`)}
+    ${kpi(lc.filter(LC_FILTERS.progress[1]).length, 'In progress', 'evaluation, staging or review')}
+    ${kpi(lc.filter((m) => m.stages.some((x) => x.status === 'blocked')).length, 'Stopped at a gate', 'needs action before release', 'bad')}
+    ${kpi(lc.filter((m) => m.risk === 'High').length, 'High-risk uses', 'EU AI Act Annex III')}
+    <div class="card c12 lcm">
+      <div class="lcm-list">
+        <div class="seg">${Object.entries(LC_FILTERS).map(([k, [t, f]]) => `<button class="${(S.lcFilter || 'all') === k ? 'on' : ''}" data-lcfilter="${k}">${t} <span class="cnt">${lc.filter(f).length}</span></button>`).join('')}</div>
+        <label class="search">${icon('search')}<input data-filter="lifecycle" value="${h(F.lifecycle || '')}" placeholder="Search models"></label>
+        <div class="lcm-rows">${list.map((m) => `<button class="lcm-row${m === cur ? ' on' : ''}" data-lcmodel="${m.model}"><i class="dot ${lcHealth(m)}"></i><span><b>${h(m.name)}</b><small>${h(m.version)} · ${h(m.owner)}</small></span><em>${h(m.stage)}</em></button>`).join('') || '<p class="note">No models match.</p>'}</div>
+      </div>
+      <div class="lcm-detail">
+        <div class="lcm-head"><div><h2>${h(cur.name)} <span>${h(cur.version)}</span></h2><p>${h(cur.purpose)}</p></div>${pill(lcHealth(cur), cur.stage)}</div>
+        ${glist([['Owner', h(cur.owner)], ['Training', h(cur.method)], ['Data sensitivity', h(cur.data)], ['Regions', h(cur.regions)], ['EU AI Act risk', pill(cur.risk === 'High' ? 'deny' : cur.risk === 'Limited' ? 'warn' : 'ok', cur.risk)], ['Last change', h(cur.updated)]])}
+        <div class="lcm-progress"><div><i style="width:${(100 * passed / cur.stages.length).toFixed(0)}%"></i></div><span>${passed} of ${cur.stages.length} gates passed</span></div>
+        <div class="lc">${cur.stages.map((st, i) => { const [cls, label] = LC_STATE[st.status] || LC_STATE.done; return `<div class="lc-stage ${st.status}"><div class="lc-n">${st.status === 'blocked' ? '!' : i + 1}</div><div class="lc-body"><div class="row between"><b>${h(st.name)}</b>${pill(cls, label)}</div>
+          <dl class="kv"><dt>Inputs</dt><dd>${st.inputs.map((x) => `<span>${h(nm(x.split('@')[0]) !== x.split('@')[0] ? nm(x.split('@')[0]) + (x.includes('@') ? ' @' + x.split('@')[1] : '') : x)}</span>`).join('<br>')}</dd><dt>Gate</dt><dd>${h(st.gate)}</dd><dt>Policy</dt><dd class="mono">${st.policy}</dd><dt>Produced</dt><dd class="mono">${h(st.artifact)}</dd>${st.metrics ? `<dt>Results</dt><dd>${Object.entries(st.metrics).map(([k, v]) => `${k.replace(/_/g, ' ')}: <b>${h(v)}</b>`).join('<br>')}</dd>` : ''}</dl></div></div>`; }).join('')}</div>
+      </div>
+    </div>
+  </div>`;
 };
 
 /* ── artifacts and endpoints: ABAC on weights and inference ── */
@@ -1678,7 +1699,7 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node],[data-lnode],[data-lnode-go],[data-linwl],[data-lindir],[data-linrun],[data-linclear],[data-linerase]');
+  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-lcfilter],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node],[data-lnode],[data-lnode-go],[data-linwl],[data-lindir],[data-linrun],[data-linclear],[data-linerase]');
   if (!t || $('#app').hidden) return;
   if (t.dataset.toggle) { e.stopPropagation(); S.open.has(t.dataset.toggle) ? S.open.delete(t.dataset.toggle) : S.open.add(t.dataset.toggle); return renderChrome(); }
   if (t.dataset.range) { S.range = t.dataset.range; return render(); }
@@ -1692,6 +1713,7 @@ document.addEventListener('click', async (e) => {
   if (t.dataset.asm) { S.asmSel = t.dataset.asm; return render(); }
   if (t.dataset.inc) { S.incSel = t.dataset.inc; return render(); }
   if (t.dataset.opendsGo) { S.data.mode = 'datasets'; S.data.ds = t.dataset.opendsGo; return go('data'); }
+  if (t.dataset.lcfilter) { S.lcFilter = t.dataset.lcfilter; return render(); }
   if (t.dataset.lcmodel) { S.lcModel = t.dataset.lcmodel; return render(); }
   if (t.dataset.artifact) { S.art.artifact = t.dataset.artifact; S.art.action = S.art.action === 'invoke' ? 'download' : S.art.action; return render(); }
   if (t.dataset.pipe) { S.pipe = t.dataset.pipe; return render(); }
