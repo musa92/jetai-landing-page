@@ -32,7 +32,7 @@ const S = {
   agent: { user: null, userToken: null, agentToken: null, results: [] },
   dma: null, actsDone: new Set(), act: null,
   data: { tab: 'users', region: 'all', user: null },
-  bulk: new Set(), range: '24h', chaosLog: [], drawer: null,
+  bulk: new Set(), range: '24h', chaosLog: [], drawer: null, open: new Set(['home']), inspector: true,
 };
 
 /* ───────────────────────── boot: gate, sign-in ───────────────────────── */
@@ -51,7 +51,7 @@ async function signIn(role, quiet) {
   if (!quiet) toast(`Signed in as ${r.name}, ${r.title}`);
   $('#signin').hidden = true; $('#app').hidden = false;
   if (!P) await boot();
-  renderChrome(); render();
+  renderChrome(); render(); layoutInspector(); drawDrawer();
 }
 
 async function boot() {
@@ -127,7 +127,11 @@ function counts() {
 }
 function renderChrome() {
   const c = counts(), cur = SECTION_OF[S.view];
-  const item = ([k, t, tabs]) => `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${tabs[0][0]}">${icon(k)}${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`;
+  S.open.add(cur);
+  const item = ([k, t, tabs]) => {
+    const open = S.open.has(k) && tabs.length > 1;
+    return `<div class="nav-group${open ? ' open' : ''}"><button class="nav-item${cur === k && (tabs.length === 1 || !open) ? ' on' : ''}${cur === k ? ' cur' : ''}" data-go="${tabs[0][0]}" data-sec="${k}">${tabs.length > 1 ? `<span class="chev" data-toggle="${k}">›</span>` : '<span class="chev"></span>'}${icon(k)}${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>${open ? tabs.map(([v, tt]) => `<button class="nav-sub${S.view === v ? ' on' : ''}" data-go="${v}">${tt}</button>`).join('') : ''}</div>`;
+  };
   $('#nav').innerHTML = SECTIONS.filter(([k]) => k !== 'settings').map(item).join('');
   $('#nav-bottom').innerHTML = item(SECTIONS.find(([k]) => k === 'settings'));
   const n = notifications().length;
@@ -135,18 +139,19 @@ function renderChrome() {
   const r = E.ROLES[S.role];
   $('#btn-role').innerHTML = `<span class="av">${initials(r.name)}</span>${h(r.name.split(' ')[0])} <small>${h(r.title)}</small>`;
   const sec = SECTIONS.find(([k]) => k === cur);
-  $('#bar-title').innerHTML = `<span class="crumb">${sec[1]}</span>${sec[2].length > 1 ? `<span class="crumb-sep">›</span><span>${TITLES[S.view]}</span>` : ''}`;
+  $('#bar-title').innerHTML = sec[2].length > 1 ? `<span class="crumb">${sec[1]}</span><span class="crumb-sep">›</span><span>${TITLES[S.view]}</span>` : `<span>${sec[1]}</span>`;
   const ck = controlChecks(), passing = ck.filter((c) => c[1]).length;
   const critical = !P.policyUp || P.breaker.state !== 'closed' || P.serving.violations > 0;
   $('#side-foot').innerHTML = `<span class="health ${critical ? 'bad' : passing === ck.length ? '' : 'warn'}"></span>${passing} of ${ck.length} controls passing<br>Policy core-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
 }
 function tabsBar() {
+  return '';
   const sec = SECTIONS.find(([k]) => k === SECTION_OF[S.view]);
   if (!sec || sec[2].length < 2) return '';
   return `<div class="tabs-wrap"><div class="seg">${sec[2].map(([v, t]) => `<button class="${S.view === v ? 'on' : ''}" data-go="${v}">${t}</button>`).join('')}</div></div>`;
 }
 
-function go(view) { S.view = view; $('#side').classList.remove('open'); renderChrome(); render(); $('#view').scrollTop = 0; }
+function go(view) { if (SECTION_OF[view] !== SECTION_OF[S.view] && S.drawer) { S.drawer = null; drawDrawer(); } if (SECTION_OF[view] !== SECTION_OF[S.view]) S.open = new Set([SECTION_OF[view]]); S.view = view; $('#side').classList.remove('open'); renderChrome(); render(); $('#view').scrollTop = 0; }
 
 /* ───────────────────────── rendering ───────────────────────── */
 
@@ -551,7 +556,7 @@ VIEWS.data = () => {
   if (ds) return hd + `<div class="tabs-wrap">${sw}</div>` + datasetViewer(ds);
   const list = P.datasets.filter((d) => match('gallery', d.id, nm(d.id), d.classification, d.workload && E.WORKLOADS[d.workload].name));
   return hd + `<div class="tabs-wrap">${sw}</div>` + `<div class="grid"><div class="card c12">${tools('gallery', list.length, P.datasets.length, 'Search datasets')}
-    <div class="gallery">${list.map((d) => `<button class="ds-card" data-opends="${d.id}">
+    <div class="gallery">${list.map((d) => `<button class="ds-card${S.drawer && S.drawer.id === d.id ? ' on' : ''}" data-drawer="dataset:${d.id}" data-dblopen="${d.id}" title="Double-click to open">
       <div class="row between"><span class="ds-layer">${LAYER[d.layer] || d.layer} · ${d.region}</span>${pill(d.classification)}</div>
       <b>${h(nm(d.id))}</b><span class="id">${h(d.id)}</span>
       <p>${d.workload ? E.WORKLOADS[d.workload].name : 'Shared across workloads'}</p>
@@ -601,13 +606,13 @@ VIEWS.artifacts = () => {
   const pr = E.PRINCIPALS[a.principal];
   return head('Artifacts and endpoints', 'Model weights carry the sensitivity of the data they learned from. Who may download, deploy or call a model is decided by attributes, not lists.', 'Attribute-based access control: the principal\'s federated identity attributes (team, clearance, region, kind) are checked against the resource\'s attributes (classification inherited from training data, region) and the action. Endpoints accept only registered consumers presenting OAuth client credentials or delegated tokens.') + `
   <div class="grid">
-    <div class="card c7"><h3>Model artifacts</h3><div class="scroll-x"><table class="table"><thead><tr><th>Artifact</th><th>Kind</th><th>Inherited class</th><th>Region</th><th>Trained on</th></tr></thead><tbody>
+    <div class="card c12"><h3>Model artifacts</h3><div class="scroll-x"><table class="table"><thead><tr><th>Artifact</th><th>Kind</th><th>Inherited class</th><th>Region</th><th>Trained on</th></tr></thead><tbody>
       ${arts.map((x) => `<tr class="click${x.id === res.id ? ' sel' : ''}" data-artifact="${x.id}"><td class="mono">${x.id}<span class="id">${x.size}</span></td><td>${x.kind}</td><td>${pill(x.classification)}</td><td>${x.region}</td><td>${x.from.map(nm).join(', ')}</td></tr>`).join('')}
-    </tbody></table></div>
-    <h3>Inference endpoints</h3><div class="scroll-x"><table class="table"><thead><tr><th>Endpoint</th><th>Model</th><th>Regions</th><th>Consumers</th><th>Auth</th></tr></thead><tbody>
+    </tbody></table></div></div>
+    <div class="card c6"><h3>Inference endpoints</h3><div class="scroll-x"><table class="table"><thead><tr><th>Endpoint</th><th>Model</th><th>Regions</th><th>Consumers</th><th>Auth</th></tr></thead><tbody>
       ${E.ENDPOINTS.map((x) => `<tr><td class="mono">${x.id}</td><td class="mono">${x.model}</td><td>${x.regions.join(', ')}</td><td>${x.consumers.map(nm).join(', ')}</td><td>${x.auth}</td></tr>`).join('')}
     </tbody></table></div></div>
-    <div class="card c5"><h3>Access decision</h3>
+    <div class="card c6"><h3>Access decision</h3>
       <div class="fields">
         <label class="field">Principal<select data-bind="art.principal">${opt(Object.keys(E.PRINCIPALS), a.principal)}</select></label>
         <label class="field">Action<select data-bind="art.action">${opt(['download', 'deploy', 'invoke'], a.action)}</select></label>
@@ -829,7 +834,7 @@ VIEWS.vendors = () => {
   <div class="grid">
     ${kpi(G.vendors.length, 'Vendors', 'processors and sub-processors')}${kpi(G.vendors.filter((v) => v.dpa).length + ' / ' + G.vendors.length, 'With signed DPA', 'GDPR Art. 28')}${kpi(G.vendors.filter((v) => v.scc).length, 'Covered by SCCs', 'for EU transfers')}${kpi(G.vendors.filter((v) => v.status === 'Review due').length, 'Reviews due', 'this month', G.vendors.some((v) => v.status === 'Review due') ? 'bad' : '')}
     <div class="card c12">${tools('vendors', list.length, G.vendors.length, 'Search vendors, services, data')}<div class="scroll-x"><table class="table"><thead><tr><th>Vendor</th><th>Data received</th><th>Region</th><th>DPA</th><th>SCCs</th><th>Tier</th><th>Last review</th><th>Status</th></tr></thead><tbody>
-      ${list.map((v) => `<tr><td><b>${v.name}</b><span class="id">${v.service}</span></td><td>${v.data}</td><td>${v.region}</td><td>${v.dpa ? pill('ok', 'Signed') : pill('warn', 'Pending')}</td><td>${v.scc ? 'Yes' : 'No'}</td><td>${pill(v.tier === 'Critical' || v.tier === 'High' ? 'warn' : '', v.tier)}</td><td>${v.review}</td><td>${pill(v.status === 'Approved' ? 'ok' : 'warn', v.status)}</td></tr>`).join('')}
+      ${list.map((v) => `<tr class="click" data-drawer="vendor:${v.name}"><td><b>${v.name}</b><span class="id">${v.service}</span></td><td>${v.data}</td><td>${v.region}</td><td>${v.dpa ? pill('ok', 'Signed') : pill('warn', 'Pending')}</td><td>${v.scc ? 'Yes' : 'No'}</td><td>${pill(v.tier === 'Critical' || v.tier === 'High' ? 'warn' : '', v.tier)}</td><td>${v.review}</td><td>${pill(v.status === 'Approved' ? 'ok' : 'warn', v.status)}</td></tr>`).join('')}
     </tbody></table></div></div>
   </div>`;
 };
@@ -906,34 +911,63 @@ VIEWS.observability = () => {
 };
 
 /* ── slide-over drawer for any object: overview, activity, access ── */
-function openDrawer(kind, id) { if (kind === 'dataset') S.sel.dataset = id; S.drawer = { kind, id, tab: (S.drawer && S.drawer.id === id && S.drawer.tab) || 'overview' }; drawDrawer(); }
-function closeDrawer() { S.drawer = null; const d = $('#drawer'); if (d) d.remove(); const b = $('#drawer-back'); if (b) b.remove(); }
+function openDrawer(kind, id) { if (kind === 'dataset') S.sel.dataset = id; S.drawer = { kind, id, tab: (S.drawer && S.drawer.id === id && S.drawer.tab) || 'overview' }; S.inspector = true; layoutInspector(); drawDrawer(); }
+function closeDrawer() { S.drawer = null; drawDrawer(); }
+function layoutInspector() { $('#app').classList.toggle('no-insp', !S.inspector); $('#btn-insp').classList.toggle('on', S.inspector); }
+const glist = (rows) => `<div class="glist">${rows.filter(Boolean).map(([k, v]) => `<div class="grow"><span>${k}</span><span>${v}</span></div>`).join('')}</div>`;
 function drawDrawer() {
-  if (!S.drawer) return;
+  const el = $('#inspector');
+  if (!el) return;
+  if (!S.drawer) {
+    el.innerHTML = `<div class="insp-empty"><b>No Selection</b><span>Select a dataset, model, risk, vendor or person to inspect it here.</span></div>`;
+    return;
+  }
   const { kind, id, tab } = S.drawer;
-  let title = id, sub = '', overview = '', acts = [], access = '';
+  let title = id, sub = '', overview = '', acts = [], access = '', glyph = 'data';
   if (kind === 'dataset') {
-    const d = P.dataset(id); title = nm(id); sub = `${id} · ${d.classification} · ${d.region}`;
-    overview = datasetDetail(d) + `<div class="row"><button class="btn" data-go="data" data-opends-go="${id}">View sample rows</button><button class="btn" data-go="lineage">Lineage</button></div>`;
+    const d = P.dataset(id); title = nm(id); sub = id; glyph = 'data';
+    overview = glist([['Classification', pill(d.classification)], ['Status', pill(d.status)], ['Region', d.region], ['Layer', d.layer], ['Owner', h(d.owner)], ['Steward', h(d.steward)], ['Legal basis', d.legal_basis.replace('_', ' ')], ['Retention', d.retention_days + ' days'], ['Allowed for', d.allowed_purposes.map(nm).join(', ')], ['Location', `<span class="mono">s3://${d.bucket}</span>`]])
+      + `<h4 class="insp-h">Personal data</h4><div class="tags">${d.pii.length ? d.pii.map((t) => pill(['device_id', 'precise_location', 'email', 'free_text'].includes(t) ? 'deny' : '', t)).join('') : '<span class="note">None detected</span>'}</div>`
+      + (P.tables[id] ? `<h4 class="insp-h">Table history</h4>${glist(P.tables[id].snapshots.map((x) => [`<span class="mono">${x.id}</span>`, x.op + (x === P.tables[id].current ? ' · current' : '')]))}` : '')
+      + (d.status === 'pending' ? `<div class="row"><button class="btn primary" data-act="approve-ds" ${can('data_steward') ? '' : 'disabled'}>Approve</button><button class="btn danger" data-act="reject-ds" ${can('data_steward') ? '' : 'disabled'}>Reject</button></div>${roleNote('data_steward')}` : '')
+      + `<div class="row"><button class="btn" data-opends-go="${id}">Open data</button><button class="btn" data-go="lineage">Lineage</button></div>`;
     acts = P.ledger.entries.filter((e) => e.payload.dataset === id || e.payload.dataset === id + '_ads');
     const grants = P.grants.filter((g) => g.dataset === id);
-    access = grants.length ? `<table class="table"><tbody>${grants.map((g) => `<tr><td>${nm(g.principal)}</td><td>${nm(g.purpose)}, ${g.region}</td><td>until ${date(g.expires)}</td></tr>`).join('')}</tbody></table>` : '<p class="note">No active grants. Access requires an approved request.</p>';
+    access = grants.length ? glist(grants.map((g) => [h(nm(g.principal)), `${nm(g.purpose)}, ${g.region}<span class="id">until ${date(g.expires)}</span>`])) : '<p class="note">No active grants. Access requires an approved request.</p>';
   }
   if (kind === 'risk') {
-    const r = G.risks.find((x) => x.id === id); title = r.title; sub = `${r.id} · ${r.cat} · score ${r.L * r.I}`;
-    overview = `<dl class="kv"><dt>Likelihood</dt><dd>${r.L} of 5</dd><dt>Impact</dt><dd>${r.I} of 5</dd><dt>Owner</dt><dd>${r.owner}</dd><dt>Status</dt><dd>${r.status}</dd><dt>Treatment</dt><dd>${h(r.treat)}</dd><dt>Controls</dt><dd><div class="tags">${r.controls.map((c) => pill('ok', c)).join('')}</div></dd></dl>`;
-    acts = []; access = `<p class="note">Risk owners: ${r.owner}. Reviewers: privacy, legal, security.</p>`;
+    const r = G.risks.find((x) => x.id === id); title = r.title; sub = r.id; glyph = 'risk';
+    overview = glist([['Score', pill(RISK_COLOR(r.L * r.I), String(r.L * r.I))], ['Likelihood', r.L + ' of 5'], ['Impact', r.I + ' of 5'], ['Category', r.cat], ['Owner', r.owner], ['Status', r.status]]) + `<h4 class="insp-h">Treatment</h4><p class="insp-p">${h(r.treat)}</p><h4 class="insp-h">Controls</h4><div class="tags">${r.controls.map((c) => pill('ok', c)).join('')}</div>`;
+    access = `<p class="note">Owner ${r.owner}. Reviewed by privacy, legal and security.</p>`;
+  }
+  if (kind === 'vendor') {
+    const v = G.vendors.find((x) => x.name === id); title = v.name; sub = v.service; glyph = 'settings';
+    overview = glist([['Tier', pill(v.tier === 'Critical' || v.tier === 'High' ? 'warn' : '', v.tier)], ['Status', pill(v.status === 'Approved' ? 'ok' : 'warn', v.status)], ['Region', v.region], ['DPA', v.dpa ? 'Signed' : 'Pending'], ['SCCs', v.scc ? 'Yes' : 'No'], ['Last review', v.review]]) + `<h4 class="insp-h">Data received</h4><p class="insp-p">${h(v.data)}</p>`;
+    access = '<p class="note">Vendor access is limited to the datasets in its agreement, through scoped service credentials.</p>';
+  }
+  if (kind === 'model') {
+    const m = P.models.find((x) => E.mname(x) === id); title = id; sub = E.WORKLOADS[m.workload].name; glyph = 'models';
+    const card = m.card || E.modelCard({ ...m, excluded: {}, eligible: m.members.size }, P.dataset(m.trainedOn[0].table), { version: 'core-1.3.2' });
+    const ex = Object.entries(card.governance.exclusions || {}).filter(([, v]) => v);
+    overview = glist([['Stage', m.stage], ['Status', pill(m.status)], ['Score', m.auc], ['Policy at training', card.governance.policy_bundle], ['Trained on', m.trainedOn.map((t) => `${nm(t.table)}<span class="id">@${t.snapshot}</span>`).join('')], ['People included', fmt(m.members.size)]])
+      + (m.status === 'retrain_required' ? '<div class="decision deny"><h4>Retraining required</h4><ul><li>An erased person was in this model\'s training data.</li></ul></div>' : '')
+      + `<h4 class="insp-h">Intended purpose</h4><p class="insp-p">${h(card.intended_purpose)}</p><h4 class="insp-h">Out of scope</h4><p class="insp-p">${card.out_of_scope.map(h).join('<br>')}</p>`
+      + (ex.length ? `<h4 class="insp-h">Excluded from training</h4>${glist(ex.map(([k, v]) => [rsn(k), fmt(v)]))}` : '')
+      + `<h4 class="insp-h">Evaluation</h4><p class="insp-p">Score ${card.evaluation.auc}. ${card.evaluation.slice_check}.</p><p class="note">${h(card.regulation)}</p>`;
+    acts = P.ledger.entries.filter((e) => e.payload.model === id);
+    access = glist(E.ENDPOINTS.filter((x) => x.model === id).map((x) => [x.id, x.consumers.map(nm).join(', ')])) || '<p class="note">Not served by an endpoint.</p>';
+  }
+  if (kind === 'person' && !P.userById.get(id)) { el.innerHTML = `<div class="insp-empty"><b>Erased</b><span>${h(id)} was deleted by a subject request. Only a pseudonymous tombstone remains as proof.</span></div>`; return; }
+  if (kind === 'person') {
+    const u = P.userById.get(id); const c = P.cache.get(id); title = id; sub = `${u.region} · ${E.regionInfo(u.region).law}`; glyph = 'privacy';
+    overview = glist([['Region', u.region], ['Age range', u.age_band.replace(/_/g, ' ')], ['Tracking (ATT)', u.att], ['Personalized ads', u.personalizedAdsToggle ? 'On' : 'Off'], ['Global Privacy Control', u.gpc ? 'Sent' : 'No'], ['Services', u.services.join(', ')]]) + `<h4 class="insp-h">Consent</h4>${glist(E.PURPOSES.map((p) => [nm(p), c ? pill(c.consent[p]) : '—']))}<h4 class="insp-h">Where their data lives</h4>${glist(P.locate(id).map((x) => [h(x.name), x.kind]))}`;
+    acts = P.ledger.entries.filter((e) => e.subject && false);
+    access = '<p class="note">Only privacy reviewers and auditors can see a person\'s full record. This view is limited to governance attributes.</p>';
   }
   const actHtml = acts.length ? `<ul class="feed">${acts.slice(-12).reverse().map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(nm(e.actor))}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}<span class="id">#${e.seq} · ${e.hash.slice(0, 12)}</span></span></li>`).join('')}</ul>` : '<p class="note">No recorded activity yet.</p>';
-  let el = $('#drawer');
-  if (!el) {
-    const back = document.createElement('div'); back.className = 'sheet-back'; back.id = 'drawer-back'; back.onclick = closeDrawer;
-    el = document.createElement('aside'); el.className = 'sheet drawer'; el.id = 'drawer';
-    document.body.append(back, el);
-  }
-  el.innerHTML = `<div class="sheet-head"><div><h3>${h(title)}</h3><span class="id">${h(sub)}</span></div><span class="spacer"></span><button class="btn" data-closedrawer>Close</button></div>
-    <div style="padding:0 20px"><div class="seg">${[['overview', 'Overview'], ['activity', 'Activity'], ['access', 'Access']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-drawertab="${k}">${t}</button>`).join('')}</div></div>
-    <div class="sheet-body drawer-body">${tab === 'overview' ? overview : tab === 'activity' ? actHtml : access}</div>`;
+  el.innerHTML = `<div class="insp-head"><span class="insp-glyph">${icon(glyph)}</span><div><h3>${h(title)}</h3><span class="id">${h(sub)}</span></div><button class="icon-btn" data-closedrawer aria-label="Clear selection">×</button></div>
+    <div class="insp-tabs"><div class="seg">${[['overview', 'Overview'], ['activity', 'Activity'], ['access', 'Access']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-drawertab="${k}">${t}</button>`).join('')}</div></div>
+    <div class="insp-body">${tab === 'overview' ? overview : tab === 'activity' ? actHtml : access}</div>`;
 }
 
 /* ── catalog ── */
@@ -1124,20 +1158,16 @@ function trainResult(r) {
 /* ── models ── */
 EXPORTS.models = () => [['model', 'workload', 'stage', 'status', 'score', 'trained_on'], ...P.models.map((m) => [E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status, m.auc, m.trainedOn.map((t) => t.table + '@' + t.snapshot).join(' ')])];
 VIEWS.models = () => {
-  const sel = P.models.find((m) => E.mname(m) === S.sel.model) || P.models.at(-1);
-  const card = sel.card || E.modelCard({ ...sel, excluded: {}, eligible: sel.members.size }, P.dataset(sel.trainedOn[0].table), { version: 'core-1.3.2' });
-  return head('Models', 'Every model, what it may be used for, and the data it learned from.', 'Model cards are generated at registration from lineage and the training gate. When an erased person was in a model\'s training data, the model is flagged for retraining.') + `
+  const list = P.models.filter((m) => match('models', E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status));
+  return head('Models', 'Every model, what it may be used for, and the data it learned from. Select a model to see its card in the Inspector.', 'Model cards are generated at registration from lineage and the training gate. When an erased person was in a model\'s training data, the model is flagged for retraining.') + `
   <div class="grid">
-    <div class="card c5">${tools('models', P.models.filter((m) => match('models', E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status)).length, P.models.length, 'Search models')}<table class="table"><thead><tr><th>Model</th><th>Stage</th><th>Status</th><th>Score</th></tr></thead><tbody>
-      ${P.models.filter((m) => match('models', E.mname(m), E.WORKLOADS[m.workload].name, m.stage, m.status)).map((m) => `<tr class="click${m === sel ? ' sel' : ''}" data-model="${E.mname(m)}"><td class="mono">${E.mname(m)}<br><span class="note">${E.WORKLOADS[m.workload].name}</span></td><td>${m.stage}</td><td>${pill(m.status)}</td><td>${m.auc}</td></tr>`).join('')}
-    </tbody></table></div>
-    <div class="card c7"><h3>Model card <span class="right">${h(card.regulation)}</span></h3>
-      <dl class="kv"><dt>Model</dt><dd>${card.model}</dd><dt>Workload</dt><dd>${card.workload}</dd><dt>Intended purpose</dt><dd>${h(card.intended_purpose)}</dd><dt>Out of scope</dt><dd>${card.out_of_scope.map(h).join('<br>')}</dd>
-      <dt>Training data</dt><dd>${sel.trainedOn.map((t) => `<code>${t.table}@${t.snapshot}</code>`).join('<br>')}<br>${card.training_data.classification}, ${card.training_data.region}, ${card.training_data.legal_basis}</dd>
-      <dt>Governance</dt><dd>Policy ${card.governance.policy_bundle}${card.governance.eligible_users ? `, ${fmt(card.governance.included_users)} of ${fmt(card.governance.eligible_users)} users included` : ''}</dd>
-      ${Object.keys(card.governance.exclusions).length ? `<dt>Exclusions</dt><dd>${Object.entries(card.governance.exclusions).filter(([, v]) => v).map(([k, v]) => `${k}: ${fmt(v)}`).join('<br>')}</dd>` : ''}
-      <dt>Evaluation</dt><dd>AUC ${card.evaluation.auc}, ${card.evaluation.slice_check}</dd><dt>Lineage</dt><dd class="mono">${card.lineage}</dd><dt>Status</dt><dd>${pill(sel.status)}${sel.status === 'retrain_required' ? ' An erased user was in its training data.' : ''}</dd></dl>
-    </div>
+    ${kpi(P.models.length, 'Registered models', `${P.models.filter((m) => m.stage === 'Production').length} in production`)}
+    ${kpi(P.models.filter((m) => m.status === 'retrain_required').length, 'Need retraining', 'erased people in training data', P.models.some((m) => m.status === 'retrain_required') ? 'bad' : 'good')}
+    ${kpi(P.models.filter((m) => m.card).length + P.models.filter((m) => !m.card).length, 'With model cards', 'generated at registration')}
+    ${kpi(E.ENDPOINTS.length, 'Inference endpoints', 'ABAC on every call')}
+    <div class="card c12">${tools('models', list.length, P.models.length, 'Search models, workloads, stages')}<div class="scroll-x"><table class="table"><thead><tr><th>Model</th><th>Workload</th><th>Stage</th><th>Status</th><th>Score</th><th>Trained on</th><th>People included</th><th>Registered</th></tr></thead><tbody>
+      ${list.map((m) => `<tr class="click${S.drawer && S.drawer.id === E.mname(m) ? ' sel' : ''}" data-model="${E.mname(m)}"><td class="mono">${E.mname(m)}</td><td>${E.WORKLOADS[m.workload].name}</td><td>${m.stage}</td><td>${pill(m.status)}</td><td>${m.auc}</td><td>${m.trainedOn.map((t) => h(nm(t.table))).join(', ')}</td><td>${fmt(m.members.size)}</td><td>${date(m.created)}</td></tr>`).join('')}
+    </tbody></table></div></div>
   </div>`;
 };
 
@@ -1487,19 +1517,20 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
+  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
   if (!t || $('#app').hidden) return;
+  if (t.dataset.toggle) { e.stopPropagation(); S.open.has(t.dataset.toggle) ? S.open.delete(t.dataset.toggle) : S.open.add(t.dataset.toggle); return renderChrome(); }
   if (t.dataset.range) { S.range = t.dataset.range; return render(); }
   if (t.dataset.page) { const [k, v] = t.dataset.page.split(':'); S[k] = +v; return render(); }
   if (t.dataset.catview) { S.catView = t.dataset.catview; S.bulk.clear(); return render(); }
   if (t.dataset.bulkall !== undefined) { const all = catalogRows().map((d) => d.id); if (S.bulk.size === all.length) S.bulk.clear(); else all.forEach((id) => S.bulk.add(id)); return render(); }
   if (t.dataset.bulk) { e.stopPropagation(); S.bulk.has(t.dataset.bulk) ? S.bulk.delete(t.dataset.bulk) : S.bulk.add(t.dataset.bulk); return render(); }
-  if (t.dataset.drawer) { const [k, v] = t.dataset.drawer.split(':'); if (k === 'risk') S.riskSel = v; return openDrawer(k, v); }
+  if (t.dataset.drawer) { const [k, v] = t.dataset.drawer.split(':'); if (k === 'risk') S.riskSel = v; openDrawer(k, v); return render(); }
   if (t.dataset.drawertab) { S.drawer.tab = t.dataset.drawertab; return drawDrawer(); }
   if (t.dataset.closedrawer !== undefined) return closeDrawer();
   if (t.dataset.asm) { S.asmSel = t.dataset.asm; return render(); }
   if (t.dataset.inc) { S.incSel = t.dataset.inc; return render(); }
-  if (t.dataset.opendsGo) { S.data.mode = 'datasets'; S.data.ds = t.dataset.opendsGo; closeDrawer(); return go('data'); }
+  if (t.dataset.opendsGo) { S.data.mode = 'datasets'; S.data.ds = t.dataset.opendsGo; return go('data'); }
   if (t.dataset.lcmodel) { S.lcModel = t.dataset.lcmodel; return render(); }
   if (t.dataset.artifact) { S.art.artifact = t.dataset.artifact; S.art.action = S.art.action === 'invoke' ? 'download' : S.art.action; return render(); }
   if (t.dataset.pipe) { S.pipe = t.dataset.pipe; return render(); }
@@ -1508,14 +1539,13 @@ document.addEventListener('click', async (e) => {
   if (t.dataset.datamode) { S.data.mode = t.dataset.datamode; return render(); }
   if (t.dataset.opends !== undefined) { S.data.ds = t.dataset.opends || null; if (S.data.ds && UNMASKED_ROLES.has(S.role)) P.ledger.append('data.read', S.token.claims.sub, { dataset: S.data.ds, unmasked: true, rows: 'sample' }); $('#view').scrollTop = 0; return render(); }
   if (t.dataset.reg) { S.regRegion = t.dataset.reg; return render(); }
-  if (t.dataset.go && S.drawer) closeDrawer();
   if (t.dataset.sel) { const [k, v] = t.dataset.sel.split(/:(.*)/s); S.sel[k] = v; }
   if (t.dataset.go) { e.preventDefault(); return go(t.dataset.go); }
   if (t.dataset.datatab) { S.data.tab = t.dataset.datatab; return render(); }
-  if (t.dataset.datauser) { S.data.user = t.dataset.datauser; S.data.tab = 'raw'; return render(); }
+  if (t.dataset.datauser) { S.data.user = t.dataset.datauser; openDrawer('person', t.dataset.datauser); return render(); }
   if (t.dataset.dataset) { S.sel.dataset = t.dataset.dataset; return render(); }
   if (t.dataset.request) { S.sel.request = t.dataset.request; return render(); }
-  if (t.dataset.model) { S.sel.model = t.dataset.model; return render(); }
+  if (t.dataset.model) { S.sel.model = t.dataset.model; openDrawer('model', t.dataset.model); return render(); }
   if (t.dataset.serve) { S.sel.serve = +t.dataset.serve; return render(); }
   if (t.dataset.dsr) { S.sel.dsr = t.dataset.dsr; return render(); }
   if (t.dataset.node) { const m = P.models.find((x) => E.mname(x) === t.dataset.node); if (m) { S.sel.model = E.mname(m); return go('models'); } if (P.dataset(t.dataset.node)) { S.sel.dataset = t.dataset.node; return go('catalog'); } return; }
@@ -1670,8 +1700,8 @@ const ACTS = [
   }],
   ['Governed onboarding', 'Register iphone_app_events_v2, scan, review, grant with conditions.', async (n) => {
     await as('ml_engineer'); go('catalog'); S.newDs = 'iphone_app_events_v2';
-    if (!P.dataset('iphone_app_events_v2')) { say(n, 'The ML engineer registers a new dataset. The scanner runs on schema and samples.'); render(); await pause(1500); await registerDataset(); await pause(2200); }
-    await as('data_steward'); S.sel.dataset = 'iphone_app_events_v2'; go('catalog');
+    if (!P.dataset('iphone_app_events_v2')) { say(n, 'The ML engineer registers a new dataset. The scanner runs on schema and samples.'); render(); await pause(1500); await registerDataset(); openDrawer('dataset', 'iphone_app_events_v2'); await pause(2200); }
+    await as('data_steward'); go('catalog'); openDrawer('dataset', 'iphone_app_events_v2');
     say(n, 'Precise location and IDFA found, so it is restricted. The steward confirms the tags.'); await pause(2600);
     if (P.dataset('iphone_app_events_v2').status === 'pending') await ACTIONS['approve-ds']();
     await pause(1500);
@@ -1691,8 +1721,9 @@ const ACTS = [
     await as('ml_engineer'); Object.assign(S.train, { principal: 'svc-ads-trainer', dataset: 'ad_features_v7', purpose: 'model_training' }); go('training');
     say(n, 'The trainer service account gets a 15 minute token scoped to one dataset and purpose.'); await pause(2400);
     await ACTIONS.train(); say(n, 'Allowed. Users are excluded by reason using consent as known at the snapshot.'); await pause(4500);
+    if (S.train.result && S.train.result.ok) openDrawer('model', E.mname(S.train.result.model));
     go('lineage'); say(n, 'Lineage records the exact Iceberg snapshot the model read.'); await pause(3500);
-    go('models'); say(n, 'Model card generated on registration: purpose, provenance, exclusions.'); await pause(4000);
+    go('models'); if (S.train.result && S.train.result.ok) openDrawer('model', E.mname(S.train.result.model)); say(n, 'Model card generated on registration, shown in the Inspector: purpose, provenance, exclusions.'); await pause(4500);
     S.lcModel = 'assistant-llm'; go('lifecycle'); say(n, 'Post-training is governed too: fine-tuning, preference data and safety evals each pass a gate.'); await pause(4500);
     S.art = { principal: 'maya.chen', action: 'download', artifact: 'ckpt/adrank/v3-eu', endpoint: 'assistant-llm-inference', region: 'US' }; go('artifacts'); say(n, 'Weights inherit sensitivity and region from their data: EU-trained weights cannot leave the EU.'); await pause(4500);
   }],
@@ -1716,7 +1747,7 @@ const ACTS = [
   }],
   ['Right to erasure', 'EU user deletion saga with snapshot expiry and evidence.', async (n) => {
     await as('privacy_reviewer'); const u = defaultErasureUser(); S.dsrUser = u.id;
-    S.lineageUser = u.id; go('lineage'); say(n, `${u.id} (${u.region}) files an erasure request. Lineage shows everywhere their data lives.`); await pause(4000);
+    S.lineageUser = u.id; go('lineage'); openDrawer('person', u.id); say(n, `${u.id} (${u.region}) files an erasure request. Lineage shows everywhere their data lives.`); await pause(4000);
     go('dsr'); say(n, 'The saga runs. Row deletes alone leave the user in old snapshots, so it expires them too.');
     await erase(false); await pause(2500);
     say(n, 'Run it again: same idempotency key, every step is a no-op.'); await erase(true); await pause(3000);
@@ -1766,6 +1797,9 @@ async function runAct(i) {
 $('#btn-demo').addEventListener('click', openActs);
 $('#btn-search').addEventListener('click', openPalette);
 $('#btn-bell').addEventListener('click', openBell);
+document.addEventListener('dblclick', (e) => { const c = e.target.closest('[data-dblopen]'); if (c) { S.data.mode = 'datasets'; S.data.ds = c.dataset.dblopen; $('#view').scrollTop = 0; render(); } });
+$('#btn-insp').addEventListener('click', () => { S.inspector = !S.inspector; layoutInspector(); });
+document.addEventListener('keydown', (e) => { if (e.altKey && e.metaKey && (e.key === '0' || e.code === 'Digit0')) { e.preventDefault(); S.inspector = !S.inspector; layoutInspector(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closePop(); closeDrawer(); } });
 document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k' && !$('#app').hidden) { e.preventDefault(); openPalette(); } });
 
