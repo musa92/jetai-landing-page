@@ -4,6 +4,7 @@ import * as E from './engine.js?v=20261023-4';
 import { SAMPLES, sampleKind, MASKED_TAGS, UNMASKED_ROLES, mask } from './samples.js?v=20261023-3';
 import { RANGES, history, tsChart, initChartHover, spark } from './charts.js?v=20261023-3';
 import { REGULATIONS, WATCH, PATTERNS } from './regulations.js?v=20261023-1';
+import * as L from './lineage.js?v=20261025-1';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -28,7 +29,7 @@ const S = {
   sim: { user: null, dataset: 'ad_features_v7', purpose: 'ads_personalization', region: 'US', principal: 'svc-ad-gateway' },
   train: { principal: 'svc-ads-trainer', dataset: 'ad_features_v7', purpose: 'model_training', result: null },
   shadow: null, scan: null, newDs: 'iphone_app_events_v2',
-  lineageUser: '', audit: { filter: '', verify: null, tampered: null },
+  lineageUser: '', lin: { focus: null, dir: 'both', wl: 'all' }, audit: { filter: '', verify: null, tampered: null },
   agent: { user: null, userToken: null, agentToken: null, results: [] },
   dma: null, actsDone: new Set(), act: null,
   data: { tab: 'users', region: 'all', user: null },
@@ -271,6 +272,7 @@ const ACTIVITY = {
   'policy.decision': (e) => `${e.payload.allow ? 'allowed' : 'denied'} ${nm(e.payload.purpose).toLowerCase()} on ${nm(e.payload.dataset)}${e.payload.reasons.length ? ' (' + e.payload.reasons.map(rsn).join(', ').toLowerCase() + ')' : ''}`,
   'consent.change': (e) => `recorded ${nm(e.payload.purpose).toLowerCase()} ${e.payload.status} (${e.payload.source.replace(/_/g, ' ')})`,
   'model.registered': (e) => `registered ${e.payload.model}`,
+  'lineage.impact_notified': (e) => `sent a change notice for ${e.payload.node} to ${e.payload.owners.join(', ')}`,
   'dsr.opened': () => 'opened an erasure request',
   'dsr.step': (e) => `completed erasure step ${e.payload.step}`,
   'dsr.completed': () => 'completed an erasure, evidence signed',
@@ -569,7 +571,7 @@ function datasetViewer(d) {
   const blocked = d.status !== 'approved';
   return `<div class="grid">
     <div class="card c12">
-      <div class="row between"><button class="btn" data-opends="">‹ All datasets</button><div class="row"><button class="btn" data-go="catalog" data-sel="dataset:${d.id}">Open in catalog</button><button class="btn" data-go="lineage">Lineage</button><button class="btn" data-act="export" data-key="sample">Export sample</button></div></div>
+      <div class="row between"><button class="btn" data-opends="">‹ All datasets</button><div class="row"><button class="btn" data-go="catalog" data-sel="dataset:${d.id}">Open in catalog</button><button class="btn" data-lnode-go="${d.id}">Lineage</button><button class="btn" data-act="export" data-key="sample">Export sample</button></div></div>
       <div class="ds-head"><div><h2>${h(nm(d.id))}</h2><span class="id">${h(d.id)}</span></div><div class="tags">${pill(d.classification)}${pill('blue', d.region)}${pill(d.status)}</div></div>
       <dl class="ds-meta"><div><dt>Rows</dt><dd>${compact(rowEstimate(d))}</dd></div><div><dt>Owner</dt><dd>${h(d.owner)}</dd></div><div><dt>Steward</dt><dd>${h(d.steward)}</dd></div><div><dt>Allowed for</dt><dd>${d.allowed_purposes.map(nm).join(', ')}</dd></div><div><dt>Retention</dt><dd>${d.retention_days} days</dd></div><div><dt>Location</dt><dd class="mono">s3://${d.bucket}</dd></div>${t ? `<div><dt>Snapshot</dt><dd class="mono">${t.current.id}</dd></div>` : ''}</dl>
     </div>
@@ -923,14 +925,14 @@ function drawDrawer() {
     return;
   }
   const { kind, id, tab } = S.drawer;
-  let title = id, sub = '', overview = '', acts = [], access = '', glyph = 'data';
+  let title = id, sub = '', overview = '', acts = [], access = '', glyph = 'data'; let actOverride = null;
   if (kind === 'dataset') {
     const d = P.dataset(id); title = nm(id); sub = id; glyph = 'data';
     overview = glist([['Classification', pill(d.classification)], ['Status', pill(d.status)], ['Region', d.region], ['Layer', d.layer], ['Owner', h(d.owner)], ['Steward', h(d.steward)], ['Legal basis', d.legal_basis.replace('_', ' ')], ['Retention', d.retention_days + ' days'], ['Allowed for', d.allowed_purposes.map(nm).join(', ')], ['Location', `<span class="mono">s3://${d.bucket}</span>`]])
       + `<h4 class="insp-h">Personal data</h4><div class="tags">${d.pii.length ? d.pii.map((t) => pill(['device_id', 'precise_location', 'email', 'free_text'].includes(t) ? 'deny' : '', t)).join('') : '<span class="note">None detected</span>'}</div>`
       + (P.tables[id] ? `<h4 class="insp-h">Table history</h4>${glist(P.tables[id].snapshots.map((x) => [`<span class="mono">${x.id}</span>`, x.op + (x === P.tables[id].current ? ' · current' : '')]))}` : '')
       + (d.status === 'pending' ? `<div class="row"><button class="btn primary" data-act="approve-ds" ${can('data_steward') ? '' : 'disabled'}>Approve</button><button class="btn danger" data-act="reject-ds" ${can('data_steward') ? '' : 'disabled'}>Reject</button></div>${roleNote('data_steward')}` : '')
-      + `<div class="row"><button class="btn" data-opends-go="${id}">Open data</button><button class="btn" data-go="lineage">Lineage</button></div>`;
+      + `<div class="row"><button class="btn" data-opends-go="${id}">Open data</button><button class="btn" data-lnode-go="${id}">Lineage</button></div>`;
     acts = P.ledger.entries.filter((e) => e.payload.dataset === id || e.payload.dataset === id + '_ads');
     const grants = P.grants.filter((g) => g.dataset === id);
     access = grants.length ? glist(grants.map((g) => [h(nm(g.principal)), `${nm(g.purpose)}, ${g.region}<span class="id">until ${date(g.expires)}</span>`])) : '<p class="note">No active grants. Access requires an approved request.</p>';
@@ -957,6 +959,24 @@ function drawDrawer() {
     acts = P.ledger.entries.filter((e) => e.payload.model === id);
     access = glist(E.ENDPOINTS.filter((x) => x.model === id).map((x) => [x.id, x.consumers.map(nm).join(', ')])) || '<p class="note">Not served by an endpoint.</p>';
   }
+  if (kind === 'lnode') {
+    const g = L.lineageGraph(P), n = g.nodes.find((x) => x.id === id), im = L.impact(g, id), ep = E.ENDPOINTS.find((x) => x.id === id);
+    title = n ? n.name : id; sub = n ? (n.type === 'source' ? 'Source system' : 'Inference endpoint') : ''; glyph = n && n.type === 'endpoint' ? 'ops' : 'data';
+    overview = n ? glist([['Owner', h(n.owner)], ['Workloads', n.workloads.map((w) => E.WORKLOADS[w].name).join(', ')], ['Upstream', im.up.size], ['Downstream', im.down.size], ep && ['Serves', ep.model], ep && ['Regions', ep.regions.join(', ')], ep && ['Purpose', nm(ep.purpose)], ep && ['Auth', ep.auth]]) + (id === 'consent-store' ? '<h4 class="insp-h">Policy input</h4><p class="insp-p">Jobs that filter people join against consent as it was known at the snapshot time, so a training set can be rebuilt exactly.</p>' : '') : '';
+    access = ep ? glist(ep.consumers.map((c) => [h(nm(c)), 'registered consumer'])) : '<p class="note">Writes only through its ingestion job identity.</p>';
+  }
+  if (kind === 'run') {
+    const r = RUNS.find((x) => x.id === id);
+    if (!r) { S.drawer = null; return drawDrawer(); }
+    const J = L.JOBS[r.job] || {}, dr = Object.entries(r.dropped || {}).filter(([, v]) => v);
+    title = r.job; sub = 'Run ' + r.id.slice(0, 8); glyph = 'ops';
+    overview = glist([['State', pill(r.state === 'COMPLETE' ? 'ok' : r.state === 'FAIL' ? 'deny' : 'live', r.state.toLowerCase())], ['Engine', h(J.engine || '')], ['Started', new Date(r.start).toLocaleString('en-GB', { hour12: false })], ['Ended', r.state === 'RUNNING' ? 'streaming' : new Date(r.end).toLocaleString('en-GB', { hour12: false })], ['Rows read', r.rowsIn ? fmt(r.rowsIn) : '·'], ['Rows written', r.rowsOut ? fmt(r.rowsOut) : '·']])
+      + (r.error ? `<div class="decision deny"><h4>Run failed safely</h4><ul><li>${h(r.error)}</li></ul></div>` : '')
+      + (dr.length ? `<h4 class="insp-h">Dropped, by reason</h4>${glist(dr.map(([k, v]) => [rsn(k), fmt(v)]))}` : '')
+      + `<h4 class="insp-h">OpenLineage event</h4><pre class="code insp-code">${h(JSON.stringify(olEvent(r), null, 2))}</pre>`;
+    acts = []; actOverride = `<div class="glist">${(J.stages || []).map((x, i) => `<div class="grow"><span>${i + 1}. ${h(x)}</span><span>${r.state === 'FAIL' && i === 1 ? pill('deny', 'blocked') : pill('ok', 'done')}</span></div>`).join('')}</div>`;
+    access = glist([['Ran as', `<span class="mono">svc-${h(r.job.replace(/^train_/, '').split('-')[0])}-runner</span>`], ['Token', 'client credentials, 15 min'], ['Scope', r.job.startsWith('train_') ? 'dataset:read purpose:model_training' : 'dataset:read dataset:write']]);
+  }
   if (kind === 'person' && !P.userById.get(id)) { el.innerHTML = `<div class="insp-empty"><b>Erased</b><span>${h(id)} was deleted by a subject request. Only a pseudonymous tombstone remains as proof.</span></div>`; return; }
   if (kind === 'person') {
     const u = P.userById.get(id); const c = P.cache.get(id); title = id; sub = `${u.region} · ${E.regionInfo(u.region).law}`; glyph = 'privacy';
@@ -964,7 +984,7 @@ function drawDrawer() {
     acts = P.ledger.entries.filter((e) => e.subject && false);
     access = '<p class="note">Only privacy reviewers and auditors can see a person\'s full record. This view is limited to governance attributes.</p>';
   }
-  const actHtml = acts.length ? `<ul class="feed">${acts.slice(-12).reverse().map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(nm(e.actor))}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}<span class="id">#${e.seq} · ${e.hash.slice(0, 12)}</span></span></li>`).join('')}</ul>` : '<p class="note">No recorded activity yet.</p>';
+  const actHtml = actOverride || (acts.length ? `<ul class="feed">${acts.slice(-12).reverse().map((e) => `<li><span class="when">${time(e.ts)}</span><span><b>${h(nm(e.actor))}</b> ${h((ACTIVITY[e.type] || ((x) => x.type))(e))}<span class="id">#${e.seq} · ${e.hash.slice(0, 12)}</span></span></li>`).join('')}</ul>` : '<p class="note">No recorded activity yet.</p>');
   el.innerHTML = `<div class="insp-head"><span class="insp-glyph">${icon(glyph)}</span><div><h3>${h(title)}</h3><span class="id">${h(sub)}</span></div><button class="icon-btn" data-closedrawer aria-label="Clear selection">×</button></div>
     <div class="insp-tabs"><div class="seg">${[['overview', 'Overview'], ['activity', 'Activity'], ['access', 'Access']].map(([k, t]) => `<button class="${k === tab ? 'on' : ''}" data-drawertab="${k}">${t}</button>`).join('')}</div></div>
     <div class="insp-body">${tab === 'overview' ? overview : tab === 'activity' ? actHtml : access}</div>`;
@@ -1152,7 +1172,7 @@ function trainResult(r) {
   return `<h3>${E.mname(m)} registered <span class="right">${pill('ok', m.stage)}</span></h3>${decisionBox(r.gate.decision)}
     <dl class="kv"><dt>Snapshot</dt><dd class="mono">${m.trainedOn[0].table}@${m.trainedOn[0].snapshot}</dd><dt>Eligible users</dt><dd>${fmt(m.eligible)}</dd><dt>Included</dt><dd>${fmt(m.members.size)} (${pct(m.members.size, m.eligible)})</dd><dt>AUC</dt><dd>${m.auc}</dd></dl>
     <h3>Excluded by reason</h3>${bars(ex.map(([k, v]) => [rsn(k), v]), 'red')}
-    <div class="row"><button class="btn" data-go="models">Open model card</button><button class="btn" data-go="lineage">View lineage</button></div>`;
+    <div class="row"><button class="btn" data-go="models">Open model card</button><button class="btn" data-lnode-go="${E.mname(m)}">View lineage</button></div>`;
 }
 
 /* ── models ── */
@@ -1172,53 +1192,194 @@ VIEWS.models = () => {
 };
 
 /* ── lineage ── */
+const LIN_CLS = { restricted: '#ff3b30', confidential: '#ff9f0a', internal: '#8e8e93', public: '#34c759' };
+const LIN_TYPE = { source: '#5e5ce6', model: '#0071e3', endpoint: '#30b0c7' };
+const LIN_WL = [['all', 'All workloads'], ['ads_ranking', 'Ads ranking'], ['assistant_llm', 'Assistant'], ['search_quality', 'Search']];
+const clip = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+const strHash = (s) => { let x = 2166136261; for (const c of s) x = Math.imul(x ^ c.charCodeAt(0), 16777619); return x >>> 0; };
+const runUuid = (s) => { const a = [strHash(s), strHash(s + '1'), strHash(s + '2'), strHash(s + '3')].map((n) => n.toString(16).padStart(8, '0')).join(''); return `${a.slice(0, 8)}-${a.slice(8, 12)}-4${a.slice(13, 16)}-a${a.slice(17, 20)}-${a.slice(20, 32)}`; };
+const linName = (n) => (n.type === 'dataset' ? nm(n.id) : n.name);
+const linSub = (n) => (n.type === 'dataset' ? `${n.region} · ${n.classification}${n.status === 'pending' ? ' · pending' : ` · ${n.retention} d`}` : n.type === 'model' ? n.stage.toLowerCase() + (n.status === 'retrain_required' ? ' · retrain required' : '') : n.sub);
+function linGraph() {
+  const g = L.lineageGraph(P);
+  if (S.lin.wl === 'all') return g;
+  const keep = new Set(g.nodes.filter((n) => n.workloads.includes(S.lin.wl)).map((n) => n.id));
+  return { nodes: g.nodes.filter((n) => keep.has(n.id)), edges: g.edges.filter((e) => keep.has(e.from) && keep.has(e.to)) };
+}
+
+/* OpenLineage run events: recent runs of every job, plus training runs from this session. */
+let RUNS = [];
+function linRuns(g) {
+  const now = Date.now(), runs = [];
+  const ver = (id, k = 0) => (P.tables[id] ? P.tables[id].snapshots[Math.max(0, P.tables[id].snapshots.length - 1 - k)].id : String(1000 + (strHash(id) % 8000) - k));
+  const ds = (id, k) => { const d = P.dataset(id); return { name: id, ns: d ? `s3://${d.bucket}` : id.includes('-') ? 'custodian' : 'models', version: d ? ver(id, k) : null }; };
+  const byJob = {};
+  for (const e of g.edges) if (e.kind === 'data') (byJob[e.job] ||= []).push(e);
+  for (const [job, es] of Object.entries(byJob)) {
+    const J = L.JOBS[job]; if (!J || job.startsWith('train_') || job === 'deploy' || job === 'eval-gate') continue;
+    const every = /hourly/.test(J.schedule) ? 36e5 : /daily/.test(J.schedule) ? 864e5 : /weekly/.test(J.schedule) ? 6048e5 : 864e5 * 4;
+    const ins = [...new Set(es.map((e) => e.from))], outs = [...new Set(es.map((e) => e.to))];
+    const dropped = Object.values(J.dropped || {}).reduce((a, b) => a + b, 0);
+    const n = J.mode === 'streaming' ? 1 : 2;
+    for (let k = 0; k < n; k++) {
+      const end = J.mode === 'streaming' ? now : now - (strHash(job) % 50) * 6e4 - k * every;
+      const span = J.mode === 'streaming' ? 864e5 * 6 : (parseInt(J.duration) || 5) * 6e4;
+      const fail = job === 'assistant-redaction' && k === 1;
+      runs.push({ id: runUuid(job + k), job, state: J.mode === 'streaming' ? (J.records_in ? 'RUNNING' : 'PAUSED') : fail ? 'FAIL' : 'COMPLETE', start: end - span, end, inputs: ins.map((i) => ds(i, k + 1)), outputs: fail ? [] : outs.map((o) => ds(o, k)), rowsIn: J.records_in, rowsOut: fail ? 0 : J.records_in - dropped, dropped: fail ? {} : J.dropped || {}, error: fail ? 'Schema contract check: column message_v2 is not in the registered schema. Run blocked before write; retried after the contract was updated.' : null });
+    }
+  }
+  const trained = new Set(P.lineageRuns.map((r) => r.outputs[0].model));
+  for (const m of P.models) {
+    const id = E.mname(m);
+    if (!g.nodes.some((x) => x.id === id)) continue;
+    const live = P.lineageRuns.find((r) => r.outputs[0].model === id);
+    const at = live ? live.at : m.created;
+    const ins = g.edges.filter((e) => e.to === id && e.kind === 'data').map((e) => { const t = m.trainedOn.find((x) => x.table === e.from); return { name: e.from, ns: `s3://${P.dataset(e.from).bucket}`, version: t ? t.snapshot : ver(e.from) }; });
+    runs.push({ id: runUuid(id), job: 'train_' + m.id, state: 'COMPLETE', start: at - 6e5, end: at, inputs: ins, outputs: [{ name: id, ns: 'models', version: String(m.version) }], rowsIn: m.eligible || m.members.size, rowsOut: m.members.size, dropped: m.excluded ? Object.fromEntries(Object.entries(m.excluded).filter(([, v]) => v)) : {}, facets: live ? live.facets : { purpose: 'model_training', policy: 'core-1.3.2' }, session: trained.has(id) });
+    if (m.stage === 'Production') { const ep = E.ENDPOINTS.find((x) => x.model === id); if (ep) runs.push({ id: runUuid('deploy' + id), job: 'deploy', state: 'COMPLETE', start: at + 864e5 * 2, end: at + 864e5 * 2 + 132e4, inputs: [{ name: id, ns: 'models', version: String(m.version) }], outputs: [{ name: ep.id, ns: 'endpoints', version: null }], rowsIn: 0, rowsOut: 0, dropped: {} }); }
+  }
+  RUNS = runs.sort((a, b) => b.end - a.end);
+  return RUNS;
+}
+function olEvent(r) {
+  const J = L.JOBS[r.job] || {};
+  return {
+    eventType: r.state === 'RUNNING' || r.state === 'PAUSED' ? 'RUNNING' : r.state, eventTime: new Date(r.end).toISOString(),
+    producer: `https://custodian.acme.internal/agents/${(J.engine || 'custodian').toLowerCase().split(' ')[0]}`,
+    schemaURL: 'https://openlineage.io/spec/2-0-2/OpenLineage.json#/definitions/RunEvent',
+    run: { runId: r.id, facets: { custodian_policy: { bundle: (r.facets && r.facets.policy) || 'core-1.4.0', decision: 'allow' }, ...(r.facets && r.facets.consent_as_of ? { custodian_consent: { as_of: r.facets.consent_as_of } } : {}), ...(r.error ? { errorMessage: { message: r.error, programmingLanguage: 'python' } } : {}) } },
+    job: { namespace: 'custodian', name: r.job, facets: { jobType: { processingType: J.mode === 'streaming' ? 'STREAMING' : 'BATCH', integration: (J.engine || '').toUpperCase() } } },
+    inputs: r.inputs.map((x) => ({ namespace: x.ns, name: x.name, ...(x.version ? { facets: { version: { datasetVersion: x.version } } } : {}) })),
+    outputs: r.outputs.map((x) => ({ namespace: x.ns, name: x.name, facets: { ...(x.version ? { version: { datasetVersion: x.version } } : {}), outputStatistics: { rowCount: r.rowsOut } } })),
+  };
+}
+
 VIEWS.lineage = () => {
-  const hits = S.lineageUser ? P.locate(S.lineageUser) : null;
-  return head('Lineage', 'Where data comes from, where it goes, and where one person\'s data lives today.', 'Every job emits OpenLineage events with exact Iceberg snapshot IDs, so model provenance and per-person location are precise.') + `
+  const g = linGraph();
+  const f = S.lin.focus && g.nodes.find((n) => n.id === S.lin.focus) ? S.lin.focus : null;
+  const fn = f && g.nodes.find((n) => n.id === f);
+  const hits = S.lineageUser && P.userById.get(S.lineageUser) ? P.locate(S.lineageUser) : null;
+  const runs = linRuns(g);
+  const shownRuns = (f ? runs.filter((r) => r.inputs.some((x) => x.name === f) || r.outputs.some((x) => x.name === f)) : runs).slice(0, 12);
+  const jobs = new Set(g.edges.map((e) => e.job));
+  return head('Lineage', 'Where data comes from, every job that touches it, and what breaks or must be erased when something changes.', 'Every job emits OpenLineage run events with exact Iceberg snapshot IDs as dataset versions. Column-level lineage tracks how personal data tags travel: a tag can only be removed by a transform the privacy team approved. Consent is a policy input to every job that filters people, so it appears as a dashed edge.') + `
   <div class="grid">
-    <div class="card c12"><div class="row"><label class="field" style="min-width:220px">Find a user<select data-bind="lineageUser"><option value="">None</option>${userOptions(S.lineageUser)}</select></label></div>${lineageSvg(hits)}</div>
-    ${hits ? `<div class="card c6"><h3>Locations for ${h(S.lineageUser)}</h3><table class="table"><tbody>${hits.map((x) => `<tr><td>${x.kind}</td><td class="mono">${h(x.name)}</td><td>${x.kind === 'table' ? `${x.snapshots.length} snapshot${x.snapshots.length === 1 ? '' : 's'}${x.live ? '' : ', time travel only'}` : h(x.note || '')}</td></tr>`).join('')}</tbody></table>${hits.length ? '' : '<p class="note">No location holds this user.</p>'}</div>` : ''}
-    <div class="card ${hits ? 'c6' : 'c12'}"><h3>Runs</h3>${P.lineageRuns.length ? `<table class="table"><tbody>${P.lineageRuns.map((r) => `<tr><td>${time(r.at)}</td><td class="mono">${r.job}</td><td class="mono">${r.inputs.map((i) => i.dataset + '@' + i.snapshot).join(', ')}</td><td>${r.outputs.map((o) => o.model).join(', ')}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Run a training job to emit a lineage event.</p>'}</div>
+    <div class="card c12 lin-card">
+      <div class="lin-bar">
+        <div class="seg">${LIN_WL.map(([k, t]) => `<button class="${S.lin.wl === k ? 'on' : ''}" data-linwl="${k}">${t}</button>`).join('')}</div>
+        <div class="seg${f ? '' : ' off'}" title="${f ? '' : 'Select a node to trace it'}">${[['up', 'Upstream'], ['both', 'Both'], ['down', 'Downstream']].map(([k, t]) => `<button class="${S.lin.dir === k && f ? 'on' : ''}" data-lindir="${k}" ${f ? '' : 'disabled'}>${t}</button>`).join('')}</div>
+        <span class="spacer"></span>
+        <label class="lin-trace">Trace a person<select data-bind="lineageUser"><option value="">Nobody</option>${userOptions(S.lineageUser)}</select></label>
+      </div>
+      ${lineageSvg(g, f, hits)}
+      <div class="lin-foot"><span>${g.nodes.filter((n) => n.type === 'dataset').length} datasets · ${jobs.size} jobs · ${g.nodes.filter((n) => n.type === 'model').length} models · ${g.nodes.filter((n) => n.type === 'endpoint').length} endpoints</span><span class="spacer"></span>
+        ${Object.entries(LIN_CLS).slice(0, 3).map(([k, c]) => `<span class="lg"><i style="background:${c}"></i>${k}</span>`).join('')}<span class="lg"><i class="dash"></i>consent join</span><span class="lg"><i class="dot"></i>pending</span></div>
+    </div>
+    ${hits ? linPerson(hits) : ''}
+    ${fn ? linImpact(g, fn) + linDetail(g, fn) : ''}
+    <div class="card c12"><h3>Runs${f ? ` touching ${h(linName(fn))}` : ''}<span class="right">${f ? '<button class="link" data-linclear>Show all</button> · ' : ''}OpenLineage events, newest first</span></h3>
+      <div class="scroll-x"><table class="table"><thead><tr><th>State</th><th>Job</th><th>Read</th><th>Wrote</th><th>Rows out</th><th>Duration</th><th>Ended</th></tr></thead><tbody>
+      ${shownRuns.map((r) => `<tr class="click${S.drawer && S.drawer.kind === 'run' && S.drawer.id === r.id ? ' sel' : ''}" data-linrun="${r.id}"><td>${pill(r.state === 'COMPLETE' ? 'ok' : r.state === 'FAIL' ? 'deny' : r.state === 'PAUSED' ? 'warn' : 'live', r.state.toLowerCase())}</td><td class="nowrap"><span class="mono">${h(r.job)}</span><span class="id">${h((L.JOBS[r.job] || {}).engine || '')}</span></td><td class="mono small">${r.inputs.map((x) => h(x.name) + (x.version ? `<span class="ver">@${h(x.version)}</span>` : '')).join('<br>')}</td><td class="mono small">${r.outputs.length ? r.outputs.map((x) => h(x.name) + (x.version ? `<span class="ver">@${h(x.version)}</span>` : '')).join('<br>') : '<span class="note">nothing written</span>'}</td><td>${r.rowsOut ? fmt(r.rowsOut) : '·'}</td><td>${r.state === 'RUNNING' ? 'streaming' : r.state === 'PAUSED' ? 'paused' : dur(r.end - r.start)}</td><td>${ago(r.end)}</td></tr>`).join('')}
+      </tbody></table></div></div>
   </div>`;
 };
-function lineageSvg(hits) {
-  const hitSet = new Set((hits || []).map((x) => x.name));
-  const cols = [
-    ['Source', [['ios-collector', 'iOS collector', 'app events'], ['assistant-svc', 'Assistant service', 'conversations']]],
-    ['Raw', [['iphone_app_events_raw', 'app events raw', 'lake-us-west'], ['iphone_app_events_raw_eu', 'app events raw EU', 'lake-eu-west'], ['assistant_conversations', 'conversations raw', 'restricted'], ...(P.dataset('iphone_app_events_v2') ? [['iphone_app_events_v2', 'iphone_app_events_v2', P.dataset('iphone_app_events_v2').status]] : [])]],
-    ['Cleaned', [['app_events_clean', 'app events clean', 'lake-us-west'], ['app_events_clean_eu', 'app events clean EU', 'lake-eu-west']]],
-    ['Features', [['ad_features_v7', 'ad features v7', 'lake-us-west'], ['ad_features_v7_eu', 'ad features v7 EU', 'lake-eu-west'], ['session_metrics_daily', 'session metrics', 'analytics only'], ['assistant_conversations_redacted', 'conversations redacted', 'training only'], ...(P.dataset('iphone_app_events_v2_ads') ? [['iphone_app_events_v2_ads', 'v2 ads view', 'minimized']] : [])]],
-    ['Models', P.models.map((m) => [E.mname(m), E.mname(m), m.status + ', ' + m.stage.toLowerCase()])],
-    ['Serving', [['gateway', 'serving gateway', 'PEP']]],
-  ];
-  const edges = [['ios-collector', 'iphone_app_events_raw'], ['ios-collector', 'iphone_app_events_raw_eu'], ['iphone_app_events_raw', 'app_events_clean'], ['iphone_app_events_raw_eu', 'app_events_clean_eu'], ['app_events_clean', 'ad_features_v7'], ['app_events_clean_eu', 'ad_features_v7_eu'], ['app_events_clean', 'session_metrics_daily'], ['ios-collector', 'iphone_app_events_v2'], ['iphone_app_events_v2', 'iphone_app_events_v2_ads'], ['assistant-svc', 'assistant_conversations'], ['assistant_conversations', 'assistant_conversations_redacted']];
-  for (const m of P.models) for (const t of m.trainedOn) edges.push([t.table, E.mname(m)]);
-  const prod = P.models.filter((m) => m.stage === 'Production');
-  for (const m of prod) edges.push([E.mname(m), 'gateway']);
-  const W = 1100, colW = W / cols.length, nodeW = 150, nodeH = 40, pos = {};
-  let maxRows = Math.max(...cols.map((c) => c[1].length));
-  const H = 40 + maxRows * 64;
+const dur = (ms) => (ms >= 36e5 ? `${Math.floor(ms / 36e5)}h ${Math.round((ms % 36e5) / 6e4)}m` : `${Math.max(1, Math.round(ms / 6e4))}m`);
+const ago = (t) => { const s = (Date.now() - t) / 1000; return s < 90 ? 'just now' : s < 5400 ? Math.round(s / 60) + ' min ago' : s < 129600 ? Math.round(s / 3600) + ' h ago' : Math.round(s / 86400) + ' d ago'; };
+
+function lineageSvg(g, f, hits) {
+  const W = 1080, cols = L.COLUMNS, colW = W / cols.length, nodeW = 158, nodeH = 44, gap = 58, pos = {};
+  const byCol = cols.map(([k]) => g.nodes.filter((n) => n.col === k));
+  const maxRows = Math.max(...byCol.map((c) => c.length)), H = 30 + maxRows * gap;
   let out = '';
-  cols.forEach(([label, nodes], ci) => {
-    const x = ci * colW + (colW - nodeW) / 2;
-    out += `<text class="col-label" x="${x}" y="16">${label}</text>`;
-    nodes.forEach(([id], ri) => { pos[id] = { x, y: 34 + ri * 64 }; });
+  byCol.forEach((ns, ci) => {
+    const x = ci * colW + (colW - nodeW) / 2, off = ((maxRows - ns.length) * gap) / 2;
+    out += `<text class="col-label" x="${x}" y="14">${cols[ci][1]}</text>`;
+    ns.forEach((n, ri) => { pos[n.id] = { x, y: 26 + off + ri * gap }; });
   });
-  const live = (id) => hitSet.has(id);
+  let A = null;
+  if (f) { const im = L.impact(g, f); A = new Set([f, ...(S.lin.dir !== 'down' ? im.up : []), ...(S.lin.dir !== 'up' ? im.down : [])]); }
+  const hit = new Map();
+  for (const x of hits || []) {
+    const id = x.kind === 'consent' ? 'consent-store' : x.name;
+    if (x.kind !== 'cache') hit.set(id, x.kind === 'table' && !x.live ? 'tt' : 'hit');
+  }
   let paths = '';
-  for (const [a, b] of edges) {
-    if (!pos[a] || !pos[b]) continue;
-    const p = pos[a], q = pos[b], x1 = p.x + nodeW, y1 = p.y + nodeH / 2, x2 = q.x, y2 = q.y + nodeH / 2, mx = (x1 + x2) / 2;
-    paths += `<path class="${live(a) && live(b) ? 'hit' : ''}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;
+  for (const e of g.edges) {
+    const p = pos[e.from], q = pos[e.to];
+    if (!p || !q) continue;
+    const x1 = p.x + nodeW, y1 = p.y + nodeH / 2, x2 = q.x - 3, y2 = q.y + nodeH / 2, mx = (x1 + x2) / 2;
+    const on = A ? A.has(e.from) && A.has(e.to) : hit.size ? hit.has(e.from) && hit.has(e.to) : false;
+    const cls = [e.kind === 'control' ? 'ctl' : '', on ? (A ? 'on' : 'hit') : A || hit.size ? 'dim' : ''].join(' ');
+    paths += `<path class="${cls}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" marker-end="url(#arr${on ? '-on' : ''})"><title>${h(e.job)}</title></path>`;
   }
   let nodes = '';
-  cols.forEach(([, ns]) => ns.forEach(([id, name, sub]) => {
-    const p = pos[id], model = P.models.find((m) => E.mname(m) === id);
-    const cls = hitSet.has(id) ? 'hit' : model && model.status === 'retrain_required' ? 'flag' : '';
-    nodes += `<g class="node ${cls}" data-node="${id}" transform="translate(${p.x},${p.y})"><rect width="${nodeW}" height="${nodeH}" rx="10"/><text x="12" y="17">${h(name)}</text><text class="sub" x="12" y="31">${h(sub)}</text></g>`;
-  }));
-  return `<div class="scroll-x"><svg class="lineage" viewBox="0 0 ${W} ${H}" style="min-width:860px">${paths}${out}${nodes}</svg></div>`;
+  for (const n of g.nodes) {
+    const p = pos[n.id], color = n.type === 'dataset' ? LIN_CLS[n.classification] || '#8e8e93' : LIN_TYPE[n.type];
+    const cls = [`t-${n.type}`, n.id === f ? 'focus' : A ? (A.has(n.id) ? 'on' : 'dim') : hit.size ? hit.get(n.id) || 'dim' : '', n.status === 'pending' ? 'pending' : '', n.status === 'retrain_required' ? 'flag' : ''].join(' ');
+    nodes += `<g class="node ${cls}" data-lnode="${h(n.id)}" transform="translate(${p.x},${p.y})"><title>${h(n.id)}</title><rect class="bg" width="${nodeW}" height="${nodeH}" rx="9"/><rect x="7" y="9" width="3" height="${nodeH - 18}" rx="1.5" fill="${color}"/><text x="17" y="19">${h(clip(linName(n), n.region === 'EU' ? 19 : 24))}</text><text class="sub" x="17" y="34">${h(clip(linSub(n), 28))}</text>${n.region === 'EU' ? `<g class="badge"><rect x="${nodeW - 27}" y="8" width="20" height="13" rx="4"/><text x="${nodeW - 17}" y="17.5" text-anchor="middle">EU</text></g>` : ''}</g>`;
+  }
+  const defs = `<defs>${['', '-on'].map((s) => `<marker id="arr${s}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0.5 L7.5,4 L0,7.5z" class="arrow${s}"/></marker>`).join('')}</defs>`;
+  return `<div class="scroll-x"><svg class="lineage" viewBox="0 0 ${W} ${H}" style="min-width:780px">${defs}<rect class="lin-bg" data-linclear width="${W}" height="${H}"/>${out}${paths}${nodes}</svg></div>`;
 }
+
+const ERASE_STEP = { live: 'Iceberg row deletes', tt: 'Expire snapshots', cache: 'Purge serving cache', model: 'Flag for retraining', consent: 'Tombstone, keep proof' };
+function linPerson(hits) {
+  const u = P.userById.get(S.lineageUser);
+  const tables = hits.filter((x) => x.kind === 'table'), copies = tables.reduce((a, x) => a + x.snapshots.length, 0);
+  return `<div class="card c12"><h3>Where ${h(S.lineageUser)} lives today<span class="right">${u.region} · ${E.regionInfo(u.region).law}</span></h3>
+    <p class="note">${tables.length} tables holding ${copies} snapshot copies, ${(() => { const k = hits.filter((x) => x.kind === 'model').length; return k + (k === 1 ? ' model' : ' models'); })()} trained on them, plus the serving cache and consent proof. An erasure request reaches every row below.</p>
+    <div class="scroll-x"><table class="table"><thead><tr><th>Location</th><th>Kind</th><th>Where</th><th>Copies</th><th>Erasure step</th></tr></thead><tbody>
+    ${hits.map((x) => `<tr${x.kind === 'model' || x.kind === 'table' ? ` class="click" data-lnode="${h(x.name)}"` : ''}><td>${x.kind === 'table' ? named(x.name) : `<span class="mono">${h(x.name)}</span>`}</td><td>${x.kind === 'table' ? (x.live ? 'table' : 'table, time travel only') : x.kind}</td><td class="mono">${x.bucket ? 's3://' + h(x.bucket) : x.kind === 'model' ? 'registry' : x.kind === 'cache' ? 'redis us/eu' : 'postgres'}</td><td>${x.kind === 'table' ? x.snapshots.length + ' snapshot' + (x.snapshots.length === 1 ? '' : 's') : '·'}</td><td>${ERASE_STEP[x.kind === 'table' ? (x.live ? 'live' : 'tt') : x.kind]}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="row"><button class="btn primary" data-linerase>Start erasure request</button><button class="btn" data-act="export" data-key="lineage-person">Export location report</button></div></div>`;
+}
+
+function linImpact(g, n) {
+  const im = L.impact(g, n.id), get = (id) => g.nodes.find((x) => x.id === id);
+  const down = [...im.down].map(get), up = [...im.up].map(get);
+  const owners = [...new Set(down.map((x) => x.owner).filter(Boolean))];
+  const row = (x) => `<div class="grow click" data-lnode="${h(x.id)}"><span>${h(linName(x))}</span><span>${x.type}${x.region === 'EU' ? ' · EU' : ''}</span></div>`;
+  return `<div class="card c5"><h3>Impact<span class="right">${h(linName(n))}</span></h3>
+    <div class="lin-stats">${[[up.length, 'upstream'], [down.filter((x) => x.type === 'dataset').length, 'datasets'], [down.filter((x) => x.type === 'model').length, 'models'], [down.filter((x) => x.type === 'endpoint').length, 'endpoints']].map(([v, k]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
+    <h4 class="insp-h">If this changes or is deleted</h4>${down.length ? `<div class="glist">${down.map(row).join('')}</div>` : '<p class="note">Nothing reads from it. Safe to change.</p>'}
+    ${up.length ? `<h4 class="insp-h">Depends on</h4><div class="glist">${up.map(row).join('')}</div>` : ''}
+    ${owners.length ? `<h4 class="insp-h">Owners to notify</h4><div class="tags">${owners.map((o) => pill('', o)).join('')}</div><div class="row"><button class="btn" data-act="lin-notify">Notify ${owners.length} owner${owners.length > 1 ? 's' : ''}</button><button class="btn" data-act="export" data-key="lineage-impact">Export impact</button></div>` : ''}</div>`;
+}
+
+function linDetail(g, n) {
+  if (n.type === 'dataset' && L.COLUMN_LINEAGE[n.id]) {
+    const cl = L.COLUMN_LINEAGE[n.id], chk = L.tagCheck(n.id);
+    const tag = (t) => (t ? pill(['device_id', 'precise_location', 'email', 'free_text'].includes(t) ? 'deny' : t === 'user_id' ? 'warn' : '', t) : '<span class="note">none</span>');
+    return `<div class="card c7"><h3>Column lineage<span class="right">${chk.violations.length ? pill('deny', chk.violations.length + ' tag violations') : pill('ok', 'Tag check passed')}</span></h3>
+      <p class="note">From <b>${h(nm(cl.from))}</b>. ${chk.downgraded} of ${chk.columns} columns lose or weaken a personal data tag, each through an approved transform.</p>
+      <div class="scroll-x"><table class="table cl"><thead><tr><th>Column</th><th>From</th><th>Transform</th><th>Tag</th></tr></thead><tbody>
+      ${cl.cols.map(([out, ins, tf, tin, tout]) => `<tr class="${out ? '' : 'drop'}"><td class="mono">${out ? h(out) : '<s>' + h(ins.join(', ')) + '</s>'}</td><td class="mono small">${ins.length ? ins.map(h).join(', ') : '·'}</td><td>${h(tf)}</td><td class="tagflow">${tin || tout ? `${tag(tin)}${tin !== tout ? `<span class="to">→</span>${tag(tout)}` : ''}` : '<span class="note">·</span>'}</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+  }
+  if (n.type === 'model') {
+    const m = P.models.find((x) => E.mname(x) === n.id), ins = g.edges.filter((e) => e.to === n.id && e.kind === 'data');
+    return `<div class="card c7"><h3>Training provenance<span class="right">${pill(m.status === 'ok' ? 'ok' : 'deny', m.status === 'ok' ? 'Reproducible' : 'Retrain required')}</span></h3>
+      <p class="note">Exact table versions this model read. Re-running with these snapshots and the same consent cut-off rebuilds the same training set.</p>
+      ${glist(ins.map((e) => { const t = m.trainedOn.find((x) => x.table === e.from); return [named(e.from), `<span class="mono">@${h(t ? t.snapshot : 'pinned')}</span><span class="id">${h(e.job)}</span>`]; }))}
+      ${glist([['People included', fmt(m.members.size)], ['Policy at training', (m.card && m.card.governance.policy_bundle) || 'core-1.3.2'], ['Serves', E.ENDPOINTS.filter((x) => x.model === n.id).map((x) => x.id).join(', ') || 'not deployed']])}</div>`;
+  }
+  const js = [...new Set(g.edges.filter((e) => e.from === n.id || e.to === n.id).map((e) => e.job))];
+  return `<div class="card c7"><h3>${n.type === 'dataset' ? 'Produced by' : 'Jobs'}<span class="right">${js.length}</span></h3>
+    ${js.map((j) => { const J = L.JOBS[j] || {}; const dr = Object.entries(J.dropped || {}).filter(([, v]) => v); return `<div class="lin-job"><div class="row between"><b class="mono">${h(j)}</b><span class="note">${h(J.engine || '')} · ${h(J.schedule || '')}</span></div><div class="lin-stages">${(J.stages || []).map((s) => `<span>${h(s)}</span>`).join('')}</div>${dr.length ? `<div class="tags">${dr.map(([k, v]) => pill('warn', `${rsn(k).toLowerCase()}: ${fmt(v)}`)).join('')}</div>` : ''}</div>`; }).join('')}</div>`;
+}
+
+function linSelect(id) {
+  if (S.lin.focus === id) return;
+  S.lin.focus = id; S.lineageUser = '';
+  const g = L.lineageGraph(P), n = g.nodes.find((x) => x.id === id);
+  if (n && S.lin.wl !== 'all' && !n.workloads.includes(S.lin.wl)) S.lin.wl = 'all';
+  if (P.dataset(id)) openDrawer('dataset', id);
+  else if (P.models.some((m) => E.mname(m) === id)) openDrawer('model', id);
+  else openDrawer('lnode', id);
+}
+EXPORTS['lineage-runs'] = () => [['run_id', 'job', 'state', 'inputs', 'outputs', 'rows_out', 'ended'], ...RUNS.map((r) => [r.id, r.job, r.state, r.inputs.map((x) => x.name + '@' + (x.version || '')).join(' '), r.outputs.map((x) => x.name + '@' + (x.version || '')).join(' '), r.rowsOut, new Date(r.end).toISOString()])];
+EXPORTS['lineage-impact'] = () => { const g = L.lineageGraph(P), im = L.impact(g, S.lin.focus); return [['node', 'direction', 'type', 'owner'], ...[...im.up].map((id) => ['up', id]), ...[...im.down].map((id) => ['down', id])].map((r, i) => (i ? (() => { const n = g.nodes.find((x) => x.id === r[1]); return [r[1], r[0], n.type, n.owner || '']; })() : r)); };
+EXPORTS['lineage-person'] = () => [['location', 'kind', 'live', 'snapshots', 'erasure_step'], ...P.locate(S.lineageUser).map((x) => [x.name, x.kind, x.live, (x.snapshots || []).join(' '), ERASE_STEP[x.kind === 'table' ? (x.live ? 'live' : 'tt') : x.kind]])];
 
 /* ── DSR ── */
 VIEWS.dsr = () => {
@@ -1517,7 +1678,7 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node]');
+  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node],[data-lnode],[data-lnode-go],[data-linwl],[data-lindir],[data-linrun],[data-linclear],[data-linerase]');
   if (!t || $('#app').hidden) return;
   if (t.dataset.toggle) { e.stopPropagation(); S.open.has(t.dataset.toggle) ? S.open.delete(t.dataset.toggle) : S.open.add(t.dataset.toggle); return renderChrome(); }
   if (t.dataset.range) { S.range = t.dataset.range; return render(); }
@@ -1548,6 +1709,13 @@ document.addEventListener('click', async (e) => {
   if (t.dataset.model) { S.sel.model = t.dataset.model; openDrawer('model', t.dataset.model); return render(); }
   if (t.dataset.serve) { S.sel.serve = +t.dataset.serve; return render(); }
   if (t.dataset.dsr) { S.sel.dsr = t.dataset.dsr; return render(); }
+  if (t.dataset.lnode) { linSelect(t.dataset.lnode); return render(); }
+  if (t.dataset.lnodeGo) { const id = t.dataset.lnodeGo; go('lineage'); S.lin.focus = null; linSelect(id); return render(); }
+  if (t.dataset.linwl) { S.lin.wl = t.dataset.linwl; return render(); }
+  if (t.dataset.lindir) { S.lin.dir = t.dataset.lindir; return render(); }
+  if (t.dataset.linrun) { openDrawer('run', t.dataset.linrun); return render(); }
+  if (t.dataset.linclear !== undefined) { if (S.lin.focus) { S.lin.focus = null; closeDrawer(); } return render(); }
+  if (t.dataset.linerase !== undefined) { S.dsrUser = S.lineageUser; return go('dsr'); }
   if (t.dataset.node) { const m = P.models.find((x) => E.mname(x) === t.dataset.node); if (m) { S.sel.model = E.mname(m); return go('models'); } if (P.dataset(t.dataset.node)) { S.sel.dataset = t.dataset.node; return go('catalog'); } return; }
   const act = ACTIONS[t.dataset.act];
   if (act) await act(t);
@@ -1559,6 +1727,7 @@ document.addEventListener('change', async (e) => {
     let o = S; for (const k of path.slice(0, -1)) o = o[k];
     o[path.at(-1)] = t.value;
     if (t.dataset.bind === 'consentUser') S.flow = null;
+    if (t.dataset.bind === 'lineageUser') { S.lin.focus = null; if (t.value) openDrawer('person', t.value); else closeDrawer(); }
     if (t.dataset.bind === 'agent.user') { S.agent.agentToken = null; S.agent.results = []; }
     if (t.dataset.bind === 'audit.filter') { S.audit.loaded = null; }
     return render();
@@ -1571,6 +1740,12 @@ document.addEventListener('input', (e) => {
 });
 
 const ACTIONS = {
+  'lin-notify': async () => {
+    const g = L.lineageGraph(P), im = L.impact(g, S.lin.focus);
+    const owners = [...new Set([...im.down].map((id) => g.nodes.find((x) => x.id === id).owner).filter(Boolean))];
+    await P.ledger.append('lineage.impact_notified', S.token.claims.sub, { node: S.lin.focus, owners, downstream: im.down.size });
+    toast(`Sent a change notice to ${owners.join(', ')}`);
+  },
   report: (t) => generateReport(t.dataset.key),
   'bulk-approve': async () => { let n = 0; for (const id of S.bulk) { const d = P.dataset(id); if (d.status === 'pending') { d.status = 'approved'; n++; await P.ledger.append('catalog.approved', S.token.claims.sub, { dataset: id, bulk: true }); } } S.bulk.clear(); toast(n ? `Approved ${n} dataset${n > 1 ? 's' : ''}` : 'Nothing pending in the selection'); render(); renderChrome(); },
   'bulk-review': () => { toast(`Review requested from the data steward for ${S.bulk.size} datasets`); S.bulk.clear(); render(); },
@@ -1722,7 +1897,7 @@ const ACTS = [
     say(n, 'The trainer service account gets a 15 minute token scoped to one dataset and purpose.'); await pause(2400);
     await ACTIONS.train(); say(n, 'Allowed. Users are excluded by reason using consent as known at the snapshot.'); await pause(4500);
     if (S.train.result && S.train.result.ok) openDrawer('model', E.mname(S.train.result.model));
-    go('lineage'); say(n, 'Lineage records the exact Iceberg snapshot the model read.'); await pause(3500);
+    go('lineage'); if (S.train.result && S.train.result.ok) { S.lin.focus = null; linSelect(E.mname(S.train.result.model)); render(); } say(n, 'Lineage records the exact Iceberg snapshot the model read, and what the new model would affect.'); await pause(4500);
     go('models'); if (S.train.result && S.train.result.ok) openDrawer('model', E.mname(S.train.result.model)); say(n, 'Model card generated on registration, shown in the Inspector: purpose, provenance, exclusions.'); await pause(4500);
     S.lcModel = 'assistant-llm'; go('lifecycle'); say(n, 'Post-training is governed too: fine-tuning, preference data and safety evals each pass a gate.'); await pause(4500);
     S.art = { principal: 'maya.chen', action: 'download', artifact: 'ckpt/adrank/v3-eu', endpoint: 'assistant-llm-inference', region: 'US' }; go('artifacts'); say(n, 'Weights inherit sensitivity and region from their data: EU-trained weights cannot leave the EU.'); await pause(4500);
@@ -1747,7 +1922,7 @@ const ACTS = [
   }],
   ['Right to erasure', 'EU user deletion saga with snapshot expiry and evidence.', async (n) => {
     await as('privacy_reviewer'); const u = defaultErasureUser(); S.dsrUser = u.id;
-    S.lineageUser = u.id; go('lineage'); openDrawer('person', u.id); say(n, `${u.id} (${u.region}) files an erasure request. Lineage shows everywhere their data lives.`); await pause(4000);
+    S.lineageUser = u.id; S.lin.focus = null; go('lineage'); openDrawer('person', u.id); say(n, `${u.id} (${u.region}) files an erasure request. Lineage shows everywhere their data lives.`); await pause(4000);
     go('dsr'); say(n, 'The saga runs. Row deletes alone leave the user in old snapshots, so it expires them too.');
     await erase(false); await pause(2500);
     say(n, 'Run it again: same idempotency key, every step is a no-op.'); await erase(true); await pause(3000);
@@ -1797,7 +1972,9 @@ async function runAct(i) {
 $('#btn-demo').addEventListener('click', openActs);
 $('#btn-search').addEventListener('click', openPalette);
 $('#btn-bell').addEventListener('click', openBell);
-document.addEventListener('dblclick', (e) => { const c = e.target.closest('[data-dblopen]'); if (c) { S.data.mode = 'datasets'; S.data.ds = c.dataset.dblopen; $('#view').scrollTop = 0; render(); } });
+document.addEventListener('dblclick', (e) => {
+  const n = e.target.closest('[data-lnode]');
+  if (n) { const id = n.dataset.lnode; if (P.dataset(id)) { S.data.mode = 'datasets'; S.data.ds = id; return go('data'); } if (P.models.some((m) => E.mname(m) === id)) { S.sel.model = id; go('models'); return openDrawer('model', id); } if (E.ENDPOINTS.some((x) => x.id === id)) return go('artifacts'); return; } const c = e.target.closest('[data-dblopen]'); if (c) { S.data.mode = 'datasets'; S.data.ds = c.dataset.dblopen; $('#view').scrollTop = 0; render(); } });
 $('#btn-insp').addEventListener('click', () => { S.inspector = !S.inspector; layoutInspector(); });
 document.addEventListener('keydown', (e) => { if (e.altKey && e.metaKey && (e.key === '0' || e.code === 'Digit0')) { e.preventDefault(); S.inspector = !S.inspector; layoutInspector(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closePop(); closeDrawer(); } });

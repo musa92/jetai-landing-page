@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Platform, decide, scanPII, DEMO_SCHEMA, runErasure, ConsentStore, Ledger } from '../js/engine.js';
+import { lineageGraph, impact, tagCheck, COLUMN_LINEAGE } from '../js/lineage.js';
 
 const P = () => new Platform({ users: 1500 });
 const fast = { sleep: () => Promise.resolve(), stepDelay: 0 };
@@ -151,4 +152,17 @@ test('artifacts inherit classification and ABAC guards weights and endpoints', a
   assert.equal(decideArtifact({ principal: 'svc-model-deployer', action: 'deploy', resource: a[2] }).allow, true);
   assert.equal(decideArtifact({ principal: 'svc-ad-gateway', action: 'invoke', endpoint: 'assistant-llm-inference', region: 'US' }).allow, false);
   assert.equal(decideArtifact({ principal: 'svc-assistant', action: 'invoke', endpoint: 'assistant-llm-inference', region: 'US' }).allow, true);
+});
+
+test('lineage: impact of a cleaned table reaches its models and endpoints', () => {
+  const p = new Platform({ users: 500 });
+  const g = lineageGraph(p);
+  const im = impact(g, 'app_events_clean');
+  assert.ok(im.up.has('iphone_app_events_raw') && im.up.has('ios-collector'));
+  assert.ok(im.down.has('ad_features_v7') && im.down.has('adrank v3') && im.down.has('adrank-serving'));
+  assert.ok(!im.down.has('ad_features_v7_eu'), 'EU branch is separate');
+});
+
+test('lineage: every downgraded PII tag goes through an approved transform', () => {
+  for (const id of Object.keys(COLUMN_LINEAGE)) assert.deepEqual(tagCheck(id).violations, [], id);
 });
