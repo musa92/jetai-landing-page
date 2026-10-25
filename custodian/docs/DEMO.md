@@ -1,7 +1,7 @@
 # Live demo runbook (10 to 12 minutes)
 
 Open https://www.turbnetic.ai/custodian/, enter the password (set in Netlify, never in the repo), sign in as any
-role. Press **Demo** for the act list. Each act switches accounts by itself and
+role. Open Help (the ? button) › **Guided tour** for the act list. Each act switches accounts by itself and
 narrates at the bottom; **Stop** ends an act, **Reset** restores the start state.
 
 | # | Act | What to say |
@@ -33,3 +33,7 @@ tamper and verify (role `auditor`).
 - Models > Lifecycle: 12 governed models. Open "Assistant LLM v2 candidate": two privacy evaluations fail and sign-offs are locked. As Maya (ML engineer) click "Remove duplicates and re-run evaluation". Then sign in as Jonas, Amara and Priya: each finds the sign-off in their Home inbox. After the last one, promote to production. Every step is in the Activity tab and the audit ledger.
 - "Resume screening" shows a high-risk use (EU AI Act Annex III) stopped at intake.
 - Developers > Design review: what the platform team owns, how each part is done, service levels, trade-offs and next steps, each linked to the working screen.
+
+## Create workflows (+ New, or ⌘K and type "new")
+
+Dataset, access request, model, assessment, subject request, incident, API key. Forms validate, respect roles (the footer says who may submit), and what they create appears in the matching list, the right reviewer's Home inbox and the audit ledger. A model whose intake says it supports employment or credit decisions is classified high risk and stops at intake. API key secrets are shown once.

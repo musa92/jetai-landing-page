@@ -143,7 +143,7 @@ function renderChrome() {
   $('#bar-title').innerHTML = sec[2].length > 1 ? `<span class="crumb">${sec[1]}</span><span class="crumb-sep">›</span><span>${TITLES[S.view]}</span>` : `<span>${sec[1]}</span>`;
   const ck = controlChecks(), passing = ck.filter((c) => c[1]).length;
   const critical = !P.policyUp || P.breaker.state !== 'closed' || P.serving.violations > 0;
-  $('#side-foot').innerHTML = `<span class="health ${critical ? 'bad' : passing === ck.length ? '' : 'warn'}"></span>${passing} of ${ck.length} controls passing<br>Policy core-1.4.0 · ${fmt(P.users.length)} users<br>Session until ${time(S.token.claims.exp * 1000)}`;
+  $('#side-foot').innerHTML = `<span class="health ${critical ? 'bad' : passing === ck.length ? '' : 'warn'}"></span>${passing} of ${ck.length} controls passing<br>Policy core-1.4.0 · 2 regions<br>Session until ${time(S.token.claims.exp * 1000)}`;
 }
 function tabsBar() {
   return '';
@@ -217,7 +217,7 @@ const pager = (key, pages) => pages < 2 ? '' : `<div class="pager"><button class
 function csv(rows) { return rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n'); }
 
 const can = (...roles) => roles.includes(S.role);
-const roleNote = (...roles) => can(...roles) ? '' : `<p class="note">Requires ${roles.map((r) => `<code>${r}</code>`).join(' or ')}. Switch account from the top right.</p>`;
+const roleNote = (...roles) => can(...roles) ? '' : `<p class="note">Only ${roles.map((r) => (E.ROLES[r] ? E.ROLES[r].title.toLowerCase() + 's' : r)).join(' or ')} can do this. You are signed in as ${E.ROLES[S.role].title.toLowerCase()}.</p>`;
 const decisionBox = (d, extra = '') => `<div class="decision ${d.allow ? '' : 'deny'}"><h4>${d.allow ? 'Allowed' : 'Denied'}</h4>${d.reasons.length ? `<ul>${d.reasons.map((r) => `<li><b>${h(rsn(r.code))}.</b> ${h(r.msg)} <span class="cite">${h(r.cite)}</span></li>`).join('')}</ul>` : ''}<p class="meta">Bundle <code>${h(d.version)}</code> · evaluated in ${d.latency_ms.toFixed(3)} ms${extra}</p></div>`;
 
 function pickUser(fn) { return P.users.find(fn) || P.users[0]; }
@@ -356,7 +356,7 @@ VIEWS.insights = () => {
   </div>`;
 };
 
-VIEWS.architecture = () => head('Architecture', 'Three planes every AI workload plugs into. Select a box to open it.', 'In this hosted demo each component runs in the browser. Production mapping: Keycloak, OPA, Postgres with outbox, Redpanda, Redis, Temporal, Iceberg on S3, Marquez, MLflow, S3 Object Lock. See docs/DESIGN.md.') + `
+VIEWS.architecture = () => head('Architecture', 'Three planes every AI workload plugs into. Select a box to open it.', 'In this hosted environment each component runs in the browser. Production mapping: Keycloak, OPA, Postgres with outbox, Redpanda, Redis, Temporal, Iceberg on S3, Marquez, MLflow, S3 Object Lock. See docs/DESIGN.md.') + `
   <div class="grid"><div class="card c12">${archDiagram()}</div></div>`;
 
 function liveChart() {
@@ -659,7 +659,7 @@ function lcDetail(m, tab) {
   const mine = m.approvals.find((a) => a.role === S.role && a.status === 'pending');
   const ready = m.stage === 'Ready';
   let banner = '';
-  if (m.model === 'resume-screener') banner = `<div class="lcm-banner deny"><b>Stopped at intake.</b> Ranking job applicants is high risk under the EU AI Act (Annex III). It needs a conformity assessment, a human oversight design and a bias audit before any data is used.<div class="row"><button class="btn" data-go="assessments">Open assessments</button></div></div>`;
+  if (m.risk === 'High' && m.stages[0].status === 'blocked') banner = `<div class="lcm-banner deny"><b>Stopped at intake.</b> This use is high risk under the EU AI Act (Annex III). It needs a conformity assessment, a human oversight design and a bias audit before any data is used.<div class="row"><button class="btn" data-go="assessments">Open assessments</button></div></div>`;
   else if (fails) banner = `<div class="lcm-banner deny"><b>${fails} evaluation${fails > 1 ? 's' : ''} failed.</b> Sign-offs are locked until every check passes.${m.model === 'assistant-llm-v2' ? `<div class="row"><button class="btn primary" data-act="lc-remediate" ${can('ml_engineer') ? '' : 'disabled'}>Remove duplicates and re-run evaluation</button></div>${roleNote('ml_engineer')}` : ''}</div>`;
   else if (mine) banner = `<div class="lcm-banner warn"><b>Your sign-off is needed: ${h(mine.label.toLowerCase())}.</b> ${m.evals.some((x) => x[4] === 'scheduled') ? 'Approving the impact assessment lets fine-tuning start.' : 'Evaluations pass and provenance is signed.'}<div class="row"><button class="btn primary" data-act="lc-approve">Approve as ${h(E.ROLES[S.role].name)}</button><button class="btn" data-act="lc-changes">Request changes</button></div></div>`;
   else if (ready) banner = `<div class="lcm-banner ok"><b>All sign-offs complete.</b> Ready to promote with a 5% canary.<div class="row"><button class="btn primary" data-act="lc-promote" ${can('ml_engineer', 'sre') ? '' : 'disabled'}>Promote to production</button></div>${roleNote('ml_engineer', 'sre')}</div>`;
@@ -958,6 +958,7 @@ const G = {
     { name: 'Tailspin Analytics', service: 'Aggregate product analytics', data: 'Aggregates only (k >= 50)', region: 'US', dpa: true, scc: false, tier: 'Low', review: '2026-05-20', status: 'Approved' },
     { name: 'Litware Translation', service: 'Localization of assistant replies', data: 'Synthetic strings only', region: 'EU', dpa: false, scc: false, tier: 'Low', review: 'Scheduled', status: 'Onboarding' },
   ],
+  apikeys: [],
   incidents: [
     { id: 'INC-0412', title: 'Consent consumer lag above SLO in eu-west-1', sev: 'SEV-3', status: 'Resolved', opened: Date.now() - 864e5 * 9, resolved: Date.now() - 864e5 * 9 + 36e5 * 2, personal: false, owner: 'Priya Nair',
       timeline: [['Detected', 'Consent propagation p95 reached 7.8 s'], ['Mitigated', 'Consumers scaled from 4 to 8'], ['Resolved', 'p95 back to 1.6 s; no personalization without allow']] },
@@ -1228,14 +1229,14 @@ function requestDetail(r) {
   ${r.precheck ? decisionBox(r.precheck, ' · automatic pre-check') : ''}`;
 }
 
-async function requestAccess() {
-  const r = E.newAccessRequest(P, { requester: S.token.claims.sub, dataset: S.newDs, purpose: 'ads_personalization', region: 'US', days: 90, justification: 'Train the place-ad ranker on in-app engagement signals.' });
+async function requestAccess(opts = {}) {
+  const r = E.newAccessRequest(P, { requester: S.token.claims.sub, dataset: S.newDs, purpose: 'ads_personalization', region: 'US', days: 90, justification: 'Train the place-ad ranker on in-app engagement signals.', ...(opts.dataset ? opts : {}) });
   S.sel.request = r.id;
   await P.ledger.append('access.requested', S.token.claims.sub, { request: r.id, dataset: r.dataset, purpose: r.purpose });
   go('access');
   await sleep(500);
   const ds = P.dataset(r.dataset);
-  const pre = E.decide({ principal: { sub: r.requester }, purpose: r.purpose, dataset: ds, processing_region: 'US', grant: true });
+  const pre = E.decide({ principal: { sub: r.requester }, purpose: r.purpose, dataset: ds, processing_region: r.region, grant: true });
   r.precheck = pre;
   const step = r.steps[0];
   step.state = 'done';
@@ -1600,7 +1601,7 @@ VIEWS.audit = () => {
     ${kpi(fmt(P.ledger.entries.length), 'Entries', 'hash chained')}
     ${kpi(a.verify ? (a.verify.ok ? 'Intact' : 'Broken at #' + a.verify.brokenAt) : 'Not run', 'Chain verification', a.verify ? `${fmt(a.verify.checked)} entries checked` : '', a.verify ? (a.verify.ok ? 'good' : 'bad') : '')}
     ${kpi(P.ledger.anchors.length, 'WORM anchors', P.ledger.anchors.length ? 'root ' + P.ledger.anchors.at(-1).root.slice(0, 12) : 'none yet')}
-    ${kpi(a.tampered ? '#' + a.tampered.seq : 'None', 'Tampered entry', a.tampered ? 'edited in place' : 'demo control')}
+    ${kpi(a.tampered ? '#' + a.tampered.seq : 'None', 'Tampered entry', a.tampered ? 'edited in place' : 'integrity drill')}
     <div class="card c12"><div class="row between"><div class="row">
       <button class="btn primary" data-act="verify">Verify chain</button>
       <button class="btn" data-act="anchor">Anchor Merkle root</button>
@@ -1715,6 +1716,7 @@ VIEWS.integrations = () => head('Integrations', 'Custodian governs data where it
   <div class="grid"><div class="card c12"><div class="integ">${INTEGRATIONS.map(([cat, n, what, on]) => `<div class="integ-item"><div class="row between"><b>${n}</b>${pill(on ? 'ok' : '', on ? 'Connected' : 'Available')}</div><span class="note">${cat}</span><p>${what}</p></div>`).join('')}</div></div></div>`;
 VIEWS.apikeys = () => head('API keys', 'Service credentials. Keys are scoped, short-lived where possible, and every use is audited.') + `
   <div class="grid"><div class="card c12"><div class="scroll-x"><table class="table"><thead><tr><th>Name</th><th>Key</th><th>Scopes</th><th>Created</th><th>Last used</th></tr></thead><tbody>
+    ${G.apikeys.map((k) => `<tr class="sel"><td>${h(k.name)}<span class="id">${h(k.name)} · new</span></td><td class="mono">${h(k.prefix)}••••</td><td class="mono">${h(k.scopes)}</td><td>${date(k.created)}</td><td>never</td></tr>`).join('')}
     ${[['Ad gateway', 'svc-ad-gateway', 'decide:ads_personalization read:consent', 41, 0], ['Ads trainer', 'svc-ads-trainer', 'read:ad_features_v7 purpose:model_training', 33, 1], ['Assistant trainer', 'svc-assistant-trainer', 'read:assistant_conversations_redacted purpose:model_training', 20, 2], ['SIEM export', 'svc-siem', 'read:audit', 90, 0]].map(([n, id, sc, c, u]) => `<tr><td>${n}<span class="id">${id}</span></td><td class="mono">cst_live_••••${id.length}${id.slice(-3)}</td><td class="mono">${sc}</td><td>${date(Date.now() - 864e5 * c)}</td><td>${u ? u + ' h ago' : 'just now'}</td></tr>`).join('')}
   </tbody></table></div><p class="note">Client credentials grant. Tokens minted from these keys live 15 minutes and carry only the listed scopes.</p></div></div>`;
 VIEWS.residency = () => {
@@ -1756,7 +1758,8 @@ function paletteItems(q) {
   for (const d of P.datasets) items.push({ t: nm(d.id), sub: d.id, kind: 'Dataset', go: 'catalog', sel: ['dataset', d.id] });
   for (const m of P.models) items.push({ t: E.mname(m), sub: E.WORKLOADS[m.workload].name, kind: 'Model', go: 'models', sel: ['model', E.mname(m)] });
   for (const r of REGULATIONS) items.push({ t: r.name, sub: r.region, kind: 'Regulation', go: 'regulations' });
-  items.push({ t: 'Run the demo', kind: 'Action', act: 'demo' }, { t: 'Verify the audit chain', kind: 'Action', go: 'audit', act: 'verify' }, { t: 'Switch account', kind: 'Action', act: 'role' });
+  for (const [k, t] of NEW_MENU) items.push({ t: `New ${t.toLowerCase()}`, kind: 'Create', act: 'new:' + k });
+  items.push({ t: 'Guided tour', kind: 'Action', act: 'demo' }, { t: 'Verify the audit chain', kind: 'Action', go: 'audit', act: 'verify' }, { t: 'Switch account', kind: 'Action', act: 'role' });
   if (/^u_\d+$/.test(q) && P.userById.has(q)) items.unshift({ t: q, sub: P.userById.get(q).region, kind: 'Person', go: 'data', person: q });
   return items.filter((x) => !q || (x.t + ' ' + (x.sub || '') + ' ' + x.kind).toLowerCase().includes(q)).slice(0, 9);
 }
@@ -1777,6 +1780,7 @@ function openPalette() {
     if (x.act === 'demo') openActs();
     if (x.act === 'verify') await ACTIONS.verify();
     if (x.act === 'role') $('#btn-role').click();
+    if (x.act && x.act.startsWith('new:')) openForm(x.act.slice(4));
   };
   q.addEventListener('input', () => { palIndex = 0; items = draw(); });
   q.addEventListener('keydown', (e) => {
@@ -1844,6 +1848,228 @@ function startTraffic() {
   };
   churn(); setTimeout(churn, 400);
   setInterval(churn, 2600);
+}
+
+/* ───────────────────────── create workflows (New menu) ───────────────────────── */
+
+/* Each form: fields, who may submit it, and what it creates. Everything created
+   flows into the same lists, inboxes and ledger as the seeded work. */
+const dsOptions = () => P.datasets.filter((d) => d.status === 'approved').map((d) => [d.id, nm(d.id)]);
+const FORMS = {
+  dataset: {
+    title: 'Register a dataset', sub: 'The scanner proposes personal data tags from the schema. The dataset stays unreadable until a data steward approves it.', icon: 'data', roles: ['ml_engineer', 'data_steward'], cta: 'Register and scan',
+    fields: () => [
+      { k: 'id', label: 'Table name', type: 'text', ph: 'e.g. wallet_events_v1', req: true, pattern: /^[a-z][a-z0-9_]{3,40}$/, hint: 'Lowercase, digits and underscores.' },
+      { k: 'owner', label: 'Owning team', type: 'select', options: ['growth-analytics', 'ads-ml', 'assistant-ml', 'search-ml', 'payments-risk', 'support-eng'].map((x) => [x, x]) },
+      { k: 'region', label: 'Region', type: 'select', options: [['US', 'United States (us-west)'], ['EU', 'European Union (eu-west)']] },
+      { k: 'source', label: 'Source system', type: 'select', options: [['maps', 'iOS collector'], ['assistant', 'Assistant service'], ['news', 'News app'], ['support', 'Support desk']] },
+      { k: 'columns', label: 'Columns', type: 'textarea', req: true, def: 'user_id, email, ticket_text, created_at, product_area', hint: 'Comma separated. The scanner reads names and samples.' },
+      { k: 'purposes', label: 'Requested purposes', type: 'checks', options: [['analytics', 'Analytics'], ['model_training', 'Model training'], ['ads_personalization', 'Personalized ads']], def: ['analytics'] },
+      { k: 'retention', label: 'Retention (days)', type: 'number', def: 90, min: 1, max: 730 },
+    ],
+    async submit(v) {
+      if (P.dataset(v.id)) return { error: { id: 'A dataset with this name already exists.' } };
+      const cols = v.columns.split(',').map((x) => x.trim()).filter(Boolean);
+      const scan = E.scanPII(cols.map((name) => ({ name, sample: name.includes('email') ? 'ana@example.com' : name.includes('lat') ? '37.33' : 'x' })));
+      P.datasets.push({ id: v.id, layer: 'raw', owner: v.owner, steward: 'Luis Ortega', classification: scan.classification, pii: scan.tags, region: v.region, allowed_purposes: v.purposes, retention_days: +v.retention, sources: [v.source], status: 'pending', legal_basis: v.region === 'EU' ? 'consent' : 'legitimate_interest', bucket: v.region === 'EU' ? 'lake-eu-west' : 'lake-us-west', scan });
+      await P.ledger.append('catalog.registered', S.token.claims.sub, { dataset: v.id, classification: scan.classification, proposed_tags: scan.tags });
+      S.sel.dataset = v.id; go('catalog'); openDrawer('dataset', v.id);
+      return { ok: `${v.id} registered as ${scan.classification}${scan.tags.length ? `, tagged ${scan.tags.join(', ')}` : ''}. Sent to Luis Ortega for review.` };
+    },
+  },
+  access: {
+    title: 'Request data access', sub: 'Checked by policy first, then reviewed by privacy (and legal for restricted data). Access expires automatically.', icon: 'access', roles: null, cta: 'Submit request',
+    fields: () => [
+      { k: 'dataset', label: 'Dataset', type: 'select', options: dsOptions() },
+      { k: 'purpose', label: 'Purpose', type: 'select', options: [['analytics', 'Analytics'], ['model_training', 'Model training'], ['ads_personalization', 'Personalized ads']] },
+      { k: 'region', label: 'Processing region', type: 'select', options: [['US', 'us-west'], ['EU', 'eu-west']] },
+      { k: 'days', label: 'Duration', type: 'select', options: [['7', '7 days'], ['30', '30 days'], ['90', '90 days']], def: '30' },
+      { k: 'justification', label: 'Justification', type: 'textarea', req: true, ph: 'What you will do with the data and why this dataset', minLen: 20 },
+    ],
+    async submit(v) {
+      await requestAccess({ dataset: v.dataset, purpose: v.purpose, region: v.region, days: +v.days, justification: v.justification });
+      const r = P.accessRequests.find((x) => x.id === S.sel.request);
+      return { ok: `${r.id} submitted. ${r.precheck && r.precheck.allow ? 'Policy pre-check passed; with privacy review now.' : 'Policy flagged it; reviewers will see why.'}` };
+    },
+  },
+  model: {
+    title: 'Register a model', sub: 'Intake classifies the use under the EU AI Act and sets the gates the model must pass before release.', icon: 'models', roles: ['ml_engineer'], cta: 'Start intake',
+    fields: () => [
+      { k: 'name', label: 'Model name', type: 'text', req: true, ph: 'e.g. Wallet merchant categorizer' },
+      { k: 'purpose', label: 'Intended purpose', type: 'textarea', req: true, ph: 'What it does and for whom', minLen: 15 },
+      { k: 'owner', label: 'Owning team', type: 'select', options: ['ads-ml', 'assistant-ml', 'search-ml', 'payments-risk', 'support-eng', 'people-analytics'].map((x) => [x, x]) },
+      { k: 'data', label: 'Training data', type: 'checks', options: dsOptions().slice(0, 8), req: true },
+      { k: 'uses', label: 'Does the model', type: 'checks', options: [['decisions', 'Make or support decisions about employment, credit, education or access to essential services'], ['biometric', 'Process biometric data to identify people'], ['interacts', 'Talk to people or generate content they see'], ['minors', 'Reach people under 18']] },
+    ],
+    async submit(v) {
+      const high = v.uses.includes('decisions') || v.uses.includes('biometric');
+      const risk = high ? 'High' : v.uses.includes('interacts') ? 'Limited' : 'Minimal';
+      const id = v.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (lcRecords().some((x) => x.model === id)) return { error: { name: 'A model with this name is already registered.' } };
+      const cls = Math.max(...v.data.map((d) => E.CLASS_RANK[P.dataset(d).classification] ?? 1));
+      const rec = { model: id, name: v.name, version: 'v1 candidate', purpose: v.purpose, owner: v.owner, method: 'Centralized', risk, data: Object.keys(E.CLASS_RANK).find((k) => E.CLASS_RANK[k] === cls) || 'internal', stage: high ? 'Blocked' : 'Review', regions: [...new Set(v.data.map((d) => P.dataset(d).region))].join(', '), updated: date(Date.now()),
+        stages: [
+          { key: 'collect', name: 'Intake review', inputs: ['intake form'], gate: high ? 'EU AI Act Annex III: conformity assessment, human oversight and logging required' : `EU AI Act ${risk.toLowerCase()} risk${risk === 'Limited' ? ': Art. 50 transparency applies' : ''}`, policy: 'release-2.1', artifact: high ? 'blocked at intake' : 'intake approved', status: high ? 'blocked' : 'done' },
+          { key: 'pretrain', name: 'Training', inputs: v.data, gate: 'scoped token, purpose model_training, per-user consent', policy: 'core-1.4.0', artifact: 'not started', status: 'waiting' },
+          { key: 'eval', name: 'Evaluation', inputs: ['release-2.1 checks'], gate: 'quality, fairness, privacy and safety thresholds', policy: 'release-2.1', artifact: 'not started', status: 'waiting' },
+          { key: 'release', name: 'Release review', inputs: ['evaluation results'], gate: 'privacy and legal sign-off, model card', policy: 'release-2.1', artifact: 'not started', status: 'waiting' },
+        ],
+        evals: [['Quality target', 'quality', 'set at intake', 'after training', 'scheduled'], ['Gap across groups', 'fairness', '≤ 2 pts', 'after training', 'scheduled'], ['PII extraction rate', 'privacy', '≤ 0.01%', 'after training', 'scheduled'], ...(high ? [['Conformity assessment', 'oversight', 'required', 'not started', 'fail']] : [])],
+        approvals: APPROVERS.map(([role, label]) => ({ role, label, who: E.ROLES[role].name, status: role === 'ml_engineer' ? 'approved' : high ? 'na' : 'waiting', at: Date.now() })) };
+      lcRecords().unshift(rec);
+      for (const d of v.data) if (!P.dataset(d).allowed_purposes.includes('model_training')) rec.stages[1].gate += `; ${nm(d)} is not approved for training, an access request is needed`;
+      await P.ledger.append('model.intake', S.token.claims.sub, { lc: id, name: v.name, risk });
+      S.lcModel = id; S.lcTab = 'lifecycle'; go('lifecycle');
+      return { ok: high ? `${v.name} is high risk and stopped at intake until a conformity assessment exists.` : `${v.name} registered as ${risk.toLowerCase()} risk. Training can start once data access is in place.` };
+    },
+  },
+  dsr: {
+    title: 'New subject request', sub: 'Erasure runs as a saga across every system lineage knows about and ends in a signed evidence pack.', icon: 'privacy', roles: ['privacy_reviewer', 'legal_reviewer'], cta: 'Start request',
+    fields: () => [
+      { k: 'user', label: 'Person', type: 'select', options: featuredUsers().filter((u) => P.userById.has(u.id)).map((u) => [u.id, userLabel(u)]) },
+      { k: 'kind', label: 'Request', type: 'select', options: [['erasure', 'Erasure (GDPR Art. 17, CCPA delete)'], ['locate', 'Access: where is my data (GDPR Art. 15)']] },
+      { k: 'verified', label: 'Identity', type: 'checks', options: [['yes', 'Identity verified through the account sign-in']], req: true },
+    ],
+    async submit(v) {
+      if (v.kind === 'locate') { S.lineageUser = v.user; S.lin.focus = null; go('lineage'); openDrawer('person', v.user); return { ok: `Location report ready for ${v.user}.` }; }
+      S.dsrUser = v.user; go('dsr'); erase(false);
+      return { ok: `Erasure started for ${v.user}. Due in 30 days, target 72 hours.` };
+    },
+  },
+  incident: {
+    title: 'Declare an incident', sub: 'If personal data is involved, the 72 hour regulator clock (GDPR Art. 33) starts now.', icon: 'risk', roles: null, cta: 'Declare',
+    fields: () => [
+      { k: 'title', label: 'What happened', type: 'text', req: true, ph: 'e.g. Raw events readable by an analytics job' },
+      { k: 'sev', label: 'Severity', type: 'select', options: [['SEV-1', 'SEV-1: customer impact now'], ['SEV-2', 'SEV-2: significant, contained'], ['SEV-3', 'SEV-3: minor']], def: 'SEV-2' },
+      { k: 'personal', label: 'Personal data', type: 'select', options: [['yes', 'Involved or possibly involved'], ['no', 'Not involved']] },
+      { k: 'systems', label: 'Systems', type: 'checks', options: [['lakehouse', 'Lakehouse'], ['serving', 'Serving gateway'], ['consent', 'Consent service'], ['pipelines', 'Pipelines'], ['vendor', 'A vendor']] },
+    ],
+    async submit(v) {
+      openIncident({ title: v.title, sev: v.sev, personal: v.personal === 'yes', owner: E.ROLES[S.role].name, detect: `Declared by ${E.ROLES[S.role].name}${v.systems.length ? '; systems: ' + v.systems.join(', ') : ''}` });
+      S.incSel = G.incidents[0].id;
+      await P.ledger.append('incident.declared', S.token.claims.sub, { incident: S.incSel, sev: v.sev, personal: v.personal === 'yes' });
+      go('incidents');
+      return { ok: `${S.incSel} declared.${v.personal === 'yes' ? ' Regulator notification due within 72 hours.' : ''}` };
+    },
+  },
+  assessment: {
+    title: 'Start an assessment', sub: 'Owner drafts, reviewers sign off by role; approval unlocks the access request or release it gates.', icon: 'risk', roles: ['privacy_reviewer', 'legal_reviewer', 'data_steward', 'ml_engineer'], cta: 'Create draft',
+    fields: () => [
+      { k: 'type', label: 'Type', type: 'select', options: [['DPIA', 'Data protection impact assessment (GDPR Art. 35)'], ['AI impact assessment', 'AI impact assessment (EU AI Act)'], ['Transfer impact assessment', 'Transfer impact assessment'], ['Legitimate interest assessment', 'Legitimate interest assessment']] },
+      { k: 'title', label: 'Title', type: 'text', req: true, ph: 'e.g. Support tickets for triage model training' },
+      { k: 'dataset', label: 'Covers dataset', type: 'select', options: P.datasets.map((d) => [d.id, nm(d.id)]) },
+      { k: 'due', label: 'Due', type: 'date', def: date(Date.now() + 864e5 * 21) },
+    ],
+    async submit(v) {
+      const pre = { DPIA: 'DPIA', 'AI impact assessment': 'AIIA', 'Transfer impact assessment': 'TIA', 'Legitimate interest assessment': 'LIA' }[v.type];
+      const id = `${pre}-2026-${String(200 + G.assessments.length).padStart(3, '0')}`;
+      G.assessments.unshift({ id, type: v.type, title: v.title, dataset: v.dataset, status: 'Draft', progress: 10, owner: E.ROLES[S.role].name, due: v.due, signoffs: [], sections: [['Purpose and necessity', 'To be completed by the owner.'], ['Data and people', `Covers ${nm(v.dataset)}.`], ['Risks and mitigations', 'Linked controls are pulled from the risk register.']] });
+      await P.ledger.append('assessment.created', S.token.claims.sub, { assessment: id, dataset: v.dataset });
+      S.asmSel = id; go('assessments');
+      return { ok: `${id} created as a draft.` };
+    },
+  },
+  apikey: {
+    title: 'Create an API key', sub: 'Client credentials for a service. Tokens minted from it live 15 minutes and carry only these scopes.', icon: 'settings', roles: ['sre', 'data_steward'], cta: 'Create key',
+    fields: () => [
+      { k: 'name', label: 'Service name', type: 'text', req: true, ph: 'e.g. svc-wallet-ranker', pattern: /^svc-[a-z0-9-]{3,30}$/, hint: 'Starts with svc-' },
+      { k: 'scopes', label: 'Scopes', type: 'checks', req: true, options: [['decide:*', 'decide (policy decisions)'], ['read:consent', 'read:consent'], ['read:catalog', 'read:catalog'], ['lineage:write', 'lineage:write'], ['dsr:operate', 'dsr:operate']] },
+      { k: 'expiry', label: 'Expires', type: 'select', options: [['30', 'in 30 days'], ['90', 'in 90 days'], ['365', 'in 1 year']], def: '90' },
+    ],
+    async submit(v) {
+      const secret = 'cst_' + Array.from(crypto.getRandomValues(new Uint8Array(18)), (b) => b.toString(16).padStart(2, '0')).join('');
+      G.apikeys.unshift({ name: v.name, scopes: v.scopes.join(' '), created: Date.now(), expires: Date.now() + v.expiry * 864e5, prefix: secret.slice(0, 10) });
+      await P.ledger.append('apikey.created', S.token.claims.sub, { key: v.name, scopes: v.scopes });
+      go('apikeys');
+      return { ok: `Key created for ${v.name}.`, reveal: secret };
+    },
+  },
+};
+const NEW_MENU = [['dataset', 'Dataset'], ['access', 'Access request'], ['model', 'Model'], ['assessment', 'Assessment'], ['dsr', 'Subject request'], ['incident', 'Incident'], ['apikey', 'API key']];
+
+function openNewMenu(e) {
+  e.stopPropagation(); closePop();
+  const r = $('#btn-new').getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'popover'; pop.id = 'pop';
+  pop.style.top = r.bottom + 6 + 'px'; pop.style.left = Math.max(8, r.left) + 'px';
+  pop.innerHTML = `<p class="pop-h">Create</p>` + NEW_MENU.map(([k, t]) => { const f = FORMS[k], ok = !f.roles || f.roles.includes(S.role); return `<button data-newform="${k}" ${ok ? '' : 'class="dis"'}><span class="pop-ic">${icon(f.icon)}</span><span>${t}${ok ? '' : `<small>${f.roles.map((x) => E.ROLES[x].title).join(', ')}</small>`}</span></button>`; }).join('');
+  pop.addEventListener('click', (ev) => { const b = ev.target.closest('[data-newform]'); if (b) { closePop(); openForm(b.dataset.newform); } });
+  document.body.appendChild(pop);
+}
+
+function fieldHtml(f, v, err) {
+  const id = 'f-' + f.k, val = v ?? f.def ?? '';
+  let input = '';
+  if (f.type === 'select') input = `<select id="${id}" name="${f.k}">${f.options.map(([k, t]) => `<option value="${h(k)}"${String(k) === String(val) ? ' selected' : ''}>${h(t)}</option>`).join('')}</select>`;
+  else if (f.type === 'textarea') input = `<textarea id="${id}" name="${f.k}" rows="3" placeholder="${h(f.ph || '')}">${h(val)}</textarea>`;
+  else if (f.type === 'checks') input = `<div class="checks">${f.options.map(([k, t]) => `<label><input type="checkbox" name="${f.k}" value="${h(k)}"${(Array.isArray(val) ? val : []).includes(k) ? ' checked' : ''}><span>${h(t)}</span></label>`).join('')}</div>`;
+  else input = `<input id="${id}" name="${f.k}" type="${f.type}" value="${h(val)}" placeholder="${h(f.ph || '')}"${f.min ? ` min="${f.min}"` : ''}${f.max ? ` max="${f.max}"` : ''} autocomplete="off">`;
+  return `<div class="ff${err ? ' bad' : ''}"><label for="${id}">${h(f.label)}${f.req || f.type === 'select' || f.type === 'date' || f.type === 'number' ? '' : ' <span class="opt">optional</span>'}</label>${input}${err ? `<span class="ff-err">${h(err)}</span>` : f.hint ? `<span class="ff-hint">${h(f.hint)}</span>` : ''}</div>`;
+}
+function openForm(key, values = {}, errors = {}) {
+  const f = FORMS[key], allowed = !f.roles || f.roles.includes(S.role);
+  closeForm();
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-back'; wrap.id = 'modal';
+  wrap.innerHTML = `<form class="modal" novalidate><div class="modal-head"><span class="insp-glyph">${icon(f.icon)}</span><div><h3>${h(f.title)}</h3><p>${h(f.sub)}</p></div></div>
+    <div class="modal-body">${f.fields().map((x) => fieldHtml(x, values[x.k], errors[x.k])).join('')}</div>
+    <div class="modal-foot">${allowed ? `<span class="note">Recorded in the audit ledger as ${h(E.ROLES[S.role].name)}.</span>` : `<span class="note warn">${h(E.ROLES[S.role].title)} cannot do this. Needs ${h(f.roles.map((x) => E.ROLES[x].title).join(' or '))}.</span>`}<span class="spacer"></span><button type="button" class="btn" data-modal-cancel>Cancel</button><button type="submit" class="btn primary" ${allowed ? '' : 'disabled'}>${h(f.cta)}</button></div></form>`;
+  document.body.appendChild(wrap);
+  const form = wrap.querySelector('form');
+  (form.querySelector('.ff.bad input, .ff.bad textarea') || form.querySelector('input:not([type=checkbox]), textarea, select'))?.focus();
+  wrap.addEventListener('mousedown', (e) => { if (e.target === wrap) closeForm(); });
+  wrap.querySelector('[data-modal-cancel]').addEventListener('click', closeForm);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fields = f.fields(), v = {}, err = {};
+    for (const x of fields) {
+      if (x.type === 'checks') v[x.k] = [...form.querySelectorAll(`input[name="${x.k}"]:checked`)].map((c) => c.value);
+      else v[x.k] = (form.elements[x.k].value || '').trim();
+      const empty = Array.isArray(v[x.k]) ? !v[x.k].length : !v[x.k];
+      if (x.req && empty) err[x.k] = x.type === 'checks' ? 'Choose at least one.' : 'Required.';
+      else if (x.pattern && v[x.k] && !x.pattern.test(v[x.k])) err[x.k] = x.hint || 'Invalid format.';
+      else if (x.minLen && v[x.k].length < x.minLen) err[x.k] = `At least ${x.minLen} characters.`;
+    }
+    if (Object.keys(err).length) return openForm(key, v, err);
+    const btn = form.querySelector('[type=submit]'); btn.disabled = true; btn.textContent = 'Working…';
+    const res = await f.submit(v);
+    if (res.error) return openForm(key, v, res.error);
+    closeForm();
+    if (res.reveal) revealSecret(res.reveal);
+    toast(res.ok); renderChrome();
+  });
+}
+function closeForm() { const m = $('#modal'); if (m) m.remove(); }
+function revealSecret(secret) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-back'; wrap.id = 'modal';
+  wrap.innerHTML = `<div class="modal"><div class="modal-head"><span class="insp-glyph">${icon('settings')}</span><div><h3>Copy this secret now</h3><p>It is shown once. Custodian stores only a hash.</p></div></div><div class="modal-body"><pre class="code secret">${h(secret)}</pre></div><div class="modal-foot"><span class="spacer"></span><button class="btn" data-copy>Copy</button><button class="btn primary" data-modal-cancel>Done</button></div></div>`;
+  document.body.appendChild(wrap);
+  wrap.querySelector('[data-copy]').addEventListener('click', () => { try { navigator.clipboard.writeText(secret); toast('Copied'); } catch { /* clipboard blocked */ } });
+  wrap.querySelector('[data-modal-cancel]').addEventListener('click', closeForm);
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#modal')) closeForm(); });
+Object.assign(ACTIVITY, {
+  'model.intake': (e) => `registered ${e.payload.name} (${e.payload.risk.toLowerCase()} risk)`,
+  'incident.declared': (e) => `declared ${e.payload.incident} (${e.payload.sev})`,
+  'assessment.created': (e) => `started ${e.payload.assessment}`,
+  'apikey.created': (e) => `created an API key for ${e.payload.key}`,
+});
+
+function openHelp(e) {
+  e.stopPropagation(); closePop();
+  const r = $('#btn-help').getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'popover'; pop.id = 'pop';
+  pop.style.top = r.bottom + 6 + 'px'; pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
+  pop.innerHTML = `<button data-help="tour"><span>Guided tour<small>Ten short walkthroughs of the platform</small></span></button><button data-help="review"><span>Design review<small>How each part works and why</small></span></button><button data-help="api"><span>API reference</span></button><hr><button data-help="reset"><span>Reset workspace<small>Restore the sample tenant</small></span></button>`;
+  pop.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-help]'); if (!b) return; closePop();
+    const k = b.dataset.help;
+    if (k === 'tour') openActs(); else if (k === 'reset') location.reload(); else go(k);
+  });
+  document.body.appendChild(pop);
 }
 
 /* ───────────────────────── events ───────────────────────── */
@@ -1960,7 +2186,7 @@ const ACTIONS = {
     toast(`${d.id} approved as ${d.classification}`); render(); renderChrome();
   },
   'reject-ds': async () => { const d = P.dataset(S.sel.dataset); d.status = 'rejected'; await P.ledger.append('catalog.rejected', S.token.claims.sub, { dataset: d.id }); render(); },
-  'request-access': requestAccess,
+  'request-access': () => requestAccess(),
   'approve-step': () => advanceRequest(true),
   'reject-step': () => advanceRequest(false),
   'expire-grant': async () => {
@@ -2021,7 +2247,8 @@ $('#btn-role').addEventListener('click', (e) => {
 function closePop() { const p = $('#pop'); if (p) p.remove(); }
 document.addEventListener('click', (e) => { if (!e.target.closest('#pop')) closePop(); });
 $('#menu-btn').addEventListener('click', () => $('#side').classList.toggle('open'));
-$('#btn-reset').addEventListener('click', () => location.reload());
+$('#btn-new').addEventListener('click', openNewMenu);
+$('#btn-help').addEventListener('click', openHelp);
 
 function toast(text) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = text;
@@ -2127,7 +2354,7 @@ function openActs() {
   closeActs();
   const back = document.createElement('div'); back.className = 'sheet-back'; back.id = 'sheet-back'; back.onclick = closeActs;
   const sh = document.createElement('aside'); sh.className = 'sheet'; sh.id = 'sheet';
-  sh.innerHTML = `<div class="sheet-head"><h3>Demo</h3><span class="spacer"></span><button class="btn" id="run-all">Run all</button><button class="btn" id="sheet-x">Done</button></div>
+  sh.innerHTML = `<div class="sheet-head"><h3>Guided tour</h3><span class="spacer"></span><button class="btn" id="run-all">Run all</button><button class="btn" id="sheet-x">Done</button></div>
     <div class="sheet-body">${ACTS.map(([t, d], i) => `<div class="act${S.actsDone.has(i) ? ' done' : ''}"><span class="n">${S.actsDone.has(i) ? '✓' : i + 1}</span><div><b>${t}</b><p>${d}</p></div><button class="btn" data-run="${i}">Run</button></div>`).join('')}
     <p class="note" style="padding:12px 8px">Acts switch accounts automatically. Reset restores the starting state.</p></div>`;
   document.body.append(back, sh);
@@ -2143,7 +2370,6 @@ async function runAct(i) {
   catch (e) { if (e.message !== 'stopped') console.error(e); return false; }
   finally { S.act = null; if (narr) { narr.querySelector('button').textContent = 'Close'; } }
 }
-$('#btn-demo').addEventListener('click', openActs);
 $('#btn-search').addEventListener('click', openPalette);
 $('#btn-bell').addEventListener('click', openBell);
 document.addEventListener('dblclick', (e) => {
