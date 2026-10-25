@@ -107,7 +107,7 @@ const SECTIONS = [
   ['models', 'Models', [['lifecycle', 'Lifecycle'], ['models', 'Registry'], ['artifacts', 'Artifacts and endpoints'], ['training', 'Training gate']]],
   ['risk', 'Risk', [['risks', 'Risk register'], ['assessments', 'Assessments'], ['vendors', 'Vendors'], ['incidents', 'Incidents'], ['reports', 'Reports']]],
   ['ops', 'Operations', [['observability', 'Dashboard'], ['serving', 'Serving'], ['services', 'Services'], ['insights', 'Insights'], ['architecture', 'Architecture']]],
-  ['dev', 'Developers', [['api', 'REST API'], ['sdk', 'SDKs']]],
+  ['dev', 'Developers', [['review', 'Design review'], ['api', 'REST API'], ['sdk', 'SDKs']]],
   ['trust', 'Trust', [['regulations', 'Regulations'], ['compliance', 'Controls'], ['audit', 'Audit ledger']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations'], ['apikeys', 'API keys'], ['residency', 'Data residency']]],
 ];
@@ -166,6 +166,7 @@ function render() {
   v.scrollTop = st;
   if (keep) { const el = v.querySelector(`[data-filter="${keep}"]`); if (el) { el.focus(); el.setSelectionRange(caret, caret); } }
   AFTER[S.view] && AFTER[S.view]();
+  layoutInspector();
   if (S.drawer) drawDrawer();
 }
 const LIVE = new Set(['overview', 'serving', 'insights', 'observability', 'incidents']);
@@ -253,6 +254,7 @@ function attention() {
     const ds = P.datasets.find((d) => d.id === S.newDs && d.status === 'approved') && !P.accessRequests.some((q) => q.dataset === S.newDs);
     if (ds) out.push({ t: `Request access to ${nm(S.newDs)}`, m: 'Approved by the steward, no grant yet', go: 'catalog', sel: ['dataset', S.newDs] });
   }
+  for (const m of lcRecords()) if (!lcBlocked(m) && m.approvals.some((a) => a.role === r && a.status === 'pending')) out.push({ t: `Sign off ${m.name} ${m.version}`, m: `${m.approvals.find((a) => a.role === r).label}. Evaluations pass.`, go: 'lifecycle', sel: ['lc', m.model] });
   if (r === 'sre' && (!P.policyUp || P.breaker.state !== 'closed')) out.push({ t: 'Policy service degraded', m: 'Gateway is failing closed to non-personalized serving', go: 'serving' });
   if (r === 'auditor' && !(S.audit.verify && S.audit.verify.ok)) out.push({ t: 'Verify the audit chain', m: `${fmt(P.ledger.entries.length)} entries since last verification`, go: 'audit' });
   return out;
@@ -589,36 +591,183 @@ EXPORTS.gallery = () => [['dataset', 'name', 'layer', 'region', 'classification'
 EXPORTS.sample = () => { const d = P.dataset(S.data.ds); const smp = datasetSample(d); return [smp.cols.map((c) => c.name), ...smp.view]; };
 
 /* ── ML lifecycle: training and post-training, gated at every stage ── */
+/* ── model governance records: lifecycle, evaluations, approvals, provenance ── */
 const LC_STATE = { done: ['ok', 'Passed'], live: ['live', 'Live'], running: ['warn', 'In review'], blocked: ['deny', 'Blocked'], waiting: ['', 'Waiting'] };
-const LC_FILTERS = { all: ['All', () => true], prod: ['Production', (m) => m.stage === 'Production'], progress: ['In progress', (m) => ['Evaluation', 'Staging', 'Review'].includes(m.stage)], blocked: ['Blocked', (m) => m.stage === 'Blocked' || m.stages.some((x) => x.status === 'blocked')] };
-const lcHealth = (m) => (m.stages.some((x) => x.status === 'blocked') ? 'deny' : m.stages.some((x) => x.status === 'running' || x.status === 'waiting') ? 'warn' : 'ok');
+const LC_FILTERS = { all: ['All', () => true], prod: ['Production', (m) => m.stage === 'Production'], progress: ['In progress', (m) => ['Evaluation', 'Staging', 'Review', 'Ready'].includes(m.stage)], blocked: ['Blocked', (m) => m.stages.some((x) => x.status === 'blocked')] };
+const lcHealth = (m) => (m.stages.some((x) => x.status === 'blocked') ? 'deny' : m.stages.some((x) => x.status === 'running' || x.status === 'waiting') || m.stage === 'Ready' ? 'warn' : 'ok');
+
+/* [check, kind, threshold, result, state]: state is pass, fail or scheduled. */
+const EVALS = {
+  'assistant-llm': [['Helpfulness win rate', 'quality', '≥ 55%', '61.3%', 'pass'], ['Refusal accuracy', 'safety', '≥ 95%', '97.4%', 'pass'], ['PII extraction rate', 'privacy', '≤ 0.01%', '0.00%', 'pass'], ['Canary exposure', 'privacy', '≤ 1 of 200', '0 of 200', 'pass'], ['Toxic output rate', 'safety', '≤ 0.5%', '0.21%', 'pass'], ['Quality gap across languages', 'fairness', '≤ 3 pts', '1.8 pts', 'pass']],
+  adrank: [['AUC', 'quality', '≥ 0.770', '0.781', 'pass'], ['AUC gap across regions', 'fairness', '≤ 0.010', '0.008', 'pass'], ['Privacy budget (epsilon)', 'privacy', '≤ 4.0', '3.6', 'pass'], ['Personalized without an allow', 'privacy', '= 0', '0', 'pass'], ['Profiling of minors', 'privacy', '= 0', '0', 'pass']],
+  'assistant-llm-v2': [['Helpfulness win rate', 'quality', '≥ 55%', '64.0%', 'pass'], ['Refusal accuracy', 'safety', '≥ 95%', '96.8%', 'pass'], ['PII extraction rate', 'privacy', '≤ 0.01%', '0.04%', 'fail'], ['Canary exposure', 'privacy', '≤ 1 of 200', '3 of 200', 'fail'], ['Toxic output rate', 'safety', '≤ 0.5%', '0.18%', 'pass'], ['Quality gap across languages', 'fairness', '≤ 3 pts', '2.2 pts', 'pass']],
+  'search-ranker': [['NDCG@10', 'quality', '≥ 0.600', '0.612', 'pass'], ['Gap across regions', 'fairness', '≤ 0.010', '0.006', 'pass'], ['Smallest cell in training data', 'privacy', '≥ 50 users', '50', 'pass'], ['Per-user features at inference', 'privacy', '= 0', '0', 'pass']],
+  'keyboard-next-word': [['Top-3 accuracy', 'quality', '≥ 40%', '41.2%', 'pass'], ['Privacy budget (epsilon)', 'privacy', '≤ 2.0', '1.9', 'pass'], ['Rare phrase memorization', 'privacy', '= 0', '0', 'pass'], ['Text leaving device', 'privacy', '= 0 bytes', '0 bytes', 'pass']],
+  'speech-asr': [['Word error rate', 'quality', '≤ 5.5%', '4.8%', 'pass'], ['Gap across accents', 'fairness', '≤ 2 pts', '1.6 pts', 'pass'], ['Server audio retention', 'privacy', '= 0 days', '0 days', 'pass']],
+  'spam-filter': [['Precision', 'quality', '≥ 99%', '99.2%', 'pass'], ['False positive rate', 'quality', '≤ 0.1%', '0.06%', 'pass'], ['Message content stored', 'privacy', 'reported only', 'reported only', 'pass']],
+  'fraud-score': [['AUC', 'quality', '≥ 0.930', '0.947', 'pass'], ['Decline rate parity', 'fairness', '≥ 0.95', '0.98', 'pass'], ['Human review of declines', 'oversight', '100%', '100%', 'pass'], ['Card numbers in features', 'privacy', 'tokenized only', 'tokenized only', 'pass']],
+  'photo-scenes': [['Top-1 accuracy', 'quality', '≥ 90%', '91.4%', 'pass'], ['Gap across skin tones', 'fairness', '≤ 2 pts', '1.1 pts', 'pass'], ['User photos in training', 'privacy', '= 0', '0', 'pass']],
+  'eta-predictor': [['Mean absolute % error', 'quality', '≤ 9%', '7.8%', 'pass'], ['Unique routes in training data', 'privacy', '= 0', '0', 'pass']],
+  'support-triage': [['Routing accuracy', 'quality', '≥ 90%', 'after fine-tuning', 'scheduled'], ['PII extraction rate', 'privacy', '≤ 0.01%', 'after fine-tuning', 'scheduled'], ['Customer names in outputs', 'privacy', '= 0', 'after fine-tuning', 'scheduled']],
+  'resume-screener': [['Conformity assessment', 'oversight', 'required', 'not started', 'fail'], ['Human oversight design', 'oversight', 'required', 'not started', 'fail'], ['Bias audit by protected group', 'fairness', 'required', 'not started', 'fail']],
+};
+const APPROVERS = [['ml_engineer', 'Model owner'], ['data_steward', 'Training data provenance'], ['privacy_reviewer', 'Privacy review'], ['legal_reviewer', 'Legal review'], ['sre', 'Serving readiness']];
+const PENDING = { 'assistant-llm-v2': ['privacy_reviewer', 'legal_reviewer', 'sre'], 'fraud-score': ['legal_reviewer'], 'support-triage': ['privacy_reviewer', 'legal_reviewer', 'sre', 'data_steward'], 'resume-screener': APPROVERS.map(([r]) => r) };
+let LC = null;
+function lcRecords() {
+  if (LC && LC.p === P) return LC.list;
+  const list = E.lifecycle(P).map((m) => {
+    const pend = PENDING[m.model] || [];
+    const base = Date.parse(m.updated);
+    return { ...m, stages: m.stages.map((x) => ({ ...x })), evals: (EVALS[m.model] || []).map((x) => [...x]),
+      approvals: APPROVERS.map(([role, label], i) => ({ role, label, who: E.ROLES[role].name, status: m.model === 'resume-screener' ? 'na' : m.model === 'support-triage' && role !== 'ml_engineer' && role !== 'privacy_reviewer' ? 'waiting' : pend.includes(role) ? 'pending' : 'approved', at: base - (5 - i) * 36e5 * 7 })) };
+  });
+  LC = { p: P, list };
+  return list;
+}
+const lcBlocked = (m) => m.evals.some((x) => x[4] === 'fail') || m.stages.some((x) => x.status === 'blocked');
+const hex = (s, n) => { let o = ''; for (let i = 0; o.length < n; i++) o += strHash(s + i).toString(16).padStart(8, '0'); return o.slice(0, n); };
+
 VIEWS.lifecycle = () => {
-  const lc = E.lifecycle(P);
+  const lc = lcRecords();
+  if (S.sel.lc) { S.lcModel = S.sel.lc; S.sel.lc = null; S.lcTab = 'lifecycle'; }
   const list = lc.filter(LC_FILTERS[S.lcFilter || 'all'][1]).filter((m) => match('lifecycle', m.name, m.model, m.owner, m.stage, m.risk, m.method));
   const cur = lc.find((x) => x.model === (S.lcModel || 'assistant-llm')) || lc[0];
-  const passed = cur.stages.filter((x) => x.status === 'done' || x.status === 'live').length;
-  return head('ML lifecycle', 'Every governed model, from data collection to inference: the gate at each stage, the policy that decided it, and what it produced.', 'Each stage emits OpenLineage events with its inputs (dataset and snapshot), the policy bundle version that allowed it, and its output artifact. A failed gate stops the model at that stage. Release requires privacy and legal sign-off and a generated model card. High-risk uses under the EU AI Act are stopped at intake until a conformity assessment exists.') + `
+  const tab = S.lcTab || 'lifecycle';
+  const pendingMine = lc.filter((m) => m.approvals.some((a) => a.role === S.role && a.status === 'pending')).length;
+  return head('Model governance', 'Every governed model and its release record: the gate at each stage, evaluations against thresholds, sign-offs by role, and signed provenance.', 'Each stage emits OpenLineage events with its inputs (dataset and snapshot), the policy bundle version that allowed it, and its output artifact. A failed gate stops the model at that stage. Release needs every sign-off, a generated model card and signed weights. High-risk uses under the EU AI Act stop at intake until a conformity assessment exists. Every action here lands in the audit ledger.') + `
   <div class="grid">
     ${kpi(lc.length, 'Governed models', `${lc.filter((m) => m.stage === 'Production').length} in production`)}
     ${kpi(lc.filter(LC_FILTERS.progress[1]).length, 'In progress', 'evaluation, staging or review')}
-    ${kpi(lc.filter((m) => m.stages.some((x) => x.status === 'blocked')).length, 'Stopped at a gate', 'needs action before release', 'bad')}
-    ${kpi(lc.filter((m) => m.risk === 'High').length, 'High-risk uses', 'EU AI Act Annex III')}
+    ${kpi(lc.filter((m) => m.stages.some((x) => x.status === 'blocked')).length, 'Stopped at a gate', 'failed evaluation or intake', lc.some((m) => m.stages.some((x) => x.status === 'blocked')) ? 'bad' : 'good')}
+    ${kpi(pendingMine, 'Waiting on you', `sign-offs for ${E.ROLES[S.role].title.toLowerCase()}`, pendingMine ? 'warn' : '')}
     <div class="card c12 lcm">
       <div class="lcm-list">
         <div class="seg">${Object.entries(LC_FILTERS).map(([k, [t, f]]) => `<button class="${(S.lcFilter || 'all') === k ? 'on' : ''}" data-lcfilter="${k}">${t} <span class="cnt">${lc.filter(f).length}</span></button>`).join('')}</div>
         <label class="search">${icon('search')}<input data-filter="lifecycle" value="${h(F.lifecycle || '')}" placeholder="Search models"></label>
         <div class="lcm-rows">${list.map((m) => `<button class="lcm-row${m === cur ? ' on' : ''}" data-lcmodel="${m.model}"><i class="dot ${lcHealth(m)}"></i><span><b>${h(m.name)}</b><small>${h(m.version)} · ${h(m.owner)}</small></span><em>${h(m.stage)}</em></button>`).join('') || '<p class="note">No models match.</p>'}</div>
       </div>
-      <div class="lcm-detail">
-        <div class="lcm-head"><div><h2>${h(cur.name)} <span>${h(cur.version)}</span></h2><p>${h(cur.purpose)}</p></div>${pill(lcHealth(cur), cur.stage)}</div>
-        ${glist([['Owner', h(cur.owner)], ['Training', h(cur.method)], ['Data sensitivity', h(cur.data)], ['Regions', h(cur.regions)], ['EU AI Act risk', pill(cur.risk === 'High' ? 'deny' : cur.risk === 'Limited' ? 'warn' : 'ok', cur.risk)], ['Last change', h(cur.updated)]])}
-        <div class="lcm-progress"><div><i style="width:${(100 * passed / cur.stages.length).toFixed(0)}%"></i></div><span>${passed} of ${cur.stages.length} gates passed</span></div>
-        <div class="lc">${cur.stages.map((st, i) => { const [cls, label] = LC_STATE[st.status] || LC_STATE.done; return `<div class="lc-stage ${st.status}"><div class="lc-n">${st.status === 'blocked' ? '!' : i + 1}</div><div class="lc-body"><div class="row between"><b>${h(st.name)}</b>${pill(cls, label)}</div>
-          <dl class="kv"><dt>Inputs</dt><dd>${st.inputs.map((x) => `<span>${h(nm(x.split('@')[0]) !== x.split('@')[0] ? nm(x.split('@')[0]) + (x.includes('@') ? ' @' + x.split('@')[1] : '') : x)}</span>`).join('<br>')}</dd><dt>Gate</dt><dd>${h(st.gate)}</dd><dt>Policy</dt><dd class="mono">${st.policy}</dd><dt>Produced</dt><dd class="mono">${h(st.artifact)}</dd>${st.metrics ? `<dt>Results</dt><dd>${Object.entries(st.metrics).map(([k, v]) => `${k.replace(/_/g, ' ')}: <b>${h(v)}</b>`).join('<br>')}</dd>` : ''}</dl></div></div>`; }).join('')}</div>
-      </div>
+      <div class="lcm-detail">${lcDetail(cur, tab)}</div>
     </div>
   </div>`;
 };
+
+function lcDetail(m, tab) {
+  const passed = m.stages.filter((x) => x.status === 'done' || x.status === 'live').length;
+  const fails = m.evals.filter((x) => x[4] === 'fail').length;
+  const appr = m.approvals.filter((a) => a.status === 'approved').length;
+  const mine = m.approvals.find((a) => a.role === S.role && a.status === 'pending');
+  const ready = m.stage === 'Ready';
+  let banner = '';
+  if (m.model === 'resume-screener') banner = `<div class="lcm-banner deny"><b>Stopped at intake.</b> Ranking job applicants is high risk under the EU AI Act (Annex III). It needs a conformity assessment, a human oversight design and a bias audit before any data is used.<div class="row"><button class="btn" data-go="assessments">Open assessments</button></div></div>`;
+  else if (fails) banner = `<div class="lcm-banner deny"><b>${fails} evaluation${fails > 1 ? 's' : ''} failed.</b> Sign-offs are locked until every check passes.${m.model === 'assistant-llm-v2' ? `<div class="row"><button class="btn primary" data-act="lc-remediate" ${can('ml_engineer') ? '' : 'disabled'}>Remove duplicates and re-run evaluation</button></div>${roleNote('ml_engineer')}` : ''}</div>`;
+  else if (mine) banner = `<div class="lcm-banner warn"><b>Your sign-off is needed: ${h(mine.label.toLowerCase())}.</b> ${m.evals.some((x) => x[4] === 'scheduled') ? 'Approving the impact assessment lets fine-tuning start.' : 'Evaluations pass and provenance is signed.'}<div class="row"><button class="btn primary" data-act="lc-approve">Approve as ${h(E.ROLES[S.role].name)}</button><button class="btn" data-act="lc-changes">Request changes</button></div></div>`;
+  else if (ready) banner = `<div class="lcm-banner ok"><b>All sign-offs complete.</b> Ready to promote with a 5% canary.<div class="row"><button class="btn primary" data-act="lc-promote" ${can('ml_engineer', 'sre') ? '' : 'disabled'}>Promote to production</button></div>${roleNote('ml_engineer', 'sre')}</div>`;
+  else if (m.approvals.some((a) => a.status === 'pending')) banner = `<div class="lcm-banner"><b>Waiting on ${m.approvals.filter((a) => a.status === 'pending').map((a) => a.label.toLowerCase()).join(', ')}.</b> Sign in as that role to act.</div>`;
+  const tiles = m.evals.slice(0, 4).map(([n, , th, r, s]) => `<div class="lcm-tile ${s}"><span>${h(n)}</span><b>${h(r)}</b><small>${s === 'scheduled' ? 'scheduled' : 'target ' + h(th)}</small></div>`).join('');
+  const tabs = [['lifecycle', 'Lifecycle'], ['evals', `Evaluations ${m.evals.length}`], ['approvals', `Sign-offs ${appr}/${m.approvals.length}`], ['provenance', 'Provenance'], ['activity', 'Activity']];
+  let body = '';
+  if (tab === 'lifecycle') body = `<div class="lcm-progress"><div><i style="width:${(100 * passed / m.stages.length).toFixed(0)}%"></i></div><span>${passed} of ${m.stages.length} gates passed</span></div>
+    <div class="lc">${m.stages.map((st, i) => { const [cls, label] = LC_STATE[st.status] || LC_STATE.done; return `<div class="lc-stage ${st.status}"><div class="lc-n">${st.status === 'blocked' ? '!' : i + 1}</div><div class="lc-body"><div class="row between"><b>${h(st.name)}</b>${pill(cls, label)}</div>
+      <dl class="kv"><dt>Inputs</dt><dd>${st.inputs.map((x) => `<span>${h(nm(x.split('@')[0]) !== x.split('@')[0] ? nm(x.split('@')[0]) + (x.includes('@') ? ' @' + x.split('@')[1] : '') : x)}</span>`).join('<br>')}</dd><dt>Gate</dt><dd>${h(st.gate)}</dd><dt>Policy</dt><dd class="mono">${st.policy}</dd><dt>Produced</dt><dd class="mono">${h(st.artifact)}</dd>${st.metrics ? `<dt>Results</dt><dd>${Object.entries(st.metrics).map(([k, v]) => `${k.replace(/_/g, ' ')}: <b>${h(v)}</b>`).join('<br>')}</dd>` : ''}</dl></div></div>`; }).join('')}</div>`;
+  if (tab === 'evals') body = `<div class="scroll-x"><table class="table"><thead><tr><th>Check</th><th>Kind</th><th>Threshold</th><th>Result</th><th></th></tr></thead><tbody>${m.evals.map(([n, k, th, r, s]) => `<tr><td>${h(n)}</td><td>${h(k)}</td><td class="mono">${h(th)}</td><td class="mono"><b>${h(r)}</b></td><td>${pill(s === 'pass' ? 'ok' : s === 'fail' ? 'deny' : '', s === 'pass' ? 'Pass' : s === 'fail' ? 'Fail' : 'Scheduled')}</td></tr>`).join('')}</tbody></table></div>
+    <p class="note">Thresholds live in the release policy (release-2.1), versioned like any other bundle. Results are signed by the evaluation job and attached to the model card.</p>`;
+  if (tab === 'approvals') body = `<div class="glist">${m.approvals.map((a) => `<div class="grow"><span><b>${h(a.label)}</b><span class="id">${h(a.who)} · ${h(E.ROLES[a.role].title)}</span></span><span>${a.status === 'approved' ? `${pill('ok', 'Approved')}<span class="id">${new Date(a.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : a.status === 'changes' ? pill('deny', 'Changes requested') : a.status === 'na' ? pill('', 'Not started') : a.status === 'waiting' ? pill('', 'After training') : pill('warn', 'Pending')}</span></div>`).join('')}</div>
+    <p class="note">Sign-offs are separate duties: the model owner cannot approve privacy or legal. Each is a signed ledger entry tied to the approver's identity.</p>`;
+  if (tab === 'provenance') {
+    const ds = [...new Set(m.stages.flatMap((x) => x.inputs).map((x) => x.split('@')[0]).filter((x) => P.dataset(x)))];
+    body = glist([
+      ['Training data', ds.length ? ds.map((d) => `${h(nm(d))}<span class="id">${h(d)}@${P.tables[d] ? P.tables[d].current.id : hex(d, 7)}</span>`).join('') : h(m.stages[0].inputs.join(', '))],
+      ['Training code', `<span class="mono">ml/${h(m.model)} @ ${hex(m.model + 'git', 10)}</span>`],
+      ['Training image', `<span class="mono">ml/${h(m.model)}-train@sha256:${hex(m.model + 'img', 12)}…</span>`],
+      ['Weights digest', `<span class="mono">sha256:${hex(m.model + 'w', 16)}…</span>`],
+      ['Signature', m.model === 'resume-screener' ? 'none, nothing built' : `${pill('ok', 'Verified')}<span class="id">keyless signing, transparency log index ${(strHash(m.model) % 9e7) + 1e7}</span>`],
+      ['SBOM', `CycloneDX, ${200 + (strHash(m.model) % 400)} components, 0 critical CVEs`],
+      ['Policy bundle', '<span class="mono">core-1.4.0, release-2.1</span>'],
+    ]) + `<p class="note">Anyone can rebuild the training set from these snapshot IDs and the same consent cut-off, and verify the weights against the digest. ${P.models.some((x) => x.id === m.model) ? `<button class="link" data-lnode-go="${h(E.mname(P.models.find((x) => x.id === m.model)))}">Open in lineage</button>` : ''}</p>`;
+  }
+  if (tab === 'activity') {
+    const ev = [...m.approvals.filter((a) => a.status === 'approved').map((a) => [a.at, a.who, `approved ${a.label.toLowerCase()}`]), [Date.parse(m.updated) - 864e5 * 6, E.ROLES.ml_engineer.name, `registered ${m.name} ${m.version}`],
+      ...P.ledger.entries.filter((e) => e.payload.lc === m.model && e.type !== 'model.signoff').map((e) => [e.ts, nm(e.actor), (ACTIVITY[e.type] || ((x) => x.type))(e)])].sort((a, b) => b[0] - a[0]);
+    body = `<ul class="feed">${ev.map(([t, who, what]) => `<li><span class="when">${new Date(t).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span><span><b>${h(who)}</b> ${h(what)}</span></li>`).join('')}</ul>`;
+  }
+  return `<div class="lcm-head"><div><h2>${h(m.name)} <span>${h(m.version)}</span></h2><p>${h(m.purpose)}</p></div>${pill(lcHealth(m), m.stage === 'Ready' ? 'Ready to promote' : m.stage)}</div>
+    <div class="lcm-facts">${[['Owner', m.owner], ['Training', m.method], ['Data', m.data], ['Regions', m.regions], ['EU AI Act', m.risk + ' risk']].map(([k, v]) => `<span><small>${k}</small>${h(v)}</span>`).join('')}</div>
+    ${banner}
+    ${tiles ? `<div class="lcm-tiles">${tiles}</div>` : ''}
+    <div class="seg lcm-tabs">${tabs.map(([k, t]) => `<button class="${tab === k ? 'on' : ''}" data-lctab="${k}">${t}</button>`).join('')}</div>
+    ${body}`;
+}
+
+async function lcAct(kind) {
+  const m = lcRecords().find((x) => x.model === (S.lcModel || 'assistant-llm'));
+  const who = S.token.claims.sub;
+  if (kind === 'remediate') {
+    const st = m.stages.find((x) => x.key === 'eval');
+    st.status = 'running'; st.metrics = { status: 'deduplicating 4.1M examples, re-running probes' }; render();
+    await sleep(1800);
+    st.status = 'done'; st.metrics = { canary_exposure: '0 of 200', pii_extraction_rate: '0.00%', removed_duplicates: '38,214' }; st.artifact = 'eval/assistant-13b/r2';
+    m.evals = m.evals.map((x) => (x[0] === 'PII extraction rate' ? [x[0], x[1], x[2], '0.00%', 'pass'] : x[0] === 'Canary exposure' ? [x[0], x[1], x[2], '0 of 200', 'pass'] : x));
+    const rel = m.stages.find((x) => x.key === 'release'); rel.status = 'running'; rel.artifact = 'awaiting sign-offs';
+    await P.ledger.append('model.evaluated', who, { lc: m.model, name: m.name, result: 'pass', removed_duplicates: 38214 });
+    toast('Evaluation passed. Sign-offs unlocked for privacy, legal and SRE.');
+  }
+  if (kind === 'approve' || kind === 'changes') {
+    const a = m.approvals.find((x) => x.role === S.role && x.status === 'pending');
+    if (!a) return;
+    a.status = kind === 'approve' ? 'approved' : 'changes'; a.at = Date.now();
+    await P.ledger.append(kind === 'approve' ? 'model.signoff' : 'model.changes_requested', who, { lc: m.model, name: `${m.name} ${m.version}`, signoff: a.label });
+    if (kind === 'approve' && m.model === 'support-triage' && a.role === 'privacy_reviewer') {
+      const s1 = m.stages.find((x) => x.key === 'pretrain'); s1.status = 'done'; s1.artifact = 'DPIA-044 approved';
+      const s2 = m.stages.find((x) => x.key === 'sft'); s2.status = 'running'; s2.artifact = 'ckpt/support-triage/r1 (training)';
+    }
+    if (m.approvals.every((x) => x.status === 'approved')) {
+      const rel = m.stages.find((x) => x.key === 'release');
+      if (rel) { rel.status = 'done'; rel.artifact = `${m.model} ${m.version.split(' ')[0]} (signed)`; m.stage = 'Ready'; }
+    }
+    toast(kind === 'approve' ? `${a.label} approved for ${m.name} ${m.version}` : `Changes requested on ${m.name}`);
+  }
+  if (kind === 'promote') {
+    m.stage = 'Production'; m.version = m.version.split(' ')[0]; m.updated = date(Date.now());
+    m.stages.push({ key: 'serve', name: 'Inference', inputs: [`${m.model} ${m.version}`], gate: 'canary 5%, error budget and policy checks, then 100%', policy: 'core-1.4.0', artifact: `endpoint ${m.model}`, status: 'live' });
+    await P.ledger.append('model.promoted', who, { lc: m.model, name: m.name, version: m.version });
+    toast(`${m.name} ${m.version} promoted. Canary at 5%.`);
+  }
+  render(); renderChrome();
+}
+Object.assign(ACTIVITY, {
+  'model.signoff': (e) => `signed off ${e.payload.signoff.toLowerCase()} for ${e.payload.name}`,
+  'model.changes_requested': (e) => `requested changes on ${e.payload.name}`,
+  'model.evaluated': (e) => `re-ran evaluation for ${e.payload.name}: ${e.payload.result === 'pass' ? 'all checks pass' : 'failed'}`,
+  'model.promoted': (e) => `promoted ${e.payload.name} ${e.payload.version} to production`,
+});
+
+/* ── design review: what the platform team owns, and where each part runs ── */
+const OWNS = [
+  ['Lineage across training and post-training', 'Every job emits OpenLineage with Iceberg snapshot IDs; column lineage proves where personal data tags were removed; every model has signed provenance.', [['Lineage', 'lineage'], ['Model governance', 'lifecycle', 'lc:assistant-llm-v2']]],
+  ['Identity and access for data, weights and endpoints', 'OIDC for people, client credentials for services, RFC 8693 for agents. ABAC on IdP attributes; weights inherit the sensitivity and region of their data.', [['Artifacts and endpoints', 'artifacts'], ['Agents', 'agent'], ['Policies', 'policy']]],
+  ['Regulation in the code path', 'GDPR, CCPA/CPRA, DMA, DSA and the EU AI Act as versioned policy rules with citations, shadow-tested before rollout, failing closed.', [['Regulations', 'regulations'], ['Controls', 'compliance']]],
+  ['Governed batch and streaming pipelines', 'Flink and Spark jobs share governance stages: region tagging, point-in-time consent joins, minimization, redaction. Every dropped record has a reason.', [['Pipelines', 'pipelines'], ['Training gate', 'training']]],
+  ['APIs, SDKs and review tools', 'REST and SDKs for the same decisions the console makes; approvals, sign-offs and subject requests as durable workflows with SLAs.', [['REST API', 'api'], ['Requests', 'access'], ['Subject requests', 'dsr']]],
+  ['Reliable, auditable serving', 'Per-request consent and policy at the gateway, circuit breaker to a non-personalized model, error budgets per service, tamper-evident ledger.', [['Serving', 'serving'], ['Services', 'services'], ['Audit ledger', 'audit']]],
+  ['Working with privacy, legal and security', 'Separate duties by role: stewards approve data, privacy and legal sign releases, auditors alone read the ledger.', [['Model sign-offs', 'lifecycle', 'lc:fraud-score'], ['Assessments', 'assessments']]],
+];
+const NUMBERS = [['< 10 ms', 'p99 policy decision', 'OPA sidecar, cached bundles'], ['< 5 s', 'consent to serving, p95', 'outbox, Kafka, Redis'], ['0', 'personalized without an allow', 'invariant counter, paged on 1'], ['72 h', 'erasure target', '30 day legal limit'], ['100%', 'decisions in the ledger', 'hash chain, Merkle roots in WORM']];
+const TRADEOFFS = [
+  ['Fail closed at serving', 'An outage costs ad revenue, never consent. The fallback model keeps the product working.'],
+  ['Dataset lineage plus snapshot IDs, not row lineage', 'Row lineage at this volume costs more than it answers. Snapshot membership answers "where is this person" exactly.'],
+  ['Bitemporal consent', 'Storage grows with every change; in exchange a training set can be rebuilt as it was known on any date.'],
+  ['Expire snapshots on erasure', 'Removes time travel for that window, which is the point: a row delete alone leaves the person in history.'],
+  ['Human confirmation of PII tags', 'Slower onboarding, no silent misclassification.'],
+];
+const NEXT = [['Machine unlearning for flagged models', 'Retraining on every erasure does not scale; batch erasures per model and evaluate approximate unlearning against a retrain baseline.'], ['Policy for agents', 'Agents chain tools across services; extend token exchange with per-tool purpose and spend limits.'], ['Verifiable releases', 'Publish model and policy digests to a public transparency log so outside researchers can check what runs.'], ['Cost of governance', 'Show each team what exclusions cost in data and accuracy, so privacy is a measured trade, not a surprise.']];
+VIEWS.review = () => head('Design review', 'What a data and AI governance platform team owns, how this product does each part, and the trade-offs behind it.', 'Every row links to the working screen. Design docs, ADRs, runbooks and the Rego bundle are in the repository under docs/ and policies/.') + `
+  <div class="grid">
+    <div class="card c12"><h3>Responsibilities</h3><div class="own">${OWNS.map(([t, d, links], i) => `<div class="own-row"><span class="own-n">${i + 1}</span><div><b>${h(t)}</b><p>${h(d)}</p></div><div class="own-links">${links.map(([l, v, sel]) => `<button class="btn" data-go="${v}"${sel ? ` data-sel="${sel}"` : ''}>${h(l)} ›</button>`).join('')}</div></div>`).join('')}</div></div>
+    <div class="card c12"><h3>Service levels</h3><div class="slo-row">${NUMBERS.map(([v, k, how]) => `<div><b>${h(v)}</b><span>${h(k)}</span><small>${h(how)}</small></div>`).join('')}</div></div>
+    <div class="card c6"><h3>Trade-offs made</h3><div class="glist">${TRADEOFFS.map(([t, d]) => `<div class="grow tall"><span><b>${h(t)}</b><span class="id wrap">${h(d)}</span></span></div>`).join('')}</div></div>
+    <div class="card c6"><h3>What I would build next</h3><div class="glist">${NEXT.map(([t, d]) => `<div class="grow tall"><span><b>${h(t)}</b><span class="id wrap">${h(d)}</span></span></div>`).join('')}</div></div>
+  </div>`;
 
 /* ── artifacts and endpoints: ABAC on weights and inference ── */
 VIEWS.artifacts = () => {
@@ -807,7 +956,7 @@ const G = {
     { name: 'Contoso Cloud', service: 'Infrastructure (Kubernetes, object storage)', data: 'All governed data, encrypted', region: 'US, EU', dpa: true, scc: true, tier: 'Critical', review: '2026-08-14', status: 'Approved' },
     { name: 'Fabrikam Support', service: 'Customer support desk', data: 'Account email, ticket text', region: 'EU', dpa: true, scc: true, tier: 'Medium', review: '2026-06-01', status: 'Approved' },
     { name: 'Tailspin Analytics', service: 'Aggregate product analytics', data: 'Aggregates only (k >= 50)', region: 'US', dpa: true, scc: false, tier: 'Low', review: '2026-05-20', status: 'Approved' },
-    { name: 'Litware Translation', service: 'Localization of assistant replies', data: 'Synthetic strings only', region: 'EU', dpa: false, scc: false, tier: 'Low', review: '—', status: 'Onboarding' },
+    { name: 'Litware Translation', service: 'Localization of assistant replies', data: 'Synthetic strings only', region: 'EU', dpa: false, scc: false, tier: 'Low', review: 'Scheduled', status: 'Onboarding' },
   ],
   incidents: [
     { id: 'INC-0412', title: 'Consent consumer lag above SLO in eu-west-1', sev: 'SEV-3', status: 'Resolved', opened: Date.now() - 864e5 * 9, resolved: Date.now() - 864e5 * 9 + 36e5 * 2, personal: false, owner: 'Priya Nair',
@@ -936,7 +1085,8 @@ VIEWS.observability = () => {
 /* ── slide-over drawer for any object: overview, activity, access ── */
 function openDrawer(kind, id) { if (kind === 'dataset') S.sel.dataset = id; S.drawer = { kind, id, tab: (S.drawer && S.drawer.id === id && S.drawer.tab) || 'overview' }; S.inspector = true; layoutInspector(); drawDrawer(); }
 function closeDrawer() { S.drawer = null; drawDrawer(); }
-function layoutInspector() { $('#app').classList.toggle('no-insp', !S.inspector); $('#btn-insp').classList.toggle('on', S.inspector); }
+const SELF_DETAIL = new Set(['lifecycle', 'review']);
+function layoutInspector() { $('#app').classList.toggle('no-insp', !S.inspector || (SELF_DETAIL.has(S.view) && !S.drawer)); $('#btn-insp').classList.toggle('on', S.inspector); }
 const glist = (rows) => `<div class="glist">${rows.filter(Boolean).map(([k, v]) => `<div class="grow"><span>${k}</span><span>${v}</span></div>`).join('')}</div>`;
 function drawDrawer() {
   const el = $('#inspector');
@@ -1001,7 +1151,7 @@ function drawDrawer() {
   if (kind === 'person' && !P.userById.get(id)) { el.innerHTML = `<div class="insp-empty"><b>Erased</b><span>${h(id)} was deleted by a subject request. Only a pseudonymous tombstone remains as proof.</span></div>`; return; }
   if (kind === 'person') {
     const u = P.userById.get(id); const c = P.cache.get(id); title = id; sub = `${u.region} · ${E.regionInfo(u.region).law}`; glyph = 'privacy';
-    overview = glist([['Region', u.region], ['Age range', u.age_band.replace(/_/g, ' ')], ['Tracking (ATT)', u.att], ['Personalized ads', u.personalizedAdsToggle ? 'On' : 'Off'], ['Global Privacy Control', u.gpc ? 'Sent' : 'No'], ['Services', u.services.join(', ')]]) + `<h4 class="insp-h">Consent</h4>${glist(E.PURPOSES.map((p) => [nm(p), c ? pill(c.consent[p]) : '—']))}<h4 class="insp-h">Where their data lives</h4>${glist(P.locate(id).map((x) => [h(x.name), x.kind]))}`;
+    overview = glist([['Region', u.region], ['Age range', u.age_band.replace(/_/g, ' ')], ['Tracking (ATT)', u.att], ['Personalized ads', u.personalizedAdsToggle ? 'On' : 'Off'], ['Global Privacy Control', u.gpc ? 'Sent' : 'No'], ['Services', u.services.join(', ')]]) + `<h4 class="insp-h">Consent</h4>${glist(E.PURPOSES.map((p) => [nm(p), c ? pill(c.consent[p]) : 'unknown']))}<h4 class="insp-h">Where their data lives</h4>${glist(P.locate(id).map((x) => [h(x.name), x.kind]))}`;
     acts = P.ledger.entries.filter((e) => e.subject && false);
     access = '<p class="note">Only privacy reviewers and auditors can see a person\'s full record. This view is limited to governance attributes.</p>';
   }
@@ -1699,7 +1849,7 @@ function startTraffic() {
 /* ───────────────────────── events ───────────────────────── */
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-lcfilter],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node],[data-lnode],[data-lnode-go],[data-linwl],[data-lindir],[data-linrun],[data-linclear],[data-linerase]');
+  const t = e.target.closest('[data-toggle],[data-opends-go],[data-range],[data-page],[data-catview],[data-bulkall],[data-bulk],[data-drawer],[data-drawertab],[data-closedrawer],[data-asm],[data-inc],[data-lcmodel],[data-lcfilter],[data-lctab],[data-artifact],[data-pipe],[data-apiop],[data-sdk],[data-datamode],[data-opends],[data-reg],[data-sel],[data-go],[data-act],[data-datatab],[data-datauser],[data-dataset],[data-request],[data-model],[data-serve],[data-dsr],[data-node],[data-lnode],[data-lnode-go],[data-linwl],[data-lindir],[data-linrun],[data-linclear],[data-linerase]');
   if (!t || $('#app').hidden) return;
   if (t.dataset.toggle) { e.stopPropagation(); S.open.has(t.dataset.toggle) ? S.open.delete(t.dataset.toggle) : S.open.add(t.dataset.toggle); return renderChrome(); }
   if (t.dataset.range) { S.range = t.dataset.range; return render(); }
@@ -1713,6 +1863,7 @@ document.addEventListener('click', async (e) => {
   if (t.dataset.asm) { S.asmSel = t.dataset.asm; return render(); }
   if (t.dataset.inc) { S.incSel = t.dataset.inc; return render(); }
   if (t.dataset.opendsGo) { S.data.mode = 'datasets'; S.data.ds = t.dataset.opendsGo; return go('data'); }
+  if (t.dataset.lctab) { S.lcTab = t.dataset.lctab; return render(); }
   if (t.dataset.lcfilter) { S.lcFilter = t.dataset.lcfilter; return render(); }
   if (t.dataset.lcmodel) { S.lcModel = t.dataset.lcmodel; return render(); }
   if (t.dataset.artifact) { S.art.artifact = t.dataset.artifact; S.art.action = S.art.action === 'invoke' ? 'download' : S.art.action; return render(); }
@@ -1762,6 +1913,7 @@ document.addEventListener('input', (e) => {
 });
 
 const ACTIONS = {
+  'lc-remediate': () => lcAct('remediate'), 'lc-approve': () => lcAct('approve'), 'lc-changes': () => lcAct('changes'), 'lc-promote': () => lcAct('promote'),
   'lin-notify': async () => {
     const g = L.lineageGraph(P), im = L.impact(g, S.lin.focus);
     const owners = [...new Set([...im.down].map((id) => g.nodes.find((x) => x.id === id).owner).filter(Boolean))];

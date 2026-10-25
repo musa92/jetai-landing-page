@@ -27,3 +27,9 @@ tamper and verify (role `auditor`).
 - **Risk:** register with heat map, DPIA and AI impact assessments with role sign-off, vendor register, incidents with the 72 hour clock (opened automatically by chaos or tampering), and one-click regulator reports.
 - **Data > Catalog:** saved views, bulk approve, and a slide-over panel per dataset with Overview, Activity (from the ledger) and Access.
 - **Account menu > Dark appearance.**
+
+## Model governance and design review
+
+- Models > Lifecycle: 12 governed models. Open "Assistant LLM v2 candidate": two privacy evaluations fail and sign-offs are locked. As Maya (ML engineer) click "Remove duplicates and re-run evaluation". Then sign in as Jonas, Amara and Priya: each finds the sign-off in their Home inbox. After the last one, promote to production. Every step is in the Activity tab and the audit ledger.
+- "Resume screening" shows a high-risk use (EU AI Act Annex III) stopped at intake.
+- Developers > Design review: what the platform team owns, how each part is done, service levels, trade-offs and next steps, each linked to the working screen.
