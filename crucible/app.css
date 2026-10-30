@@ -935,3 +935,9 @@ body { background: var(--bg); }
 .lcm-tile::before { background: transparent; }
 .lcm-tile.fail::before { background: var(--red); } .lcm-tile.warn::before { background: #ff9f0a; }
 .lin-foot .lg { text-transform: none; }
+
+.term-hint { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 0 16px 12px; font: 11.5px var(--mono); min-height: 0; }
+.term-hint:empty { display: none; }
+.term-hint span { padding: 2px 8px; border-radius: 5px; background: #2c2c2e; color: #e5e5ea; }
+.term-hint span.on { background: #0a84ff; color: #fff; }
+.term-hint em { font-style: normal; color: #636366; align-self: center; margin-left: 4px; }
