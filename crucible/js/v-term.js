@@ -98,6 +98,7 @@ const HELP = `[b]crucible[/] training and inference CLI
   [acc]meta[/] <model>          architecture, KV bytes, shard map
   [acc]optimize[/] <model>      sweep configs against an SLO
   [acc]plan[/] <model> --gpus N  training layouts (TP, PP, DP, recompute)
+  [acc]explain fsdp[/]          how sharded data parallel runs a step
   [acc]status[/]                fleet, jobs and deployments
   [acc]models[/]                registry
   [acc]top[/]                   GPU telemetry snapshot
@@ -135,6 +136,16 @@ async function serve(args) {
 const CMDS = {
   help: () => out(HELP),
   clear: () => { T.lines = []; draw(); },
+  explain: (a) => {
+    if (a[0] !== 'fsdp') return out('[err]usage: crucible explain fsdp[/]');
+    out(`[b]FSDP step on N GPUs[/] (each owns 1/N of every layer)
+  forward   for each layer:  [acc]all-gather[/] params → compute → [dim]free (reshard)[/]   next layer prefetched on the NCCL stream
+  backward  for each layer:  [acc]all-gather[/] params → compute grads → [acc]reduce-scatter[/] → keep 1/N of grads
+  optimizer Adam on the local shard only, no communication
+  memory    16·P/N bytes of state per GPU + ~2 gathered layers + activations
+  traffic   ~3·(N−1)/N·2P bytes per GPU per step (1.5× DDP)
+  [dim]open fsdp to watch it step by step[/]`);
+  },
   history: () => out(T.hist.map((c, i) => `${lpad(i + 1, 4)}  ${c}`).join('\n')),
   open: (a) => { const v = a[0]; if (VIEWS[v]) { ui.go(v); } else out(`[err]no page ${v}[/]`); },
   serve,
@@ -219,6 +230,7 @@ function candidates(line) {
     else if (i === 1 && ['forecast', 'kv', 'scale'].includes(cmd)) opts = ctx.F.deps.map((d) => d.id);
     else if (i === 1 && cmd === 'logs') opts = [...ctx.F.jobs.map((j) => j.id), ...ctx.F.deps.map((d) => d.id)];
     else if (i === 1 && cmd === 'open') opts = Object.keys(VIEWS);
+    else if (i === 1 && cmd === 'explain') opts = ['fsdp'];
     else opts = (FLAGS[cmd] || []).filter((f) => !words.slice(1, -1).includes(f));
   }
   return { head: toks.slice(0, toks.length - 1).join(' '), cur, list: [...new Set(opts)].filter((o) => o.startsWith(cur)) };
