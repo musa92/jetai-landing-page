@@ -202,7 +202,7 @@ VIEWS.terminal = () => {
   if (!T.lines.length) out(`Crucible CLI 3.4.0 · signed in as ${me().name} (${me().title}) · type [acc]help[/]\n`);
   const chips = ['crucible serve core-8b --auto --engine sglang', 'crucible serve core-70b --auto --ttft 1.2 --itl 40', 'crucible plan core-70b --gpus 1024', 'crucible status', 'crucible top', 'crucible forecast assistant-8b'];
   return `<div class="view-head"><h1>Terminal</h1><p>Every console action is a CLI command. One line takes a model from the registry to a serving canary: mesh, metadata, engine wrap, allocation, SLO optimization and rollout.</p></div>
-  <div class="term-wrap"><div class="term"><div class="term-bar"><i></i><i></i><i></i><span>crucible · ${h(me().name.split(' ')[0].toLowerCase())}@acme</span></div><div class="term-out" id="term-out"></div><label class="term-in"><span class="t-prompt">${h(me().name.split(' ')[0].toLowerCase())}@crucible ~ %</span><input id="term-q" autocomplete="off" spellcheck="false" placeholder="type a command, Tab to complete"></label><div class="term-hint" id="term-hint"></div></div>
+  <div class="term-wrap"><div class="term"><div class="term-bar"><i></i><i></i><i></i><span>crucible · ${h(me().name.split(' ')[0].toLowerCase())}@acme</span></div><div class="term-out" id="term-out"></div><label class="term-in"><span class="t-prompt">${h(me().name.split(' ')[0].toLowerCase())}@crucible ~ %</span><input id="term-q" autocomplete="off" spellcheck="false" placeholder="type a command, Tab for suggestions"></label><div class="term-menu" id="term-menu" hidden></div></div>
     <aside class="term-side"><h3>Pipeline</h3><div id="term-steps"></div><h3 class="sub-h">Try</h3><div class="term-chips">${chips.map((c) => `<button class="btn" data-termrun="${h(c)}">${h(c.replace('crucible ', ''))}</button>`).join('')}</div></aside></div>`;
 };
 /* ── tab completion: commands, then models, deployments, jobs, flags and flag values ── */
@@ -235,41 +235,67 @@ function candidates(line) {
   }
   return { head: toks.slice(0, toks.length - 1).join(' '), cur, list: [...new Set(opts)].filter((o) => o.startsWith(cur)) };
 }
-const common = (a) => !a.length ? '' : a.reduce((p, x) => { let k = 0; while (k < p.length && p[k] === x[k]) k++; return p.slice(0, k); });
-function hint(q) {
-  const el = $('#term-hint'); if (!el) return;
-  const c = T.cyc >= 0 && T.cycList ? { list: T.cycList, cur: '' } : q.value.trim() ? candidates(q.value) : { list: [] };
-  const show = c.list.length > 1 || (c.list.length === 1 && c.list[0] !== c.cur) ? c.list.slice(0, 20) : [];
-  el.innerHTML = show.length ? show.map((o, k) => `<span class="${k === T.cyc ? 'on' : ''}">${h(o)}</span>`).join('') + (c.list.length > 20 ? `<em>+${c.list.length - 20} more</em>` : '') + `<em>${T.cyc >= 0 ? 'Tab for next' : 'Tab to complete'}</em>` : '';
+/* What each suggestion is, shown on the right of the dropdown. */
+const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'How FSDP runs a step', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
+const FLAG_DESC = { '--auto': 'Run every step without pausing', '--engine': 'vllm, sglang or trt', '--replicas': 'Number of replicas', '--ttft': 'TTFT p90 SLO, seconds', '--itl': 'ITL p90 SLO, ms', '--gpu': 'h100, h200, b200, l40s', '--quant': 'fp8, bf16, int4', '--name': 'Deployment name', '--gpus': 'GPU budget for training', '--seq': 'Sequence length' };
+function describe(o) {
+  if (CMD_DESC[o]) return CMD_DESC[o];
+  if (FLAG_DESC[o]) return FLAG_DESC[o];
+  if (E.ARCH[o]) return `${E.ARCH[o].name} · ${si(E.ARCH[o].params)} params`;
+  if (E.HW[o]) return `${E.HW[o].name} ${E.HW[o].mem} GB`;
+  const v = E.MODELS.flatMap((m) => m.versions).find((x) => x[0] === o); if (v) return `${v[1]} · ${v[3]}`;
+  const d = ctx.F.dep(o); if (d) return `${d.name} · ${d.engine}`;
+  const j = ctx.F.job(o); if (j) return `${j.name} · ${j.state}`;
+  if (VIEWS[o]) return 'Console page';
+  return { vllm: 'vLLM 0.11', sglang: 'SGLang 0.5', trt: 'TensorRT-LLM 1.1', fp8: '1 byte per weight', bf16: '2 bytes per weight', int4: 'AWQ, ~0.56 bytes per weight' }[o] || '';
 }
-function complete(q) {
+
+/* Dropdown above the prompt: arrows move, Tab or Enter picks, Esc closes. */
+const M = T.menu = { open: false, list: [], idx: 0, head: '', cur: '', nav: false };
+function menuUpdate(q, force) {
   const c = candidates(q.value);
-  if (!c.list.length && T.cyc < 0) return;
-  const join = (w, done) => (c.head ? c.head + ' ' : '') + w + (done ? ' ' : '');
-  if (T.cyc < 0 && c.list.length === 1) { q.value = join(c.list[0], true); T.armed = false; return; }
-  const pre = common(c.list);
-  if (T.cyc < 0 && pre.length > c.cur.length) { q.value = join(pre); T.armed = true; return; }
-  // First Tab lists the matches; further Tabs cycle through them, zsh style.
-  if (T.cyc < 0 && !T.armed) { T.armed = true; return; }
-  T.cycList = T.cyc >= 0 && T.cycList ? T.cycList : c.list; T.cycHead = T.cyc >= 0 ? T.cycHead : c.head;
-  T.cyc = (T.cyc + 1) % T.cycList.length;
-  q.value = (T.cycHead ? T.cycHead + ' ' : '') + T.cycList[T.cyc];
+  const exact = c.list.length === 1 && c.list[0] === c.cur;
+  M.list = exact ? [] : c.list; M.head = c.head; M.cur = c.cur;
+  M.open = M.list.length > 0 && (force || q.value.trim() !== '' || M.open);
+  M.idx = Math.min(M.idx, Math.max(0, M.list.length - 1));
+  menuDraw();
 }
-T.cyc = -1;
+function menuDraw() {
+  const el = $('#term-menu'); if (!el) return;
+  if (!M.open) { el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = M.list.map((o, k) => `<button type="button" class="tm-item${k === M.idx ? ' on' : ''}" data-tmi="${k}"><b>${h(M.cur)}<span>${h(o.slice(M.cur.length))}</span></b><em>${h(describe(o))}</em></button>`).join('') + `<div class="tm-foot">↑↓ choose · Tab insert · Enter ${M.nav ? 'insert' : 'run'} · Esc close</div>`;
+  const on = el.querySelector('.tm-item.on');
+  if (on) { if (on.offsetTop < el.scrollTop) el.scrollTop = on.offsetTop - 4; else if (on.offsetTop + on.offsetHeight > el.scrollTop + el.clientHeight - 30) el.scrollTop = on.offsetTop + on.offsetHeight - el.clientHeight + 34; }
+}
+function menuPick(q, k = M.idx) {
+  const o = M.list[k]; if (o === undefined) return;
+  q.value = (M.head ? M.head + ' ' : '') + o + ' ';
+  M.idx = 0; M.nav = false; menuUpdate(q, true); q.focus();
+}
 
 AFTER.terminal = () => {
   draw();
   const q = $('#term-q'); if (!q) return;
   q.focus();
-  q.addEventListener('input', () => { T.cyc = -1; T.cycList = null; T.armed = false; hint(q); });
+  M.open = false; M.idx = 0;
+  q.addEventListener('input', () => { M.idx = 0; M.nav = false; menuUpdate(q); });
+  q.addEventListener('focus', () => menuUpdate(q));
   q.addEventListener('keydown', async (e) => {
-    if (e.key === 'Tab') { e.preventDefault(); complete(q); hint(q); return; }
-    if (e.key !== 'Shift') { T.cyc = -1; T.cycList = null; T.armed = false; }
-    if (e.key === 'Enter' && !T.busy) { const v = q.value; q.value = ''; hint(q); await exec(v); }
-    if (e.key === 'ArrowUp') { T.hi = Math.max(0, T.hi - 1); q.value = T.hist[T.hi] || ''; e.preventDefault(); hint(q); }
-    if (e.key === 'ArrowDown') { T.hi = Math.min(T.hist.length, T.hi + 1); q.value = T.hist[T.hi] || ''; e.preventDefault(); hint(q); }
-    if (e.key === 'Escape') { $('#term-hint').innerHTML = ''; }
+    if (M.open && M.list.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); M.idx = M.nav ? (M.idx + 1) % M.list.length : Math.min(1, M.list.length - 1); M.nav = true; return menuDraw(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); M.idx = M.nav ? (M.idx - 1 + M.list.length) % M.list.length : M.list.length - 1; M.nav = true; return menuDraw(); }
+      // Tab always inserts; Enter inserts only after choosing with the arrows, otherwise it runs the line.
+      if (e.key === 'Tab' || (e.key === 'Enter' && M.nav)) { e.preventDefault(); return menuPick(q); }
+      if (e.key === 'Escape') { e.preventDefault(); M.open = false; return menuDraw(); }
+    }
+    if (e.key === 'Tab') { e.preventDefault(); return menuUpdate(q, true); }
+    if (e.key === 'Enter' && !T.busy) { const v = q.value; q.value = ''; M.open = false; menuDraw(); await exec(v); }
+    if (e.key === 'ArrowUp') { T.hi = Math.max(0, T.hi - 1); q.value = T.hist[T.hi] || ''; e.preventDefault(); }
+    if (e.key === 'ArrowDown') { T.hi = Math.min(T.hist.length, T.hi + 1); q.value = T.hist[T.hi] || ''; e.preventDefault(); }
     if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); CMDS.clear(); }
   });
+  $('#term-menu').addEventListener('mousedown', (e) => { const b = e.target.closest('[data-tmi]'); if (b) { e.preventDefault(); menuPick(q, +b.dataset.tmi); } });
+  q.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== q) { M.open = false; menuDraw(); } }, 120));
 };
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-termrun]'); if (b && !T.busy) { e.stopPropagation(); exec(b.dataset.termrun); } }, true);
