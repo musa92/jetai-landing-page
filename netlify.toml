@@ -22,6 +22,18 @@
   to   = "/custodian/:splat"
   status = 200
 
+# Cadence inference demo: same passthrough as /fl-demo.
+[[redirects]]
+  from = "/cadence/*"
+  to   = "/cadence/:splat"
+  status = 200
+
+# Crucible training and inference demo: same passthrough.
+[[redirects]]
+  from = "/crucible/*"
+  to   = "/crucible/:splat"
+  status = 200
+
 # Turbofan page disabled for now; remove this rule to bring it back.
 [[redirects]]
   from = "/turbofan.html"
