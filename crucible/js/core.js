@@ -1,6 +1,6 @@
 /* Shared console state and helpers. Every view module imports this one file
    (same URL, so one instance) and registers into VIEWS, ACTIONS and CLICKS. */
-import * as E from './sim.js?v=20261030-5';
+import * as E from './sim.js?v=20261030-8';
 export { E };
 
 export const $ = (s, r = document) => r.querySelector(s);
@@ -16,7 +16,7 @@ export const ms = (s) => (s === Infinity ? 'saturated' : s >= 1 ? s.toFixed(2) +
 export const dur = (sec) => sec >= 86400 ? `${Math.floor(sec / 86400)}d ${Math.round((sec % 86400) / 3600)}h` : sec >= 3600 ? `${Math.floor(sec / 3600)}h ${Math.round((sec % 3600) / 60)}m` : sec >= 60 ? `${Math.round(sec / 60)} min` : `${Math.max(1, Math.round(sec))} s`;
 export const ago = (t) => { const s = (Date.now() - t) / 1000; return s < 60 ? 'just now' : s < 5400 ? Math.round(s / 60) + ' min ago' : s < 129600 ? Math.round(s / 3600) + ' h ago' : Math.round(s / 86400) + ' d ago'; };
 /* Latency percentiles from the mean-value model: TTFT has a heavier tail (queueing behind prefills) than ITL. */
-export const p90 = (x) => ({ ttft: x.ttft * 1.5, itl: x.itl * 1.2 });
+export const p90 = (x) => ({ ttft: x.ttft * E.P90.ttft, itl: x.itl * E.P90.itl });
 export const usd = (v) => '$' + (v >= 1000 ? fmt(v) : v >= 10 ? v.toFixed(0) : v.toFixed(2));
 export const store = {
   get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
@@ -57,10 +57,20 @@ export const ICON = {
   flask: '<path d="M8 3h4M8.5 3v5L4 16a1 1 0 0 0 .9 1.5h10.2A1 1 0 0 0 16 16l-4.5-8V3"/>',
   gauge: '<path d="M3.5 14a7 7 0 1 1 13 0"/><path d="m10 11 3-4"/>',
   play: '<path d="M6 4.5v11l9-5.5z"/>',
+  info: '<circle cx="10" cy="10" r="7.5"/><path d="M10 9v5M10 6.2v.1"/>',
 };
 export const icon = (k) => `<svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k] || ICON.home}</svg>`;
 
-export const head = (title, sub, how) => `<div class="view-head"><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}${how ? `<details class="how"><summary>How it works</summary><p>${how}</p></details>` : ''}</div>`;
+export const head = (title, sub, how) => `<div class="view-head"><div class="vh-t"><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div><div class="vh-a">${how ? `<details class="how"><summary>${ICON.info ? icon('info') : ''}How it works</summary><p>${how}</p></details>` : ''}${EXPORTS[S.view] ? `<button class="btn" data-act="export" data-key="${S.view}">Export</button>` : ''}<button class="btn" data-act="share">Share</button></div></div>`;
+/* KPI tile with change vs previous period and a sparkline. invert: lower is better. */
+export function kpi2(label, value, sub, delta, seed, level, invert = false) {
+  const n = 24, pts = [];
+  let x = 0; for (const ch of seed) x = (x * 31 + ch.charCodeAt(0)) >>> 0;
+  for (let i = 0; i < n; i++) { const r = Math.sin(x + i * 1.7) * 0.5 + Math.sin(x * 0.3 + i * 0.4) * 0.5; pts.push(level * (1 - delta / 100 * (1 - i / (n - 1))) * (1 + r * 0.025)); }
+  const mx = Math.max(...pts), mn = Math.min(...pts), d = pts.map((v, i) => `${i ? 'L' : 'M'}${(i / (n - 1) * 100).toFixed(1)},${(26 - (v - mn) / (mx - mn || 1) * 22).toFixed(1)}`).join('');
+  const good = invert ? delta < 0 : delta > 0;
+  return `<div class="card c3 kpi2"><div class="k2-h"><span>${label}</span><em class="${good ? 'up' : 'down'}">${delta > 0 ? '▲' : '▼'} ${Math.abs(delta).toFixed(1)}%</em></div><b>${value}</b><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="${good ? '#34c759' : '#ff9f0a'}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><small>${sub} · vs previous ${S.range}</small></div>`;
+}
 export const kpi = (v, label, sub, cls = '', span = 'c3') => `<div class="card ${span} kpi ${cls}"><b>${v}</b><span>${label}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
 export const pill = (cls, text) => `<span class="pill ${h(cls)}">${h(text ?? cls)}</span>`;
 export const glist = (rows) => `<div class="glist">${rows.filter(Boolean).map(([k, v]) => `<div class="grow"><span>${k}</span><span>${v}</span></div>`).join('')}</div>`;

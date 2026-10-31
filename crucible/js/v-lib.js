@@ -2,7 +2,7 @@
    launched on Ray. Logical-axis sharding rules are the contract between model
    code and parallelism, so the same model runs FSDP + TP in PyTorch (DTensor)
    or GSPMD in JAX (NamedSharding) without changes. */
-import { E, h, fmt, si, gb, ctx, S, VIEWS, CLICKS, ACTIONS, head, pill, glist, seg, C, xyChart, toast } from './core.js?v=20261030-5';
+import { E, h, fmt, si, gb, ctx, S, VIEWS, CLICKS, ACTIONS, head, pill, glist, seg, C, xyChart, toast } from './core.js?v=20261030-8';
 
 S.lib = S.lib || { arch: 'core-70b', fw: 'jax', data: 8, fsdp: 32, tensor: 8, tab: 'user', hw: 'h100' };
 

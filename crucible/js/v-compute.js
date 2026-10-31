@@ -1,5 +1,5 @@
 /* Compute views: fleet (clusters, node health), queue and quotas, Ray clusters. */
-import { E, h, fmt, si, gb, dur, ago, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, head, pill, glist, stack, seg, C, can, me, toast, ui } from './core.js?v=20261030-5';
+import { E, h, fmt, si, gb, dur, ago, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, head, pill, glist, stack, seg, C, can, me, toast, ui } from './core.js?v=20261030-8';
 
 const XID = [['XID 79', 'GPU fell off the bus'], ['XID 48', 'Double-bit ECC error'], ['XID 94', 'Contained ECC error, row remap pending'], ['NVLink', 'Link 7 down, CRC errors'], ['IB', 'Port flapping, 14 link-downs in 1 h'], ['Thermal', 'GPU 5 throttling at 87 °C']];
 

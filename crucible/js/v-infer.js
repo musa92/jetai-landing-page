@@ -1,8 +1,8 @@
 /* Inference views: deployments (SLOs, tuning, canary rollout, autoscaling,
    engine config), the capacity planner and engine benchmarks. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, sleep, p90, icon, match, F_ } from './core.js?v=20261030-5';
-import { tsChart } from './charts.js?v=20261030-5';
-import { WORK as KWORK } from './v-perf.js?v=20261030-5';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, sleep, p90, icon, match, F_ } from './core.js?v=20261030-8';
+import { tsChart, RANGES } from './charts.js?v=20261030-8';
+import { WORK as KWORK } from './v-perf.js?v=20261030-8';
 
 const DSTATE = { healthy: 'ok', canary: 'blue', degraded: 'warn', 'rolling back': 'warn' };
 const effCfg = (d) => (d.issue ? { ...d.cfg, prompt: 5800 } : d.cfg);
@@ -33,8 +33,9 @@ function depDetail(d) {
 
 function depOverview(d, s) {
   const F = ctx.F, q = p90(s);
-  const hist = (fn) => Array.from({ length: 97 }, (_, i) => { const t = Date.now() - 864e5 + i * 9e5; return [t, fn(t)]; });
-  const lat = Array.from({ length: 49 }, (_, i) => { const t = Date.now() - 864e5 + i * 18e5; const x = F.servingNow(d, t); return [t, p90(x)]; });
+  const span = RANGES[S.range].ms, rl = RANGES[S.range].label.toLowerCase();
+  const hist = (fn) => Array.from({ length: 97 }, (_, i) => { const t = Date.now() - span + i * span / 96; return [t, fn(t)]; });
+  const lat = Array.from({ length: 49 }, (_, i) => { const t = Date.now() - span + i * span / 48; const x = F.servingNow(d, t); return [t, p90(x)]; });
   return `<div class="lcm-tiles">
       <div class="lcm-tile"><span>Requests/s</span><b>${si(s.total)}</b><small>${s.per.toFixed(1)} per replica</small></div>
       <div class="lcm-tile ${q.ttft > d.slo.ttft ? 'fail' : ''}"><span>TTFT p90</span><b>${ms(q.ttft)}</b><small>SLO ${ms(d.slo.ttft)}</small></div>
@@ -42,8 +43,8 @@ function depOverview(d, s) {
       <div class="lcm-tile"><span>Output tokens/s</span><b>${si(s.tpsAll)}</b><small>${fmt(s.tpsAll / s.gpus)} per GPU</small></div>
       <div class="lcm-tile"><span>Batch per replica</span><b>${Math.round(s.B)}</b><small>max ${fmt(s.cap.maxBatch)} by KV memory</small></div>
       <div class="lcm-tile"><span>Cost per 1M tokens</span><b>${usd(s.cost)}</b><small>output, at list price</small></div></div>
-    <div class="grid2"><div class="card-sub"><h4>Requests per second, 24 hours</h4>${tsChart([{ name: 'Requests/s', color: C.blue, points: hist((t) => F.trafficAt(d, t)) }], { range: '24h', w: 400, height: 150, area: true })}</div>
-    <div class="card-sub"><h4>Latency p90, 24 hours</h4>${tsChart([{ name: 'TTFT', color: C.purple, points: lat.map(([t, x]) => [t, x.ttft * 1000]) }, { name: 'ITL', color: C.teal, points: lat.map(([t, x]) => [t, x.itl * 1000]) }], { range: '24h', w: 400, height: 150, fmt: (v) => Math.round(v) + ' ms', threshold: { value: d.slo.ttft * 1000, label: 'TTFT SLO' } })}</div></div>
+    <div class="grid2"><div class="card-sub"><h4>Requests per second, ${rl}</h4>${tsChart([{ name: 'Requests/s', color: C.blue, points: hist((t) => F.trafficAt(d, t)) }], { range: S.range, w: 400, height: 150, area: true })}</div>
+    <div class="card-sub"><h4>Latency p90, ${rl}</h4>${tsChart([{ name: 'TTFT', color: C.purple, points: lat.map(([t, x]) => [t, x.ttft * 1000]) }, { name: 'ITL', color: C.teal, points: lat.map(([t, x]) => [t, x.itl * 1000]) }], { range: S.range, w: 400, height: 150, fmt: (v) => Math.round(v) + ' ms', threshold: { value: d.slo.ttft * 1000, label: 'TTFT SLO' } })}</div></div>
     <div class="card-sub"><h4>KV cache per replica: ${si(s.cap.kvTokens)} tokens in ${gb(s.cap.kvBytes)}</h4>${stack([['Active sequences', s.kvActive, C.blue], ['Cached prefixes', s.kvCached, C.teal], ['Free', Math.max(0, 1 - s.kvActive - s.kvCached), 'var(--fill-2)']], (v) => (v * 100).toFixed(0) + '%')}<p class="note">Prefix hit rate ${((d.cfg.prefixHit || 0) * 100).toFixed(0)}%: shared system prompts and earlier turns skip prefill. The router hashes the prefix to send a conversation back to the replica that holds its cache.</p></div>
     <div class="card-sub"><h4>Features</h4><div class="tags">${d.features.map((f) => pill('blue', f)).join('')}</div></div>`;
 }

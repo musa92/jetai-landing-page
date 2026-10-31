@@ -1,7 +1,7 @@
 /* Runtime internals and operations: KV cache, mixture of experts, GPU
    telemetry, and demand forecasting that sizes serving and lends the rest. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, p90 } from './core.js?v=20261030-5';
-import { tsChart } from './charts.js?v=20261030-5';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, p90 } from './core.js?v=20261030-8';
+import { tsChart, RANGES } from './charts.js?v=20261030-8';
 
 const rnd = (i, j = 0) => { const x = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453; return x - Math.floor(x); };
 const depSel = (attr, cur, filter = () => true) => `<div class="seg">${ctx.F.deps.filter(filter).map((d) => `<button class="${d.id === cur ? 'on' : ''}" data-${attr}="${d.id}">${h(d.name)}</button>`).join('')}</div>`;
@@ -25,7 +25,7 @@ VIEWS.kv = () => {
   const table = Array.from({ length: 8 }, (_, k) => [k, Math.floor(rnd(k, S.kv.seq + 1) * blocks)]);
   const tiers = [['GPU HBM', (c.prefixHit || 0) * 0.86, C.blue], ['Host DRAM (offload)', (c.prefixHit || 0) * 0.14 + 0.06, C.teal], ['Recomputed', Math.max(0, 1 - (c.prefixHit || 0) - 0.06), 'var(--fill-2)']];
   const fp = E.serveCapacity(a, { ...c, kvq: 'fp8' }), bf = E.serveCapacity(a, { ...c, kvq: 'bf16' });
-  const kvUse = Array.from({ length: 49 }, (_, i) => { const t = Date.now() - 864e5 + i * 18e5, x = F.servingNow(d, t); return [t, (x.kvActive + x.kvCached) * 100]; });
+  const kvUse = Array.from({ length: 49 }, (_, i) => { const t = Date.now() - RANGES[S.range].ms + i * RANGES[S.range].ms / 48, x = F.servingNow(d, t); return [t, (x.kvActive + x.kvCached) * 100]; });
   return head('KV cache', 'Where every token of context lives: paged blocks in GPU memory, a prefix tree shared across requests, a host-memory tier, and the policy that decides what to evict.', 'Keys and values for every past token are kept so decode never recomputes them. Memory is split into fixed 16-token blocks (PagedAttention); each sequence has a block table mapping its logical blocks to physical ones, so there is no fragmentation and shared prefixes are stored once with a reference count. Blocks with refcount 0 stay as cache until LRU evicts them. When memory runs out the scheduler preempts the newest sequence and either swaps its blocks to host memory or recomputes them later.') + `
   <div class="grid"><div class="card c12">${depSel('kvdep', d.id)}</div>
     <div class="card c3 kpi"><b>${fmt(per / 1024)} KB</b><span>Per token</span><small>2 × ${a.layers} layers × ${a.kv} KV heads × ${a.hd} dims × ${c.kvq === 'fp8' ? 1 : 2} B</small></div>
@@ -43,7 +43,7 @@ VIEWS.kv = () => {
       <p class="note">The router hashes the first blocks of each request and sends it to the replica that already holds that prefix (consistent hashing with load bounds), so hits survive scale-out.</p></div>
     <div class="card c6"><h3>Where prefix tokens come from</h3>${stack(tiers, (v) => (v * 100).toFixed(0) + '%')}
       ${glist([['Eviction', 'LRU over refcount-0 blocks; leaves before shared roots'], ['Preemption', 'Recompute for short contexts, swap to host above 8K tokens'], ['Host tier', `${E.HW[c.hw].mem * 2} GB of DRAM per GPU, KV moved over PCIe at 50 GB/s`], ['KV precision', `${c.kvq.toUpperCase()}: ${si(fp.kvTokens)} tokens in FP8 vs ${si(bf.kvTokens)} in BF16`]])}</div>
-    <div class="card c12"><h3>KV cache in use, 24 hours</h3>${tsChart([{ name: 'KV in use', color: C.teal, points: kvUse }], { range: '24h', w: 1120, height: 140, fmt: (v) => Math.round(v) + '%', area: true })}</div>
+    <div class="card c12"><h3>KV cache in use, ${RANGES[S.range].label.toLowerCase()}</h3>${tsChart([{ name: 'KV in use', color: C.teal, points: kvUse }], { range: S.range, w: 1120, height: 140, fmt: (v) => Math.round(v) + '%', area: true })}</div>
   </div>`;
 };
 CLICKS.push(['kvdep', (id) => { S.kv.dep = id; S.kv.seq = 0; }]);

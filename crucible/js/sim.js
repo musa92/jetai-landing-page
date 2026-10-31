@@ -65,7 +65,7 @@ export function trainStep(arch, c) {
   const work = c.micro * c.seq / (c.cp || 1) * arch.hidden / c.tp;
   // Narrow models (small hidden size) run smaller, less efficient GEMMs and relatively more norm/attention overhead.
   const width = 0.7 + 0.3 * Math.min(1, arch.hidden / 8192);
-  const kEff = 0.63 * width * Math.min(1, 0.55 + 0.45 * Math.min(1, work / 16.7e6));
+  const kEff = 0.58 * width * Math.min(1, 0.55 + 0.45 * Math.min(1, work / 16.7e6));
   const recompute = c.recompute === 'full' ? 4 / 3 : c.recompute === 'selective' ? 1.04 : 1;
   const compute = tokens * flopsPerToken * recompute / (gpus * peak * kEff);
   const m = c.accum, v = c.vpp || 1;
@@ -79,11 +79,13 @@ export function trainStep(arch, c) {
   // Data parallel: gradient reduce-scatter per step, plus param all-gathers per microbatch under ZeRO-3. Mostly overlapped.
   const shard = arch.params / (c.tp * c.pp);
   const dpSize = c.dp * (c.cp || 1);
-  const dpBw = c.tp * c.pp >= hw.perNode ? hw.net : hw.nvlink * 0.6;
+  // The data-parallel group stays on NVLink only if the whole job fits in one node; otherwise each GPU's NIC is the limit.
+  const dpBw = c.tp * c.pp * dpSize <= hw.perNode ? hw.nvlink * 0.6 : hw.net;
   const ring = dpSize > 1 ? (dpSize - 1) / dpSize : 0;
   const dpBytes = 2 * shard * ring * (c.zero >= 3 ? 1 + 2 * m : 2);
   const dpComm = dpBytes / dpBw;
-  const dpExposed = Math.max(0, dpComm - 0.8 * compute) + 0.08 * dpComm;
+  // Overlap is partial in practice: prefetch depth, stream contention and SM time taken by NCCL kernels.
+  const dpExposed = Math.max(0, dpComm - 0.6 * compute) + 0.15 * dpComm;
   const cpComm = (c.cp || 1) > 1 ? compute * 0.06 : 0;
   const pp2p = c.pp > 1 ? 2 * m * v * arBytes / hw.net : 0;
   const optimizer = 16 * shard / (c.zero >= 1 ? dpSize : 1) / hw.bw * 3;
@@ -154,15 +156,20 @@ export function serveCapacity(arch, c) {
 export function decodeStep(arch, c, B, ctx, tokensPerSeq = 1) {
   const hw = HW[c.hw];
   const peak = (c.quant === 'fp8' ? hw.fp8 : hw.flops) * 0.5;
-  const mem = (arch.params * WBYTES[c.quant] / c.tp + B * ctx * kvPerToken(arch, c.kvq) / c.tp) / (hw.bw * 0.78);
+  const mem = (arch.params * WBYTES[c.quant] / c.tp + B * ctx * kvPerToken(arch, c.kvq) / c.tp) / (hw.bw * 0.68);   // achieved HBM bandwidth in decode kernels is ~65-70% of spec
   const comp = B * tokensPerSeq * 2 * active(arch) / (c.tp * peak);
   const tpComm = c.tp > 1 ? 2 * arch.layers * (9e-6 + B * tokensPerSeq * arch.hidden * 2 / hw.nvlink) : 0;
-  const launch = c.cudaGraphs === false ? arch.layers * 40e-6 : 0.6e-3;
+  // ~12 small kernels per layer (norms, RoPE, KV write, sampling): ~3 µs each even inside CUDA graphs.
+  const launch = arch.layers * (c.cudaGraphs === false ? 80e-6 : 36e-6) + 0.4e-3;
   return Math.max(mem, comp) + 0.2 * Math.min(mem, comp) + tpComm + launch;
 }
 
+/* Fixed per-request cost before the first token: gateway, auth, tokenizer, router, scheduler admission. */
+export const OVERHEAD = 0.045;
+/* p90 over mean for the mean-value model: TTFT queues behind prefills, ITL jitters with batch churn. */
+export const P90 = { ttft: 1.9, itl: 1.3 };
 export const prefillTime = (arch, c, tokens) => {
-  const hw = HW[c.hw], peak = (c.quant === 'fp8' ? hw.fp8 : hw.flops) * 0.55;
+  const hw = HW[c.hw], peak = (c.quant === 'fp8' ? hw.fp8 : hw.flops) * 0.45;
   return tokens * 2 * active(arch) / (c.tp * peak) + 2e-3;
 };
 
@@ -192,7 +199,7 @@ export function servePoint(arch, c, rate) {
   let B = 1, itl = itlOf(1), ttft = pre;
   for (let i = 0; i < 60; i++) {
     itl = itlOf(Math.max(1, B)) / (1 - busy);
-    ttft = pre / (1 - busy) + itl;
+    ttft = OVERHEAD + pre / (1 - busy) + itl;
     const want = rate * (ttft + c.out * itl);
     B = B + 0.5 * (Math.min(want, cap.maxBatch) - B);
   }
@@ -214,7 +221,7 @@ export function serveCurve(arch, c, slo = { ttft: 2, itl: 0.05 }, points = 28) {
   for (let i = 1; i <= points; i++) {
     const r = (hi * i) / points, p = servePoint(arch, c, r);
     // SLOs are p90; the mean-value model's tails: TTFT ×1.5 (queueing behind prefills), ITL ×1.2.
-    rows.push({ rate: r, ...p, ok: !p.saturated && p.ttft * 1.5 <= slo.ttft && p.itl * 1.2 <= slo.itl });
+    rows.push({ rate: r, ...p, ok: !p.saturated && p.ttft * P90.ttft <= slo.ttft && p.itl * P90.itl <= slo.itl });
   }
   const good = rows.filter((x) => x.ok).at(-1) || null;
   const gpus = c.tp + (c.disagg ? c.disagg : 0);
@@ -256,10 +263,10 @@ function seedJobs(now) {
   return [
     { id: 'pt-core-70b-v3', name: 'Core 70B v3 pretraining', kind: 'pretrain', arch: 'core-70b', team: 'foundation', owner: 'Maya Chen', cluster: 'usw2-h100-a', state: 'running', priority: 'P0',
       cfg: { hw: 'h100', tp: 8, pp: 4, cp: 1, dp: 64, micro: 1, accum: 32, zero: 1, recompute: 'selective', vpp: 5, seq: 8192, fp8: true, chunkedLoss: true },
-      targetTokens: 15e12, started: now - 31 * D, doneTokens: 6.92e12, goodput: 0.943, ckptEvery: 15 * 60, mix: 'mix-pretrain-v9' },
+      targetTokens: 9e12, started: now - 31 * D, doneTokens: 4.12e12, goodput: 0.943, ckptEvery: 15 * 60, mix: 'mix-pretrain-v9' },
     { id: 'pt-edge-3b-distill', name: 'Edge 3B distillation from Core 70B', kind: 'pretrain', arch: 'edge-3b', team: 'foundation', owner: 'Hiro Tanaka', cluster: 'usw2-b200-c', state: 'running', priority: 'P1',
       cfg: { hw: 'b200', tp: 1, pp: 1, cp: 1, dp: 256, micro: 4, accum: 1, zero: 3, recompute: 'none', vpp: 1, seq: 4096, fp8: true, chunkedLoss: true },
-      targetTokens: 2.4e12, started: now - 4 * D, doneTokens: 1.31e12, goodput: 0.968, ckptEvery: 10 * 60, mix: 'mix-distill-v2' },
+      targetTokens: 2.4e12, started: now - 1.4 * D, doneTokens: 1.31e12, goodput: 0.968, ckptEvery: 10 * 60, mix: 'mix-distill-v2' },
     { id: 'rl-core-70b-reason', name: 'Core 70B reasoning RL (GRPO)', kind: 'rl', method: 'GRPO', arch: 'core-70b', team: 'foundation', owner: 'Maya Chen', cluster: 'use1-h200-b', state: 'running', priority: 'P0',
       cfg: { hw: 'h200', tp: 4, pp: 1, cp: 1, dp: 64, micro: 1, accum: 1, zero: 3, recompute: 'full', vpp: 1, seq: 16384, fp8: false, chunkedLoss: true },
       rl: { rolloutGpus: 256, trainGpus: 256, rmGpus: 0, verifiers: 2048, group: 16, promptsPerStep: 256, maxLen: 16384, async: 1, engine: 'vLLM 0.11', sync: 'NCCL broadcast, bucketed' },
@@ -299,7 +306,7 @@ function seedDeployments() {
       canary: { from: 'core-70b-grpo-v0.8', to: 'core-70b-grpo-v0.9', step: 1, steps: [5, 25, 50, 100] } },
     { id: 'coder-34b', name: 'Coder 34B completions', model: 'coder-34b-v2', arch: 'coder-34b', team: 'devtools', engine: 'TensorRT-LLM', version: '1.1', region: 'us-west', state: 'degraded',
       cfg: { hw: 'h100', tp: 2, quant: 'int4', kvq: 'bf16', prompt: 3000, out: 60, prefixHit: 0.55, spec: { k: 5, alpha: 0.8, kind: 'N-gram lookup' }, cudaGraphs: true },
-      replicas: 16, min: 8, max: 40, slo: { ttft: 0.35, itl: 0.02 }, peak: 160, features: ['AWQ int4', 'Prompt lookup decoding', 'In-flight batching'],
+      replicas: 16, min: 8, max: 40, slo: { ttft: 0.35, itl: 0.02 }, peak: 105, features: ['AWQ int4', 'Prompt lookup decoding', 'In-flight batching'],
       issue: 'TTFT p90 above SLO since 09:40. Long-context requests from a new IDE plugin raised the average prompt to 5,800 tokens.' },
     { id: 'moe-235b', name: 'MoE 235B batch', model: 'moe-235b-a22b-v1', arch: 'moe-235b', team: 'research', engine: 'SGLang', version: '0.5.2', region: 'us-west', state: 'healthy',
       cfg: { hw: 'b200', tp: 8, quant: 'fp8', kvq: 'fp8', prompt: 2500, out: 900, prefixHit: 0.1, spec: null, cudaGraphs: true, ep: 8 },

@@ -1,17 +1,17 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90 } from './core.js?v=20261030-5';
-import { initChartHover } from './charts.js?v=20261030-5';
-import './v-train.js?v=20261030-5';
-import './v-infer.js?v=20261030-5';
-import './v-compute.js?v=20261030-5';
-import './v-more.js?v=20261030-5';
-import './v-ops.js?v=20261030-5';
-import './v-term.js?v=20261030-5';
-import './v-fsdp.js?v=20261030-5';
-import './v-backends.js?v=20261030-5';
-import './v-lib.js?v=20261030-5';
-import './v-perf.js?v=20261030-5';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261030-8';
+import { initChartHover } from './charts.js?v=20261030-8';
+import './v-train.js?v=20261030-8';
+import './v-infer.js?v=20261030-8';
+import './v-compute.js?v=20261030-8';
+import './v-more.js?v=20261030-8';
+import './v-ops.js?v=20261030-8';
+import './v-term.js?v=20261030-8';
+import './v-fsdp.js?v=20261030-8';
+import './v-backends.js?v=20261030-8';
+import './v-lib.js?v=20261030-8';
+import './v-perf.js?v=20261030-8';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -34,7 +34,7 @@ function signIn(role, quiet) {
 
 export const SECTIONS = [
   ['home', 'Home', [['overview', 'Overview']]],
-  ['training', 'Training', [['runs', 'Runs'], ['planner', 'Parallelism planner'], ['fsdp', 'How FSDP works'], ['data', 'Datasets']]],
+  ['training', 'Training', [['runs', 'Runs'], ['planner', 'Parallelism planner'], ['fsdp', 'FSDP'], ['data', 'Datasets']]],
   ['post', 'Post-training', [['pipelines', 'Pipelines'], ['rl', 'RL runs'], ['evals', 'Evaluations']]],
   ['inference', 'Inference', [['deployments', 'Deployments'], ['tenant', 'Tenant optimizer'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
   ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['kernels', 'Kernels and memory'], ['tenants', 'Tenants and cost'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
@@ -79,11 +79,12 @@ function renderChrome() {
   const c = counts(), cur = SECTION_OF[S.view];
   S.open.add(cur);
   const item = ([k, t, tabs]) => {
-    const open = S.open.has(k) && tabs.length > 1;
-    return `<div class="nav-group${open ? ' open' : ''}"><button class="nav-item${cur === k && (tabs.length === 1 || !open) ? ' on' : ''}${cur === k ? ' cur' : ''}" data-go="${tabs[0][0]}">${tabs.length > 1 ? `<span class="chev" data-toggle="${k}">›</span>` : '<span class="chev"></span>'}${icon(k)}${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>${open ? tabs.map(([v, tt]) => `<button class="nav-sub${S.view === v ? ' on' : ''}" data-go="${v}">${tt}</button>`).join('') : ''}</div>`;
+    if (tabs.length === 1) return `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${tabs[0][0]}">${icon(k)}${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`;
+    return `<div class="nav-sec"><h6>${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></h6>${tabs.map(([v, tt]) => `<button class="nav-link${S.view === v ? ' on' : ''}" data-go="${v}">${tt}</button>`).join('')}</div>`;
   };
   $('#nav').innerHTML = SECTIONS.filter(([k]) => k !== 'settings').map(item).join('');
   $('#nav-bottom').innerHTML = item(SECTIONS.find(([k]) => k === 'settings'));
+  $('#bar-ctx').innerHTML = `<button class="ctx-btn" data-act="env"><span class="dot-ok"></span>Production<i>▾</i></button><div class="seg range">${['1h', '24h', '7d', '30d'].map((r) => `<button class="${S.range === r ? 'on' : ''}" data-range="${r}">${r}</button>`).join('')}</div><span class="live"><span class="live-dot"></span>Live</span>`;
   const n = notifications().length;
   $('#btn-bell').innerHTML = icon('bell') + (n ? `<span class="badge">${n}</span>` : '');
   const r = me();
@@ -93,7 +94,9 @@ function renderChrome() {
   const F = ctx.F, total = E.CLUSTERS.reduce((a, cl) => a + cl.nodes * 8, 0);
   const used = F.jobs.filter((j) => j.state === 'running').reduce((a, j) => a + E.jobGpus(j), 0) + F.deps.reduce((a, d) => a + d.replicas * (d.cfg.tp + (d.cfg.disagg || 0)), 0);
   const degraded = F.deps.some((d) => d.state === 'degraded');
-  $('#side-foot').innerHTML = `<span class="health ${degraded ? 'warn' : ''}"></span>${fmt(used)} of ${fmt(total)} GPUs in use<br>4 clusters · 3 regions<br>Session until ${time(S.session)}`;
+  $('#side-foot').innerHTML = `${fmt(used)} of ${fmt(total)} GPUs in use<br>Session until ${time(S.session)}`;
+  const crit = F.deps.filter((d) => d.state === 'degraded').length, fails = F.jobs.filter((j) => j.state === 'failed' && !j.ack).length;
+  $('#statusbar').innerHTML = `<span class="sb-h ${crit ? 'warn' : ''}"><i></i>${crit ? `${crit} deployment degraded` : 'All systems operational'}</span><span>${fmt(used)} / ${fmt(total)} GPUs</span><span>${F.jobs.filter((j) => j.state === 'running').length} jobs running${fails ? ` · ${fails} failed` : ''}</span><span>${F.deps.length} deployments</span><span class="sb-sp"></span><span>us-west 9 ms · us-east 61 ms · eu-west 142 ms</span><span>Control plane 3.4.0</span><span>Synced ${new Date().toLocaleTimeString('en-GB', { hour12: false })}</span>`;
 }
 
 function go(view) {
@@ -112,9 +115,36 @@ function render() {
   v.innerHTML = (VIEWS[S.view] || VIEWS.overview)();
   v.scrollTop = st;
   if (keep) { const el = v.querySelector(`[data-filter="${keep}"]`); if (el) { el.focus(); el.setSelectionRange(caret, caret); } }
+  applySorts();
   AFTER[S.view] && AFTER[S.view]();
   layoutInspector();
 }
+
+/* Click any column header to sort that table; the choice survives live refreshes. */
+const SORTS = {};
+const cellVal = (td) => {
+  const t = (td?.innerText || '').trim().replace(/,/g, '');
+  const m = t.match(/^[$▲▼]?\s*(-?\d+(?:\.\d+)?)\s*(T|B|M|K|GB|TB|ms|s|%|×)?/);
+  if (!m) return t.toLowerCase();
+  const mult = { T: 1e12, B: 1e9, M: 1e6, K: 1e3, GB: 1e9, TB: 1e12, ms: 1e-3, s: 1 }[m[2]] || 1;
+  return parseFloat(m[1]) * mult;
+};
+function applySorts() {
+  document.querySelectorAll('#view table.table').forEach((tb, i) => {
+    const key = S.view + ':' + i, st = SORTS[key], ths = tb.querySelectorAll('thead th');
+    ths.forEach((th, c) => { th.dataset.sortcol = key + '|' + c; th.classList.toggle('sorted', !!st && st.c === c); th.classList.toggle('desc', !!st && st.c === c && st.d < 0); });
+    if (!st || !tb.tBodies[0]) return;
+    const rows = [...tb.tBodies[0].rows];
+    rows.sort((x, y) => { const a = cellVal(x.cells[st.c]), b = cellVal(y.cells[st.c]); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))) * st.d; });
+    rows.forEach((r) => tb.tBodies[0].appendChild(r));
+  });
+}
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('#view th[data-sortcol]'); if (!th) return;
+  const [key, c] = th.dataset.sortcol.split('|'), cur = SORTS[key];
+  SORTS[key] = { c: +c, d: cur && cur.c === +c ? -cur.d : -1 };
+  applySorts();
+});
 const LIVE = new Set(['overview', 'runs', 'rl', 'deployments', 'fleet', 'ray', 'gpu']);
 setInterval(() => {
   if (!ctx.F || $('#app').hidden) return;
@@ -405,6 +435,8 @@ ACTIONS.export = (t) => {
   const a = document.createElement('a'); a.href = url; a.download = `crucible-${k}-${date(Date.now())}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast(`Exported ${fmt(Math.max(rows.length - 1, 0))} rows`);
 };
+ACTIONS.env = () => toast('Production is the only environment you can access. Staging requires the platform-admin group.');
+ACTIONS.share = () => { try { navigator.clipboard.writeText(location.origin + location.pathname + '#' + S.view); } catch { /* clipboard blocked */ } toast('Link to this view copied'); };
 ACTIONS.new = (t) => openForm(t.dataset.form, t.dataset.values ? JSON.parse(t.dataset.values) : {});
 
 $('#btn-role').addEventListener('click', (e) => {
@@ -438,7 +470,6 @@ $('#btn-insp').addEventListener('click', () => { S.inspector = !S.inspector; lay
 
 VIEWS.overview = () => {
   const F = ctx.F, r = me(), hr = new Date().getHours();
-  const greet = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
   const items = attention();
   const running = F.jobs.filter((j) => j.state === 'running' && j.kind !== 'eval');
   const total = E.CLUSTERS.reduce((a, cl) => a + cl.nodes * 8, 0);
@@ -452,12 +483,13 @@ VIEWS.overview = () => {
     const p = F.perf(j), prog = j.kind === 'pretrain' ? F.tokensAt(j) / j.targetTokens : j.step / j.steps;
     return `<tr class="click" data-openrun="${j.id}"><td><b>${h(j.name)}</b><span class="id">${h(E.TEAMS[j.team].name)} · ${h(j.owner)}</span></td><td>${pill(j.kind === 'pretrain' ? 'blue' : j.kind === 'rl' ? 'purple' : '', j.kind === 'pretrain' ? 'Pretraining' : j.method || j.kind)}</td><td class="num">${fmt(E.jobGpus(j))}</td><td><div class="prog"><div style="width:${(prog * 100).toFixed(1)}%"></div></div><span class="id">${(prog * 100).toFixed(1)}%</span></td><td class="num">${j.kind === 'eval' ? 'n/a' : (p.mfu * 100).toFixed(1) + '%'}</td><td class="num">${si(p.tps)}/s</td></tr>`;
   };
-  return `<div class="hello"><h1>${greet}, ${h(r.name.split(' ')[0])}.</h1><p>${items.length ? `${items.length} item${items.length > 1 ? 's' : ''} need${items.length > 1 ? '' : 's'} you.` : 'Nothing needs you right now.'} ${fmt(running.length)} jobs training, ${F.deps.length} deployments serving.</p></div>
+  const reqs = now.reduce((a, [, s]) => a + s.total, 0);
+  return head('Overview', `Acme Corp production · ${E.CLUSTERS.length} clusters · ${fmt(total)} GPUs · ${items.length ? `${items.length} item${items.length > 1 ? 's' : ''} need you` : 'nothing needs you'}`) + `
   <div class="grid">
-    <div class="card c3 kpi"><b>${fmt((trainGpus + serveGpus) / total * 100, 1)}%</b><span>Fleet allocated</span><small>${fmt(trainGpus)} training · ${fmt(serveGpus)} serving · ${fmt(total)} GPUs</small></div>
-    <div class="card c3 kpi good"><b>${(gp * 100).toFixed(1)}%</b><span>Training goodput</span><small>Productive time over wall time, weighted by GPUs</small></div>
-    <div class="card c3 kpi"><b>${si(tokS)}</b><span>Output tokens per second</span><small>${si(now.reduce((a, [, s]) => a + s.total, 0))} requests/s across ${F.deps.length} deployments</small></div>
-    <div class="card c3 kpi"><b>${usd(cost)}</b><span>Blended cost per 1M output tokens</span><small>At list GPU-hour prices, current load</small></div>
+    ${kpi2('Fleet allocated', fmt((trainGpus + serveGpus) / total * 100, 1) + '%', `${fmt(trainGpus)} training · ${fmt(serveGpus)} serving`, 2.4, 'alloc', (trainGpus + serveGpus) / total * 100)}
+    ${kpi2('Training goodput', (gp * 100).toFixed(1) + '%', 'productive time / wall time', -0.3, 'goodput', gp * 100)}
+    ${kpi2('Output tokens/s', si(tokS), `${si(reqs)} req/s · ${F.deps.length} deployments`, 6.8, 'tok', tokS)}
+    ${kpi2('$ per 1M output tokens', usd(cost), 'blended, list GPU prices', -4.1, 'cost', cost, true)}
     <div class="card c12"><h3>Runtime efficiency <span class="right"><a href="#" data-go="kernels">Kernels and memory ›</a></span></h3><div class="rt-tiles">${[
       ['SM busy, training', '84%', 'gpu', 'bubbles and waits are the rest'],
       ['Tensor-core use, training', '41%', 'kernels', 'of FP8 peak, FA3 + FP8 GEMMs'],

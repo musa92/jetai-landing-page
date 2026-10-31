@@ -1,7 +1,7 @@
 /* Training views: runs (pretraining, post-training, RL, eval) with detail
    tabs, the parallelism planner and training datasets. */
-import { E, $, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, roleNote, me, toast, ui, sleep, icon, match, F_ } from './core.js?v=20261030-5';
-import { tsChart } from './charts.js?v=20261030-5';
+import { E, $, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, roleNote, me, toast, ui, sleep, icon, match, F_ } from './core.js?v=20261030-8';
+import { tsChart } from './charts.js?v=20261030-8';
 
 const KIND = { pretrain: ['blue', 'Pretraining'], post: ['', 'Post-training'], rl: ['purple', 'RL'], eval: ['', 'Evaluation'] };
 const STATE = { running: 'live', queued: 'pending', succeeded: 'ok', failed: 'deny', stopped: '' };
@@ -77,7 +77,7 @@ function runOverview(j, p) {
       <div class="lcm-tile"><span>Goodput</span><b>${(j.goodput * 100).toFixed(1)}%</b><small>after restarts and saves</small></div>
       <div class="lcm-tile"><span>Loss</span><b>${pts.at(-1)[1].toFixed(3)}</b><small>step ${fmt(Math.round(F.stepAt(j)))}</small></div>
       <div class="lcm-tile"><span>ETA</span><b>${dur(left)}</b><small>${usd(cost / 1e6)}M spent so far</small></div></div>
-      <div class="card-sub"><h4>Training loss by tokens seen</h4>${xyChart([{ name: 'Loss', color: C.blue, pts: lossPts }], { w: 820, hgt: 190, ymin: 1.8, ymax: 2.6, xl: 'tokens', fy: (v) => v.toFixed(2), marks: [{ x: done, y: E.lossAt(a, done), color: C.blue, label: 'now' }] })}<p class="note">Fit: L = 1.69 + A/N^0.34 + B/D^0.28 (Chinchilla). The run tracks its forecast within 0.4%, so the target loss at 15T tokens is ${E.lossAt(a, j.targetTokens).toFixed(3)}.</p></div>
+      <div class="card-sub"><h4>Training loss by tokens seen</h4>${xyChart([{ name: 'Loss', color: C.blue, pts: lossPts }], { w: 820, hgt: 190, ymin: 1.8, ymax: 2.6, xl: 'tokens', fy: (v) => v.toFixed(2), marks: [{ x: done, y: E.lossAt(a, done), color: C.blue, label: 'now' }] })}<p class="note">Fit: L = 1.69 + A/N^0.34 + B/D^0.28 (Chinchilla). The run tracks its forecast within 0.4%, so the target loss at ${si(j.targetTokens)} tokens is ${E.lossAt(a, j.targetTokens).toFixed(3)}.</p></div>
       <div class="card-sub"><h4>Tokens per second, last 24 hours</h4><p class="note">The gap is the node failure 26 minutes ago: detection, a hot spare and a restore from peer memory took 94 s, plus warmup.</p>${tsChart([{ name: 'Tokens/s', color: C.teal, points: thr }], { range: '24h', w: 820, height: 140, area: true })}</div>`;
   }
   // SFT, DPO, LoRA: loss or preference accuracy by step
@@ -169,7 +169,7 @@ function runPar(j) {
     ['Pipeline parallel', `${c.pp} stages`, c.pp > 1 ? `Point-to-point activations, ${c.accum} microbatches${c.vpp > 1 ? `, ${c.vpp} virtual stages` : ''}` : 'None', 'InfiniBand'],
     ['Data parallel', `${c.dp} replicas`, c.zero >= 3 ? 'FSDP: all-gather params, reduce-scatter grads' : `ZeRO-1: reduce-scatter grads, all-gather params after the step`, 'InfiniBand, rail-aligned'],
   ];
-  return `<div class="card-sub"><h4>One model replica: ${c.pp} pipeline stage${c.pp > 1 ? 's' : ''} × ${c.tp} tensor-parallel GPUs, repeated ${c.dp} times</h4><div class="pp">${stages.join('<span class="pp-arrow">→</span>')}</div>${c.zero >= 3 ? `<div class="row"><button class="btn" data-go="fsdp">Watch FSDP run one step ›</button></div>` : ''}<p class="note">Tensor parallel stays inside a node on NVLink. Pipeline stages and data-parallel replicas cross nodes on InfiniBand, placed so each rail carries one rank's traffic.</p></div>
+  return `<div class="card-sub"><h4>One model replica: ${c.pp} pipeline stage${c.pp > 1 ? 's' : ''} × ${c.tp} tensor-parallel GPUs, repeated ${c.dp} times</h4><div class="pp">${stages.join('<span class="pp-arrow">→</span>')}</div>${c.zero >= 3 ? `<div class="row"><button class="btn" data-go="fsdp">FSDP configuration ›</button></div>` : ''}<p class="note">Tensor parallel stays inside a node on NVLink. Pipeline stages and data-parallel replicas cross nodes on InfiniBand, placed so each rail carries one rank's traffic.</p></div>
     <div class="card-sub"><h4>Memory per GPU: ${gb(m.total)} of ${E.HW[c.hw].mem} GB</h4>${stack([['Weights', m.weights, C.blue], ['Gradients', m.grads, C.teal], ['Optimizer state', m.optim, C.purple], ['Activations', m.acts, C.amber], ['Gathered params', m.gathered, C.indigo], ['Logits', m.logits, C.pink], ['Runtime and fragmentation', m.other, C.gray], ['Free', Math.max(0, cap - m.total), 'var(--fill-2)']], gb)}<p class="note">${c.recompute === 'full' ? 'Full activation recompute' : c.recompute === 'selective' ? 'Selective recompute of attention and activations' : 'No recompute'}${c.zero >= 1 ? `, optimizer state sharded over ${c.dp} ranks` : ''}${c.chunkedLoss ? ', chunked cross-entropy (no full logits)' : ''}.</p></div>
     <div class="card-sub"><h4>Collectives</h4><table class="table"><thead><tr><th>Dimension</th><th>Group</th><th>Traffic</th><th>Link</th></tr></thead><tbody>${coll.map((r) => `<tr>${r.map((x) => `<td>${h(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
@@ -276,7 +276,7 @@ VIEWS.planner = () => {
   const P = S.planner, a = E.ARCH[P.arch];
   const res = E.plan(a, { hw: P.hw, gpus: +P.gpus, seq: +P.seq, batchTokens: +P.batch, fp8: !!P.fp8 });
   const pick = res.best[Math.min(P.pick, res.best.length - 1)];
-  const target = P.arch === 'core-70b' ? 15e12 : P.arch === 'coder-34b' ? 5e12 : 2e12;
+  const target = P.arch === 'core-70b' ? 9e12 : P.arch === 'coder-34b' ? 5e12 : 2e12;
   const sel = (k, opts) => `<select data-bind="planner.${k}">${opts.map(([v, t]) => `<option value="${v}"${String(v) === String(P[k]) ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
   const row = (r, i) => `<tr class="click${i === P.pick ? ' sel' : ''}" data-plpick="${i}"><td class="mono">${r.c.tp}</td><td class="mono">${r.c.pp}${r.c.vpp > 1 ? '×' + r.c.vpp : ''}</td><td class="mono">${r.c.cp}</td><td class="mono">${r.c.dp}</td><td class="mono">${r.c.micro} × ${r.c.accum}</td><td>${r.c.zero >= 3 ? 'FSDP' : 'ZeRO-1'}</td><td>${r.c.recompute}</td><td><div class="membar"><i style="width:${(r.mem.total / (E.HW[P.hw].mem * 1e9) * 100).toFixed(0)}%"></i></div><span class="id">${gb(r.mem.total)}</span></td><td class="num"><b>${(r.perf.mfu * 100).toFixed(1)}%</b></td><td class="num">${si(r.perf.tps)}/s</td><td class="num">${dur(target / r.perf.tps)}</td></tr>`;
   const cost = pick ? (target / pick.perf.tps) / 3600 * (+P.gpus) * E.HW[P.hw].cost : 0;
