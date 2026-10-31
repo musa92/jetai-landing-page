@@ -977,3 +977,13 @@ body { background: var(--bg); }
 .tm-item:hover { background: #3a3a3c; }
 .tm-item.on { background: #0a84ff; } .tm-item.on em, .tm-item.on b span { color: #fff; }
 .tm-foot { padding: 6px 10px 4px; font: 11px var(--text); color: #636366; border-top: 1px solid #3a3a3c; margin-top: 4px; }
+
+/* library layers */
+.stackdia { display: grid; gap: 6px; }
+.sd { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 10px; }
+.sd b { font: 600 13px var(--display); }
+.sd div { display: flex; flex-wrap: wrap; gap: 6px; }
+.sd span { font-size: 12px; padding: 4px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--hair); }
+.sd-u { background: var(--fill); } .sd-c { background: var(--blue-soft); } .sd-f { background: rgba(142,108,240,.12); } .sd-r { background: rgba(48,176,199,.12); } .sd-h { background: var(--fill); }
+.big-sm { display: flex; align-items: center; gap: 6px; height: 26px; font-size: 13px; color: var(--ink); }
+@media (max-width: 700px) { .sd { grid-template-columns: 1fr; } }

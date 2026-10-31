@@ -1,8 +1,9 @@
 /* Terminal: the crucible CLI in the browser. `crucible serve <model> --auto`
    runs the whole serving pipeline (mesh, meta, wrap, allocate, optimize,
    serve) against the same cost models the console uses. */
-import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261030-1';
-import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261030-1';
+import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261030-2';
+import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261030-2';
+import { lower, RULES } from './v-lib.js?v=20261030-2';
 
 const T = S.term = S.term || { lines: [], hist: [], hi: 0, busy: false, steps: null, model: null };
 const STEPS = [['mesh', 'Build device mesh'], ['meta', 'Read model metadata'], ['wrap', 'Wrap in engine'], ['optimize', 'Optimize for SLO'], ['allocate', 'Allocate GPUs'], ['serve', 'Serve as canary']];
@@ -170,6 +171,7 @@ const HELP = `[b]crucible[/] training and inference CLI
   [acc]explain[/] <topic>         fsdp, zero, kv, paged, batching, spec, disagg, moe, tp, pp, ring, grpo, dpo, ray
   [acc]export[/] <job|dep> --backend ray|k8s|slurm|skypilot|kserve|dynamo|llmd|triton
   [acc]backends[/]              Ray and its alternatives
+  [acc]build[/] <model> --framework jax|torch --mesh 8x32x8   lower a job through the Crucible library
   [acc]ray[/] status | list actors | list placement-groups | job list | job submit
   [acc]serve status[/]          Ray Serve application status
   [acc]status[/]                fleet, jobs and deployments
@@ -225,6 +227,25 @@ const CMDS = {
     if (!code) return out(`[err]backend '${b}' does not apply here[/]. Choose: ${opts.join(', ')}`);
     out(`[dim]# ${id} rendered for ${b} · other backends: ${opts.filter((x) => x !== b).join(', ')}[/]`);
     out(code);
+  },
+  build: async (a) => {
+    const arch = archOf(a[0]); if (!arch || E.ARCH[arch].experts) return out('[err]usage: crucible build <dense model> --framework jax|torch --mesh DATAxFSDPxTENSOR[/]');
+    const fw = flag(a, 'framework', 'jax'), [d, f, t] = flag(a, 'mesh', '8x32x8').split('x').map(Number);
+    if (![d, f, t].every((x) => x > 0)) return out('[err]--mesh must look like 8x32x8[/]');
+    const X = lower({ arch, fw, data: d, fsdp: f, tensor: t });
+    out(`[b]build[/] ${X.a.name} · ${fw === 'jax' ? 'JAX' : 'PyTorch'} backend · mesh data ${d} × fsdp ${f} × tensor ${t} = ${fmt(X.n)} devices`);
+    const step = async (name, text, ok = true) => { await sleep(260); out(`  ${ok ? '[ok]✓[/]' : '[err]✗[/]'} ${pad(name, 18)}${text}`); };
+    await step('spec', 'JobSpec parsed, model is framework-neutral (cx.Module)');
+    for (const [c, txt] of X.checks) if (!c) { await step('validate', txt, false); return out('[err]build failed[/]'); }
+    await step('validate', `${X.checks.length} shape checks pass`);
+    const fits = X.mem.total <= 80e9 * 0.92;
+    await step('memory', `${gb(X.mem.total)} per device of 80 GB`, fits);
+    if (!fits) return out('[err]build failed: raise fsdp or tensor[/]');
+    await step('sharding', RULES.filter((r) => r[1].length).map(([k, m]) => `${k}→${m.join('×')}`).join('  '));
+    await step('lower', fw === 'jax' ? 'jit + NamedSharding; XLA SPMD inserted 4 all-gathers, 3 reduce-scatters per layer; compiled 41 s (cached)' : 'DTensor ColwiseParallel/RowwiseParallel + fully_shard per block; torch.compile per block');
+    await step('ray', `placement group ${X.n / 8} × {GPU: 8} STRICT_SPREAD ready; ${fw === 'jax' ? 'jax.distributed.initialize on each host' : 'init_process_group(nccl) on each GPU'}`);
+    await step('checkpoint', fw === 'jax' ? 'Orbax async, cx.ckpt layout' : 'torch DCP async, cx.ckpt layout');
+    out(`[ok]✓ ready[/] modeled MFU ${(X.perf.mfu * 100).toFixed(1)}% · ${si(X.perf.tps)} tokens/s · [acc]open library[/] for generated code`);
   },
   backends: () => {
     out(`[b]training[/]  ray (default) · k8s: Kubeflow PyTorchJob + Kueue · slurm · skypilot · torchrun
@@ -350,15 +371,16 @@ VIEWS.terminal = () => {
     <aside class="term-side"><h3>Pipeline</h3><div id="term-steps"></div><h3 class="sub-h">Try</h3><div class="term-chips">${chips.map((c) => `<button class="btn" data-termrun="${h(c)}">${h(c.replace('crucible ', ''))}</button>`).join('')}</div></aside></div>`;
 };
 /* ── tab completion: commands, then models, deployments, jobs, flags and flag values ── */
-const MODEL_ARGS = ['serve', 'mesh', 'meta', 'wrap', 'optimize', 'allocate', 'plan'];
+const MODEL_ARGS = ['serve', 'mesh', 'meta', 'wrap', 'optimize', 'allocate', 'plan', 'build'];
 const FLAGS = {
   serve: ['--auto', '--engine', '--replicas', '--ttft', '--itl', '--gpu', '--quant', '--name'],
   mesh: ['--gpu', '--quant'], wrap: ['--gpu', '--quant'], optimize: ['--gpu', '--quant', '--ttft', '--itl'],
-  allocate: ['--gpu', '--quant', '--replicas'], plan: ['--gpus', '--gpu', '--seq'], scale: ['--replicas'], export: ['--backend'],
+  allocate: ['--gpu', '--quant', '--replicas'], plan: ['--gpus', '--gpu', '--seq'], scale: ['--replicas'], export: ['--backend'], build: ['--framework', '--mesh'],
 };
 const VALUES = {
   '--engine': ['vllm', 'sglang', 'trt'], '--gpu': Object.keys(E.HW), '--quant': ['fp8', 'bf16', 'int4'],
   '--gpus': ['64', '128', '256', '512', '1024', '2048', '4096'], '--seq': ['4096', '8192', '16384', '32768', '131072'],
+  '--framework': ['jax', 'torch'], '--mesh': ['8x32x8', '4x64x8', '1x64x1', '2x16x4', '8x16x8'],
   '--backend': ['ray', 'k8s', 'slurm', 'skypilot', 'torchrun', 'monolith', 'kserve', 'dynamo', 'llmd', 'triton'],
   '--replicas': ['2', '4', '8', '16', '32'], '--ttft': ['0.3', '0.6', '1.2', '2.5'], '--itl': ['20', '30', '40', '60'],
 };
@@ -372,7 +394,7 @@ function candidates(line) {
   else {
     const cmd = words[0], prev = words[i - 1];
     if (VALUES[prev]) opts = VALUES[prev];
-    else if (i === 1 && MODEL_ARGS.includes(cmd)) opts = [...Object.keys(E.ARCH).filter((k) => cmd !== 'plan' || !E.ARCH[k].experts), ...VERS().map(([v]) => v)];
+    else if (i === 1 && MODEL_ARGS.includes(cmd)) opts = [...Object.keys(E.ARCH).filter((k) => !['plan', 'build'].includes(cmd) || !E.ARCH[k].experts), ...VERS().map(([v]) => v)];
     else if (i === 1 && ['forecast', 'kv', 'scale'].includes(cmd)) opts = ctx.F.deps.map((d) => d.id);
     else if (i === 1 && cmd === 'logs') opts = [...ctx.F.jobs.map((j) => j.id), ...ctx.F.deps.map((d) => d.id)];
     else if (i === 1 && cmd === 'open') opts = Object.keys(VIEWS);
@@ -384,7 +406,7 @@ function candidates(line) {
   return { head: toks.slice(0, toks.length - 1).join(' '), cur, list: [...new Set(opts)].filter((o) => o.startsWith(cur)) };
 }
 /* What each suggestion is, shown on the right of the dropdown. */
-const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'FSDP, KV cache, MoE, TP, PP and more', export: 'Render a job for Ray, Kubernetes, Slurm…', backends: 'Ray and its alternatives', ray: 'Ray cluster: status, actors, jobs', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
+const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'FSDP, KV cache, MoE, TP, PP and more', export: 'Render a job for Ray, Kubernetes, Slurm…', backends: 'Ray and its alternatives', ray: 'Ray cluster: status, actors, jobs', build: 'Lower a job to JAX or PyTorch on Ray', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
 const FLAG_DESC = { '--auto': 'Run every step without pausing', '--engine': 'vllm, sglang or trt', '--replicas': 'Number of replicas', '--ttft': 'TTFT p90 SLO, seconds', '--itl': 'ITL p90 SLO, ms', '--gpu': 'h100, h200, b200, l40s', '--quant': 'fp8, bf16, int4', '--name': 'Deployment name', '--gpus': 'GPU budget for training', '--seq': 'Sequence length' };
 function describe(o) {
   if (CMD_DESC[o]) return CMD_DESC[o];
@@ -396,7 +418,7 @@ function describe(o) {
   const j = ctx.F.job(o); if (j) return `${j.name} · ${j.state}`;
   if (VIEWS[o]) return 'Console page';
   if (EXPLAIN[o]) return EXPLAIN[o][0];
-  const BD = { k8s: 'Kubeflow PyTorchJob + Kueue', slurm: 'sbatch + srun torchrun', skypilot: 'Any cloud, spot recovery', torchrun: 'Plain PyTorch launcher', monolith: 'One colocated SPMD job', kserve: 'KServe InferenceService', dynamo: 'NVIDIA Dynamo, disaggregated', llmd: 'llm-d on Kubernetes', triton: 'Triton + TensorRT-LLM', actors: 'Live actors', 'placement-groups': 'GPU reservations', submit: 'Submit a script', list: 'List', status: 'Cluster or app status', job: 'Jobs on the cluster' };
+  const BD = { jax: 'JAX backend: NamedSharding, jit, Orbax', torch: 'PyTorch backend: DTensor, FSDP2, DCP', '8x32x8': '2,048 devices', '4x64x8': '2,048 devices', '1x64x1': '64 devices, FSDP only', '2x16x4': '128 devices', '8x16x8': '1,024 devices', '--framework': 'jax or torch', '--mesh': 'data x fsdp x tensor', k8s: 'Kubeflow PyTorchJob + Kueue', slurm: 'sbatch + srun torchrun', skypilot: 'Any cloud, spot recovery', torchrun: 'Plain PyTorch launcher', monolith: 'One colocated SPMD job', kserve: 'KServe InferenceService', dynamo: 'NVIDIA Dynamo, disaggregated', llmd: 'llm-d on Kubernetes', triton: 'Triton + TensorRT-LLM', actors: 'Live actors', 'placement-groups': 'GPU reservations', submit: 'Submit a script', list: 'List', status: 'Cluster or app status', job: 'Jobs on the cluster' };
   if (BD[o]) return BD[o];
   return { vllm: 'vLLM 0.11', sglang: 'SGLang 0.5', trt: 'TensorRT-LLM 1.1', fp8: '1 byte per weight', bf16: '2 bytes per weight', int4: 'AWQ, ~0.56 bytes per weight' }[o] || '';
 }

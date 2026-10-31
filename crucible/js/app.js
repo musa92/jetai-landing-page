@@ -1,15 +1,16 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90 } from './core.js?v=20261030-1';
-import { initChartHover } from './charts.js?v=20261030-1';
-import './v-train.js?v=20261030-1';
-import './v-infer.js?v=20261030-1';
-import './v-compute.js?v=20261030-1';
-import './v-more.js?v=20261030-1';
-import './v-ops.js?v=20261030-1';
-import './v-term.js?v=20261030-1';
-import './v-fsdp.js?v=20261030-1';
-import './v-backends.js?v=20261030-1';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90 } from './core.js?v=20261030-2';
+import { initChartHover } from './charts.js?v=20261030-2';
+import './v-train.js?v=20261030-2';
+import './v-infer.js?v=20261030-2';
+import './v-compute.js?v=20261030-2';
+import './v-more.js?v=20261030-2';
+import './v-ops.js?v=20261030-2';
+import './v-term.js?v=20261030-2';
+import './v-fsdp.js?v=20261030-2';
+import './v-backends.js?v=20261030-2';
+import './v-lib.js?v=20261030-2';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -37,7 +38,7 @@ export const SECTIONS = [
   ['inference', 'Inference', [['deployments', 'Deployments'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
   ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
   ['models', 'Models', [['registry', 'Registry']]],
-  ['dev', 'Developers', [['terminal', 'Terminal'], ['review', 'Design review'], ['sdk', 'SDK and API']]],
+  ['dev', 'Developers', [['library', 'Crucible library'], ['terminal', 'Terminal'], ['review', 'Design review'], ['sdk', 'SDK and API']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations']]],
 ];
 const SECTION_OF = Object.fromEntries(SECTIONS.flatMap(([k, , tabs]) => tabs.map(([v]) => [v, k])));

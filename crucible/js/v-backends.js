@@ -2,7 +2,7 @@
    The same three workloads rendered as Ray, Kubernetes, Slurm, SkyPilot or
    the serving stacks, with when each one wins. Generators are shared with the
    terminal's `crucible export`. */
-import { E, h, ctx, S, VIEWS, CLICKS, head, pill, seg } from './core.js?v=20261030-1';
+import { E, h, ctx, S, VIEWS, CLICKS, head, pill, seg } from './core.js?v=20261030-2';
 
 export const BACKENDS = {
   train: [['ray', 'Ray Train'], ['k8s', 'Kubernetes (Kubeflow + Kueue)'], ['slurm', 'Slurm'], ['skypilot', 'SkyPilot'], ['torchrun', 'torchrun']],

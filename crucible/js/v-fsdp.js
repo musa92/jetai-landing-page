@@ -2,7 +2,7 @@
    event. Each GPU owns a quarter of every layer; layers are gathered just in
    time, freed after use, and gradients are reduce-scattered back to owners.
    Strategy switch compares DDP, ZeRO-2 (SHARD_GRAD_OP) and FSDP (FULL_SHARD). */
-import { E, h, fmt, gb, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, stack, seg, C, ui } from './core.js?v=20261030-1';
+import { E, h, fmt, gb, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, stack, seg, C, ui } from './core.js?v=20261030-2';
 
 const N = 4, L = 4;
 S.fsdp = S.fsdp || { mode: 'full', i: 0, play: false, arch: 'core-70b', gpus: 64 };
