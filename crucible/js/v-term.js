@@ -1,9 +1,10 @@
 /* Terminal: the crucible CLI in the browser. `crucible serve <model> --auto`
    runs the whole serving pipeline (mesh, meta, wrap, allocate, optimize,
    serve) against the same cost models the console uses. */
-import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261030-9';
-import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261030-9';
-import { lower, RULES } from './v-lib.js?v=20261030-9';
+import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261031-3';
+import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261031-3';
+import { lower, RULES } from './v-lib.js?v=20261031-3';
+import { jobCommands, fileNames, FS } from './v-jobs.js?v=20261031-3';
 
 const T = S.term = S.term || { lines: [], hist: [], hi: 0, busy: false, steps: null, model: null };
 const STEPS = [['mesh', 'Build device mesh'], ['meta', 'Read model metadata'], ['wrap', 'Wrap in engine'], ['optimize', 'Optimize for SLO'], ['allocate', 'Allocate GPUs'], ['serve', 'Serve as canary']];
@@ -20,7 +21,9 @@ const flag = (args, k, d) => { const i = args.indexOf('--' + k); return i >= 0 &
 const has = (args, k) => args.includes('--' + k);
 
 function stepsHtml() {
-  if (!T.steps) return `<p class="note">Run <code>crucible serve core-8b --auto</code> to watch the six serving steps execute.</p>`;
+  const mine = (S.submitted || []).map((id) => ctx.F.job(id)).filter(Boolean);
+  const jobs = mine.length ? `<b class="t-model">Submitted from this terminal</b><ul class="tjobs">${mine.slice(0, 6).map((j) => `<li><span class="mono">${h(j.id)}</span><em>${j.state} · ${E.jobGpus(j)} GPUs</em></li>`).join('')}</ul>` : '';
+  if (!T.steps) return jobs + `<p class="note">Submit a spec with <code>crucible job submit jobs/sft-8b.yaml</code>, or run <code>crucible serve core-8b --auto</code> to watch the serving steps.</p>`;
   return `<b class="t-model">${h(T.model)}</b><ol class="steps">${STEPS.map(([k, n], i) => { const st = T.steps[k]; return `<li class="${st === 'done' ? 'done' : st === 'run' ? 'running' : ''}"><span class="dot">${st === 'done' ? '✓' : ''}</span><div><b>${n}</b><p class="mono">crucible ${k}</p></div><span class="id">${T.stepTime && T.stepTime[k] ? T.stepTime[k] : ''}</span></li>`; }).join('')}</ol>`;
 }
 
@@ -174,6 +177,14 @@ const HELP = `[b]crucible[/] training and inference CLI
   [acc]build[/] <model> --framework jax|torch --mesh 8x32x8   lower a job through the Crucible library
   [acc]ray[/] status | list actors | list placement-groups | job list | job submit
   [acc]serve status[/]          Ray Serve application status
+  [b]jobs[/]
+  [acc]ls[/] · [acc]tree[/] · [acc]cat[/] <file> · [acc]edit[/] <file>      workspace: jobs/*.yaml, src/*.py, configs/
+  [acc]job validate[/] <file.yaml>   schema, registry, governance and quota checks with line numbers
+  [acc]job submit[/] <file.yaml> [--dry-run]   package code, shard data, place on GPUs/CPUs, launch on Ray
+  [acc]run[/] <src/file.py> --gpus 64 --cpus 256   generate a job spec from flags and submit it
+  [acc]job list[/] · [acc]job status[/] · [acc]job logs[/] · [acc]job describe[/] · [acc]job cancel[/] <id>
+  [acc]data shard[/] <dataset> --ranks N   shard-to-rank assignment
+  [b]fleet[/]
   [acc]status[/]                fleet, jobs and deployments
   [acc]models[/]                registry
   [acc]top[/]                   GPU telemetry snapshot
@@ -352,6 +363,22 @@ INFO trainer.py: torch.distributed initialized, backend=nccl, world_size=8
   logs: (a) => { const ev = ctx.F.events.filter((e) => e.subject === a[0]); if (!ev.length) return out(`[dim]no events for ${a[0] || '?'}[/]`); for (const e of ev.slice(0, 12)) out(`  ${new Date(e.t).toISOString().slice(11, 19)}  ${pad(e.kind, 10)} ${e.text}`); },
 };
 
+/* Job submission, workspace files and data sharding live in v-jobs.js. */
+function setLine(i, text) { if (i >= 0 && i < T.lines.length) { T.lines[i] = text; draw(); } }
+function openEditor(file, text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-back'; wrap.id = 'modal';
+  wrap.innerHTML = `<div class="modal ed"><div class="modal-head"><div><h3 class="mono">${h(file)}</h3><p>${FS[file] === undefined ? 'New file.' : 'Edit and save, then run crucible job validate or submit.'}</p></div></div><textarea class="ed-ta" spellcheck="false">${h(text)}</textarea><div class="modal-foot"><span class="note">⌘S to save · Esc to cancel</span><span class="spacer"></span><button class="btn" data-ed-cancel>Cancel</button><button class="btn primary" data-ed-save>Save</button></div></div>`;
+  document.body.appendChild(wrap);
+  const ta = wrap.querySelector('textarea'); ta.focus();
+  const close = () => { wrap.remove(); const q = $('#term-q'); if (q) q.focus(); };
+  const save = () => { FS[file] = ta.value.endsWith('\n') ? ta.value : ta.value + '\n'; out(`[ok]✓ saved ${file}[/] (${FS[file].split('\n').length - 1} lines)`); close(); };
+  ta.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); } if (e.key === 'Tab') { e.preventDefault(); ta.setRangeText('  ', ta.selectionStart, ta.selectionEnd, 'end'); } if (e.key === 'Escape') { e.stopPropagation(); close(); } });
+  wrap.querySelector('[data-ed-cancel]').addEventListener('click', close);
+  wrap.querySelector('[data-ed-save]').addEventListener('click', save);
+}
+Object.assign(CMDS, jobCommands({ out, setLine, pad, lpad, flag, has, sleep, openEditor, lineCount: () => T.lines.length }));
+
 async function exec(line) {
   line = line.trim(); if (!line) return;
   T.hist.push(line); T.hi = T.hist.length;
@@ -366,7 +393,7 @@ async function exec(line) {
 
 VIEWS.terminal = () => {
   if (!T.lines.length) out(`Crucible CLI 3.4.0 · signed in as ${me().name} (${me().title}) · type [acc]help[/]\n`);
-  const chips = ['crucible serve core-8b --auto --engine sglang', 'crucible serve core-70b --auto --ttft 1.2 --itl 40', 'crucible plan core-70b --gpus 1024', 'crucible status', 'crucible top', 'crucible forecast assistant-8b'];
+  const chips = ['ls', 'cat jobs/sft-8b.yaml', 'crucible job submit jobs/sft-8b.yaml', 'crucible job submit jobs/embed-docs.yaml', 'crucible run src/train_sft.py --gpus 32 --cpus 128', 'crucible serve core-8b --auto --engine sglang', 'crucible serve core-70b --auto --ttft 1.2 --itl 40', 'crucible plan core-70b --gpus 1024', 'crucible status', 'crucible top', 'crucible forecast assistant-8b'];
   return `<div class="view-head"><h1>Terminal</h1><p>Every console action is a CLI command. One line takes a model from the registry to a serving canary: mesh, metadata, engine wrap, allocation, SLO optimization and rollout.</p></div>
   <div class="term-wrap"><div class="term"><div class="term-bar"><i></i><i></i><i></i><span>crucible · ${h(me().name.split(' ')[0].toLowerCase())}@acme</span></div><div class="term-out" id="term-out"></div><label class="term-in"><span class="t-prompt">${h(me().name.split(' ')[0].toLowerCase())}@crucible ~ %</span><input id="term-q" autocomplete="off" spellcheck="false" placeholder="type a command, Tab for suggestions"></label><div class="term-menu" id="term-menu" hidden></div></div>
     <aside class="term-side"><h3>Pipeline</h3><div id="term-steps"></div><h3 class="sub-h">Try</h3><div class="term-chips">${chips.map((c) => `<button class="btn" data-termrun="${h(c)}">${h(c.replace('crucible ', ''))}</button>`).join('')}</div></aside></div>`;
@@ -380,7 +407,8 @@ const FLAGS = {
 };
 const VALUES = {
   '--engine': ['vllm', 'sglang', 'trt'], '--gpu': Object.keys(E.HW), '--quant': ['fp8', 'bf16', 'int4'],
-  '--gpus': ['64', '128', '256', '512', '1024', '2048', '4096'], '--seq': ['4096', '8192', '16384', '32768', '131072'],
+  '--cpus': ['64', '128', '256', '512'], '--model': ['core-8b-sft-v5', 'core-8b-base-v5', 'coder-34b-v2'], '--data': ['assistant-sft-v9', 'ide-completions-v3'],
+  '--gpus': ['8', '16', '32', '64', '128', '256', '512', '1024', '2048', '4096'], '--seq': ['4096', '8192', '16384', '32768', '131072'],
   '--framework': ['jax', 'torch'], '--mesh': ['8x32x8', '4x64x8', '1x64x1', '2x16x4', '8x16x8'],
   '--backend': ['ray', 'k8s', 'slurm', 'skypilot', 'torchrun', 'monolith', 'kserve', 'dynamo', 'llmd', 'triton'],
   '--replicas': ['2', '4', '8', '16', '32'], '--ttft': ['0.3', '0.6', '1.2', '2.5'], '--itl': ['20', '30', '40', '60'],
@@ -391,6 +419,11 @@ function candidates(line) {
   const words = toks.slice(lead), cur = words[words.length - 1] ?? '', i = words.length - 1;
   let opts = [];
   if (i <= 0) opts = [...Object.keys(CMDS), ...(lead ? [] : ['crucible'])];
+  else if (words[0] === 'job') opts = i === 1 ? ['submit', 'validate', 'list', 'status', 'logs', 'describe', 'cancel'] : i === 2 && ['submit', 'validate'].includes(words[1]) ? fileNames().filter((f) => f.endsWith('.yaml') && f.startsWith('jobs/')) : i === 2 && ['status', 'logs', 'describe', 'cancel'].includes(words[1]) ? ctx.F.jobs.map((j) => j.id) : i >= 3 && words[1] === 'submit' ? ['--dry-run'] : i >= 3 && words[1] === 'logs' ? ['--follow'] : [];
+  else if (['cat', 'edit'].includes(words[0])) opts = i === 1 ? fileNames() : [];
+  else if (words[0] === 'ls') opts = i === 1 ? ['jobs/', 'src/', 'configs/'] : [];
+  else if (words[0] === 'run') opts = i === 1 ? fileNames().filter((f) => f.endsWith('.py')) : (VALUES[words[i - 1]] || ['--gpus', '--cpus', '--model', '--data', '--gpu', '--dry-run'].filter((f) => !words.includes(f)));
+  else if (words[0] === 'data') opts = i === 1 ? ['shard'] : i === 2 ? E.DATASETS.map((d) => d.id) : words[i - 1] === '--ranks' ? ['8', '64', '256', '1024'] : ['--ranks'];
   else if (words[0] === 'ray') opts = i === 1 ? ['status', 'list', 'job'] : i === 2 && words[1] === 'list' ? ['actors', 'placement-groups'] : i === 2 && words[1] === 'job' ? ['list', 'submit'] : words[1] === 'status' ? (words[i - 1] === '--address' ? ctx.F.jobs.filter((j) => j.state === 'running').map((j) => 'ray-' + j.id) : ['--address']) : [];
   else {
     const cmd = words[0], prev = words[i - 1];
@@ -407,7 +440,7 @@ function candidates(line) {
   return { head: toks.slice(0, toks.length - 1).join(' '), cur, list: [...new Set(opts)].filter((o) => o.startsWith(cur)) };
 }
 /* What each suggestion is, shown on the right of the dropdown. */
-const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'FSDP, KV cache, MoE, TP, PP and more', export: 'Render a job for Ray, Kubernetes, Slurm…', backends: 'Ray and its alternatives', ray: 'Ray cluster: status, actors, jobs', build: 'Lower a job to JAX or PyTorch on Ray', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
+const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'FSDP, KV cache, MoE, TP, PP and more', export: 'Render a job for Ray, Kubernetes, Slurm…', backends: 'Ray and its alternatives', ray: 'Ray cluster: status, actors, jobs', build: 'Lower a job to JAX or PyTorch on Ray', job: 'Submit, validate, list, describe, cancel jobs', run: 'Run a script across GPUs and CPUs', ls: 'List workspace files', tree: 'Workspace tree', cat: 'Print a file', edit: 'Edit a file', data: 'Shard a dataset across ranks', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
 const FLAG_DESC = { '--auto': 'Run every step without pausing', '--engine': 'vllm, sglang or trt', '--replicas': 'Number of replicas', '--ttft': 'TTFT p90 SLO, seconds', '--itl': 'ITL p90 SLO, ms', '--gpu': 'h100, h200, b200, l40s', '--quant': 'fp8, bf16, int4', '--name': 'Deployment name', '--gpus': 'GPU budget for training', '--seq': 'Sequence length' };
 function describe(o) {
   if (CMD_DESC[o]) return CMD_DESC[o];
@@ -419,6 +452,10 @@ function describe(o) {
   const j = ctx.F.job(o); if (j) return `${j.name} · ${j.state}`;
   if (VIEWS[o]) return 'Console page';
   if (EXPLAIN[o]) return EXPLAIN[o][0];
+  if (FS[o]) return o.endsWith('.yaml') ? (FS[o].match(/kind: (\w+)/) || [])[1] || 'YAML' : o.endsWith('.py') ? 'Python' : 'File';
+  const JD = { submit: 'Package, place and launch', validate: 'Check a spec', describe: 'Nodes, ranks, shards', cancel: 'Checkpoint and release GPUs', logs: 'Tail rank 0', '--dry-run': 'Plan without starting', '--follow': 'Keep tailing', shard: 'Assign shards to ranks', '--ranks': 'Data-parallel ranks', '--cpus': 'CPUs for preprocessing' };
+  if (JD[o]) return JD[o];
+  if (ctx.F.job(o)) return ctx.F.job(o).name + ' · ' + ctx.F.job(o).state;
   const BD = { jax: 'JAX backend: NamedSharding, jit, Orbax', torch: 'PyTorch backend: DTensor, FSDP2, DCP', '8x32x8': '2,048 devices', '4x64x8': '2,048 devices', '1x64x1': '64 devices, FSDP only', '2x16x4': '128 devices', '8x16x8': '1,024 devices', '--framework': 'jax or torch', '--mesh': 'data x fsdp x tensor', k8s: 'Kubeflow PyTorchJob + Kueue', slurm: 'sbatch + srun torchrun', skypilot: 'Any cloud, spot recovery', torchrun: 'Plain PyTorch launcher', monolith: 'One colocated SPMD job', kserve: 'KServe InferenceService', dynamo: 'NVIDIA Dynamo, disaggregated', llmd: 'llm-d on Kubernetes', triton: 'Triton + TensorRT-LLM', actors: 'Live actors', 'placement-groups': 'GPU reservations', submit: 'Submit a script', list: 'List', status: 'Cluster or app status', job: 'Jobs on the cluster' };
   if (BD[o]) return BD[o];
   return { vllm: 'vLLM 0.11', sglang: 'SGLang 0.5', trt: 'TensorRT-LLM 1.1', fp8: '1 byte per weight', bf16: '2 bytes per weight', int4: 'AWQ, ~0.56 bytes per weight' }[o] || '';

@@ -1,17 +1,17 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261030-9';
-import { initChartHover } from './charts.js?v=20261030-9';
-import './v-train.js?v=20261030-9';
-import './v-infer.js?v=20261030-9';
-import './v-compute.js?v=20261030-9';
-import './v-more.js?v=20261030-9';
-import './v-ops.js?v=20261030-9';
-import './v-term.js?v=20261030-9';
-import './v-fsdp.js?v=20261030-9';
-import './v-backends.js?v=20261030-9';
-import './v-lib.js?v=20261030-9';
-import './v-perf.js?v=20261030-9';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261031-3';
+import { initChartHover } from './charts.js?v=20261031-3';
+import './v-train.js?v=20261031-3';
+import './v-infer.js?v=20261031-3';
+import './v-compute.js?v=20261031-3';
+import './v-more.js?v=20261031-3';
+import './v-ops.js?v=20261031-3';
+import './v-term.js?v=20261031-3';
+import './v-fsdp.js?v=20261031-3';
+import './v-backends.js?v=20261031-3';
+import './v-lib.js?v=20261031-3';
+import './v-perf.js?v=20261031-3';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 

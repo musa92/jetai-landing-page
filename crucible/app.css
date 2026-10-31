@@ -1098,3 +1098,7 @@ body { background: var(--bg); }
 .ff2 select { height: 26px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); padding: 0 8px; font-size: 12.5px; color: var(--ink); }
 .dv-up { color: var(--green); font-weight: 600; } .dv-down { color: var(--red); font-weight: 600; }
 .table.cmp td:first-child { color: var(--ink-2); }
+
+.modal.ed { width: min(860px, 100%); }
+.ed-ta { width: 100%; min-height: 420px; border: 0; border-top: 1px solid var(--rule); padding: 14px 18px; font: 12.5px/1.6 var(--mono); background: #1d1d1f; color: #e5e5ea; resize: vertical; outline: none; tab-size: 2; }
+.tjobs { list-style: none; display: grid; gap: 6px; margin: 6px 0 10px; } .tjobs li { display: grid; gap: 1px; font-size: 11.5px; } .tjobs em { font-style: normal; color: var(--ink-3); }

@@ -327,6 +327,7 @@ export const MODELS = [
   { id: 'core-8b', name: 'Acme Core 8B', versions: [
     ['core-8b-dpo-v5.3', 'DPO', 'dpo-core-8b-assist', 'Production', 'assistant-prefs-v6'],
     ['core-8b-sft-v5', 'SFT', 'sft-core-8b-assist', 'Registered', 'assistant-sft-v9'],
+    ['core-8b-base-v5', 'Base checkpoint', 'pt-core-8b-v5', 'Registered', 'mix-pretrain-v8'],
   ] },
   { id: 'coder-34b', name: 'Acme Coder 34B', versions: [['coder-34b-v2', 'SFT', 'sft-coder-34b-v2', 'Production', 'code-sft-v4']] },
   { id: 'edge-3b', name: 'Acme Edge 3B', versions: [['edge-3b-distill-c41k', 'Distillation', 'pt-edge-3b-distill', 'Evaluating', 'mix-distill-v2']] },

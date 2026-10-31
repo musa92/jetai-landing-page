@@ -1,7 +1,7 @@
 /* Runtime internals and operations: KV cache, mixture of experts, GPU
    telemetry, and demand forecasting that sizes serving and lends the rest. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, p90 } from './core.js?v=20261030-9';
-import { tsChart, RANGES } from './charts.js?v=20261030-9';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, p90 } from './core.js?v=20261031-3';
+import { tsChart, RANGES } from './charts.js?v=20261031-3';
 
 const rnd = (i, j = 0) => { const x = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453; return x - Math.floor(x); };
 const depSel = (attr, cur, filter = () => true) => `<div class="seg">${ctx.F.deps.filter(filter).map((d) => `<button class="${d.id === cur ? 'on' : ''}" data-${attr}="${d.id}">${h(d.name)}</button>`).join('')}</div>`;
