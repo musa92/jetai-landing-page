@@ -1,6 +1,6 @@
 /* Shared console state and helpers. Every view module imports this one file
    (same URL, so one instance) and registers into VIEWS, ACTIONS and CLICKS. */
-import * as E from './sim.js?v=20261030-8';
+import * as E from './sim.js?v=20261030-9';
 export { E };
 
 export const $ = (s, r = document) => r.querySelector(s);
@@ -107,7 +107,7 @@ export const ui = { render: () => {}, renderChrome: () => {}, go: () => {}, open
 export function xyChart(series, { w = 1000, hgt = 220, xl = '', yl = '', fx = (v) => si(v), fy = (v) => si(v), ymax, ymin = 0, xmax, hline, marks = [] } = {}) {
   const L = 48, R = 12, T = 12, B = 30;
   const xs = series.flatMap((s) => s.pts.map((p) => p[0])), ys = series.flatMap((s) => s.pts.map((p) => p[1])).filter(Number.isFinite);
-  const X = xmax || Math.max(...xs, 1) * 1.04, Y = ymax || Math.max(...ys, hline || 0, 1e-9) * 1.1;
+  const X = xmax || Math.max(...xs, 1) * 1.04, Y = ymax || Math.max(...ys, hline ? hline.v : 0, 1e-9) * 1.1;
   const x = (v) => L + (v / X) * (w - L - R), y = (v) => T + (1 - (Math.max(ymin, Math.min(v, Y)) - ymin) / (Y - ymin)) * (hgt - T - B);
   let g = '';
   for (let i = 0; i <= 4; i++) { const v = ymin + ((Y - ymin) / 4) * i; g += `<line x1="${L}" x2="${w - R}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${L - 6}" y="${y(v) + 3}" class="yl">${fy(v)}</text>`; }

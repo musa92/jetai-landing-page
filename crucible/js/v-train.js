@@ -1,7 +1,7 @@
 /* Training views: runs (pretraining, post-training, RL, eval) with detail
    tabs, the parallelism planner and training datasets. */
-import { E, $, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, roleNote, me, toast, ui, sleep, icon, match, F_ } from './core.js?v=20261030-8';
-import { tsChart } from './charts.js?v=20261030-8';
+import { E, $, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, roleNote, me, toast, ui, sleep, icon, match, F_ } from './core.js?v=20261030-9';
+import { tsChart } from './charts.js?v=20261030-9';
 
 const KIND = { pretrain: ['blue', 'Pretraining'], post: ['', 'Post-training'], rl: ['purple', 'RL'], eval: ['', 'Evaluation'] };
 const STATE = { running: 'live', queued: 'pending', succeeded: 'ok', failed: 'deny', stopped: '' };
