@@ -2,6 +2,7 @@
    runs the whole serving pipeline (mesh, meta, wrap, allocate, optimize,
    serve) against the same cost models the console uses. */
 import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261030-1';
+import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261030-1';
 
 const T = S.term = S.term || { lines: [], hist: [], hi: 0, busy: false, steps: null, model: null };
 const STEPS = [['mesh', 'Build device mesh'], ['meta', 'Read model metadata'], ['wrap', 'Wrap in engine'], ['optimize', 'Optimize for SLO'], ['allocate', 'Allocate GPUs'], ['serve', 'Serve as canary']];
@@ -89,6 +90,74 @@ function stepServe(arch, m, name, slo) {
   return id;
 }
 
+function serveStatus() {
+  out(`[dim]Ray Serve applications[/]`);
+  for (const d of ctx.F.deps) { const s = ctx.F.servingNow(d); out(`${d.id}:\n  status: ${d.state === 'degraded' ? '[warn]DEPLOY_FAILED_SLO[/]' : 'RUNNING'}\n  deployments:\n    LLMServer:${d.engine.replace(/[^A-Za-z]/g, '')}:\n      status: ${d.state === 'degraded' ? '[warn]UNHEALTHY[/]' : 'HEALTHY'}\n      replica_states: { RUNNING: ${d.replicas} }\n      ongoing_requests_per_replica: ${Math.round(s.B)}`); }
+}
+
+/* Concepts, one screen each. [name, text, console page]. */
+const EXPLAIN = {
+  fsdp: ['FSDP', `[b]FSDP step on N GPUs[/] (each owns 1/N of every layer)
+  forward   for each layer:  [acc]all-gather[/] params → compute → [dim]free (reshard)[/]   next layer prefetched on the NCCL stream
+  backward  for each layer:  [acc]all-gather[/] params → compute grads → [acc]reduce-scatter[/] → keep 1/N of grads
+  optimizer Adam on the local shard only, no communication
+  memory    16·P/N bytes of state per GPU + ~2 gathered layers + activations
+  traffic   ~3·(N−1)/N·2P bytes per GPU per step (1.5× DDP)`, 'fsdp'],
+  zero: ['ZeRO stages', `[b]ZeRO[/] shards the 16 bytes/param of mixed-precision Adam (2 weights, 2 grads, 12 optimizer)
+  ZeRO-1  shard optimizer state     → 4 + 12/N bytes/param
+  ZeRO-2  + shard gradients         → 2 + 14/N
+  ZeRO-3  + shard parameters (FSDP) → 16/N, params all-gathered per layer
+  70B on 64 GPUs: DDP 1.1 TB/GPU (impossible) · ZeRO-1 297 GB · ZeRO-2 156 GB · ZeRO-3 17.5 GB`, 'fsdp'],
+  kv: ['KV cache', `[b]KV cache[/]: keys and values of every past token, kept so decode never recomputes them
+  bytes/token = 2 (K,V) × layers × kv_heads × head_dim × bytes
+  Core 70B: 2 × 80 × 8 × 128 × 2 B = [acc]320 KB/token[/] in BF16, 160 KB in FP8
+  4K-token request ≈ 1.3 GB · it, not compute, caps the batch size
+  GQA (8 KV heads for 64 query heads) is why it is 8× smaller than full attention`, 'kv'],
+  paged: ['PagedAttention', `[b]PagedAttention[/] (vLLM): KV memory in fixed 16-token blocks, like OS pages
+  sequence → block table: [0→14750] [1→59681] [2→45513] …   no contiguous allocation, ~no fragmentation
+  shared prefixes: same physical blocks, refcount > 1, copy-on-write on divergence
+  freed blocks keep their prefix until LRU evicts them → automatic prefix caching
+  memory pressure: preempt newest sequence, swap blocks to host or recompute later`, 'kv'],
+  batching: ['Continuous batching', `[b]Continuous batching[/]: scheduling per decode step, not per request
+  static:      [AAAA____][BB______] wait for the longest   → idle slots
+  continuous:  finished sequences leave, queued ones join every step → GPU stays full
+  chunked prefill: long prompts split into chunks mixed with decode tokens, so ITL stays flat`, 'capacity'],
+  spec: ['Speculative decoding', `[b]Speculative decoding[/]: a cheap draft proposes k tokens, the model verifies all k in one pass
+  expected tokens/step = (1 − α^(k+1)) / (1 − α)      α=0.72, k=3 → 2.6 tokens per pass
+  wins when decode is memory-bound (small batch); loses when compute-bound (large batch)
+  drafts: small model · n-gram/prompt lookup · Medusa/EAGLE heads · MTP heads`, 'capacity'],
+  disagg: ['Disaggregated prefill/decode', `[b]Disaggregated serving[/]
+  prefill = compute-bound (2·P·prompt FLOPs)  ·  decode = memory-bound (read weights + KV per token)
+  colocated: a 12K-token prefill stalls every decode in the batch → ITL spikes
+  split: prefill pool → KV over RDMA (NIXL) → decode pool; size and parallelize each pool separately
+  cost: KV transfer, e.g. 70B × 8K tokens ≈ 1.3 GB in FP8 per request`, 'capacity'],
+  moe: ['Mixture of experts', `[b]MoE[/]: router picks top-k of E experts per token; only k experts compute
+  235B total, 22B active: memory of 235B, FLOPs of 22B
+  expert parallel: experts on different GPUs, tokens move by [acc]all-to-all[/] (dispatch + combine) per layer
+  hot experts make one GPU the straggler for every layer → bias balancing, capacity factor, replicate hot experts (EPLB)`, 'moe'],
+  tp: ['Tensor parallel', `[b]Tensor parallel[/] (Megatron): split each weight matrix across GPUs
+  MLP: W1 column-parallel (no comm) → W2 row-parallel → [acc]all-reduce[/]
+  attention: heads split across GPUs → out-proj row-parallel → [acc]all-reduce[/]
+  2 all-reduces per layer forward, 2 backward → keep TP inside NVLink (≤ 8 GPUs)`, 'planner'],
+  pp: ['Pipeline parallel', `[b]Pipeline parallel[/]: layers split into stages, microbatches flow through
+  bubble = (p − 1) / (v·m + p − 1)     p stages, m microbatches, v interleaved chunks
+  1F1B: same bubble as GPipe, activations for only p microbatches in flight
+  interleaved: v chunks per GPU shrink the bubble by v, more point-to-point traffic`, 'planner'],
+  ring: ['Ring all-reduce', `[b]Ring all-reduce[/] over N GPUs: reduce-scatter (N−1 steps) then all-gather (N−1 steps)
+  each GPU sends 2(N−1)/N × message size: bandwidth-optimal, latency grows with N
+  NCCL picks ring or tree by size; hierarchical: NVLink inside the node, InfiniBand across`, 'fsdp'],
+  grpo: ['GRPO', `[b]GRPO[/]: sample G responses per prompt, score them, advantage = (r − mean) / std within the group
+  no critic model · verifiable rewards (math answers, unit tests)
+  generation is most of the wall time; zero-variance groups give no signal (DAPO drops them)`, 'rl'],
+  dpo: ['DPO', `[b]DPO[/]: preference pairs, no reward model, no sampling
+  loss = −log σ(β[(log π(y_w) − log π_ref(y_w)) − (log π(y_l) − log π_ref(y_l))])
+  reference log-probs can be precomputed once, so only the policy is on GPU`, 'pipelines'],
+  ray: ['Ray', `[b]Ray[/]: tasks (stateless functions) and actors (stateful workers), scheduled across a cluster
+  object store per node (shared memory), ownership-based metadata, GCS for cluster state
+  placement groups reserve GPU bundles atomically (STRICT_PACK keeps a replica on one node)
+  Ray Train = worker groups over torch.distributed · Ray Serve = autoscaled deployments · Ray Data = streaming`, 'backends'],
+};
+
 /* ── commands ── */
 const HELP = `[b]crucible[/] training and inference CLI
 
@@ -98,7 +167,11 @@ const HELP = `[b]crucible[/] training and inference CLI
   [acc]meta[/] <model>          architecture, KV bytes, shard map
   [acc]optimize[/] <model>      sweep configs against an SLO
   [acc]plan[/] <model> --gpus N  training layouts (TP, PP, DP, recompute)
-  [acc]explain fsdp[/]          how sharded data parallel runs a step
+  [acc]explain[/] <topic>         fsdp, zero, kv, paged, batching, spec, disagg, moe, tp, pp, ring, grpo, dpo, ray
+  [acc]export[/] <job|dep> --backend ray|k8s|slurm|skypilot|kserve|dynamo|llmd|triton
+  [acc]backends[/]              Ray and its alternatives
+  [acc]ray[/] status | list actors | list placement-groups | job list | job submit
+  [acc]serve status[/]          Ray Serve application status
   [acc]status[/]                fleet, jobs and deployments
   [acc]models[/]                registry
   [acc]top[/]                   GPU telemetry snapshot
@@ -111,6 +184,7 @@ const HELP = `[b]crucible[/] training and inference CLI
   models: ${Object.keys(E.ARCH).join(', ')}`;
 
 async function serve(args) {
+  if (args[0] === 'status') return serveStatus();
   const arch = archOf(args[0]);
   if (!arch) return out(`[err]unknown model ${args[0] || ''}[/]. Try: ${Object.keys(E.ARCH).join(', ')}`);
   const engine = { vllm: 'vLLM', sglang: 'SGLang', trt: 'TensorRT-LLM' }[flag(args, 'engine', 'vllm')] || 'vLLM';
@@ -137,14 +211,84 @@ const CMDS = {
   help: () => out(HELP),
   clear: () => { T.lines = []; draw(); },
   explain: (a) => {
-    if (a[0] !== 'fsdp') return out('[err]usage: crucible explain fsdp[/]');
-    out(`[b]FSDP step on N GPUs[/] (each owns 1/N of every layer)
-  forward   for each layer:  [acc]all-gather[/] params → compute → [dim]free (reshard)[/]   next layer prefetched on the NCCL stream
-  backward  for each layer:  [acc]all-gather[/] params → compute grads → [acc]reduce-scatter[/] → keep 1/N of grads
-  optimizer Adam on the local shard only, no communication
-  memory    16·P/N bytes of state per GPU + ~2 gathered layers + activations
-  traffic   ~3·(N−1)/N·2P bytes per GPU per step (1.5× DDP)
-  [dim]open fsdp to watch it step by step[/]`);
+    const k = EXPLAIN[a[0]];
+    if (!k) return out(`[err]usage: crucible explain <topic>[/]  topics: ${Object.keys(EXPLAIN).join(', ')}`);
+    out(k[1]);
+    if (k[2]) out(`  [dim]open ${k[2]} to see it in the console[/]`);
+  },
+  export: (a) => {
+    const F = ctx.F, id = a[0], b = flag(a, 'backend', 'ray');
+    const j = F.job(id), d = F.dep(id);
+    if (!j && !d) return out(`[err]usage: crucible export <job|deployment> --backend <name>[/]`);
+    const code = d ? genServe(b, d) : j.kind === 'rl' ? genRL(b, j) : genTrain(b, j);
+    const opts = BACKENDS[d ? 'serve' : j.kind === 'rl' ? 'rl' : 'train'].map(([k]) => k);
+    if (!code) return out(`[err]backend '${b}' does not apply here[/]. Choose: ${opts.join(', ')}`);
+    out(`[dim]# ${id} rendered for ${b} · other backends: ${opts.filter((x) => x !== b).join(', ')}[/]`);
+    out(code);
+  },
+  backends: () => {
+    out(`[b]training[/]  ray (default) · k8s: Kubeflow PyTorchJob + Kueue · slurm · skypilot · torchrun
+[b]rl[/]        ray (default: actors per role) · k8s: JobSet per role · monolith: one colocated SPMD job
+[b]serving[/]   ray: Ray Serve LLM (default) · kserve: KServe + vLLM · dynamo: NVIDIA Dynamo, disaggregated
+            llmd: llm-d, Kubernetes-native vLLM · triton: Triton + TensorRT-LLM
+  [dim]crucible export <job|deployment> --backend <name> · open backends[/]`);
+  },
+  ray: (a) => {
+    const F = ctx.F, sub = a[0];
+    const live = F.jobs.filter((x) => x.state === 'running' && x.kind !== 'eval');
+    const j = F.job((flag(a, 'address', '') || '').replace(/^ray-/, '')) || F.job('rl-core-70b-reason');
+    if (sub === 'status') {
+      const gpus = E.jobGpus(j), nodes = Math.ceil(gpus / 8), cpu = j.rl ? j.rl.verifiers + 512 : nodes * 96;
+      return out(`[dim]cluster ray-${j.id} (KubeRay, Ray 2.49)[/]
+======== Autoscaler status: ${new Date().toISOString().slice(0, 19).replace('T', ' ')} ========
+Node status
+---------------------------------------------------------------
+Active:
+ 1 head
+ ${nodes} worker-${j.cfg.hw}-8gpu${j.rl ? `
+ ${Math.ceil(j.rl.verifiers / 64)} worker-cpu-64` : ''}
+Pending:
+ (no pending nodes)
+Recent failures:
+ (no failures)
+
+Resources
+---------------------------------------------------------------
+Usage:
+ ${gpus.toFixed(1)}/${gpus.toFixed(1)} GPU
+ ${(cpu * 0.82).toFixed(1)}/${cpu.toFixed(1)} CPU
+ ${(gpus * 0.42).toFixed(1)}GiB/${(gpus * 1.6).toFixed(1)}GiB object_store_memory
+
+Demands:
+ (no resource demands)`);
+    }
+    if (sub === 'list' && (a[1] || 'actors') === 'actors') {
+      const groups = j.rl ? [['RLController', 1], [`${j.rl.engine.split(' ')[0]}Engine`, j.rl.rolloutGpus / 4], ['FSDPWorker', j.rl.trainGpus], ['SandboxPool', j.rl.verifiers]] : [['TrainController', 1], ['RayTrainWorker', E.jobGpus(j)]];
+      out(`[dim]${pad('ACTOR_ID', 34)}${pad('CLASS_NAME', 16)}${pad('STATE', 8)}${pad('NODE', 18)}PID[/]`);
+      let n = 0;
+      for (const [c, cnt] of groups) for (let i = 0; i < Math.min(cnt, 3); i++) out(`${pad((0xa1b2c3 + n * 7919).toString(16).padEnd(32, '0'), 34)}${pad(c, 16)}${pad('ALIVE', 8)}${pad(`10.42.${(n * 3) % 250}.${(n * 17) % 250}`, 18)}${41200 + n++ * 13}`);
+      return out(`[dim]… ${groups.reduce((s, g) => s + g[1], 0)} actors: ${groups.map(([c, k]) => `${k} ${c}`).join(', ')}[/]`);
+    }
+    if (sub === 'list' && a[1] === 'placement-groups') {
+      if (!j.rl) return out(`  ${pad('pg-train', 14)}CREATED  PACK          ${E.jobGpus(j)} × {GPU: 1}`);
+      return out(`  ${pad('pg-rollout', 14)}CREATED  STRICT_PACK   ${j.rl.rolloutGpus / 4} × {GPU: 4}   one engine per node slice
+  ${pad('pg-trainer', 14)}CREATED  PACK          ${j.rl.trainGpus} × {GPU: 1}
+  ${pad('pg-verify', 14)}CREATED  SPREAD        ${j.rl.verifiers} × {CPU: 1}`);
+    }
+    if (sub === 'job' && a[1] === 'list') { for (const x of live) out(`  raysubmit_${x.id.slice(0, 10).replace(/-/g, '')}  ${pad('RUNNING', 9)}${x.name}`); return; }
+    if (sub === 'job' && a[1] === 'submit') {
+      const id = 'raysubmit_' + Math.random().toString(36).slice(2, 12);
+      return out(`Job '${id}' submitted successfully
+[dim]Next steps
+  Query the logs of the job:   ray job logs ${id}
+  Query the status of the job: ray job status ${id}[/]
+Tailing logs until the job exits (disable with --no-wait):
+INFO worker.py: Connecting to existing Ray cluster at address: ray-head:6379
+INFO trainer.py: Started distributed worker processes: 8 workers on 1 node
+INFO trainer.py: torch.distributed initialized, backend=nccl, world_size=8
+[ok]step 10 loss 1.912 tokens/s 61.3K[/]`);
+    }
+    out('[err]usage: ray status | ray list actors | ray list placement-groups | ray job list | ray job submit -- python train.py[/]');
   },
   history: () => out(T.hist.map((c, i) => `${lpad(i + 1, 4)}  ${c}`).join('\n')),
   open: (a) => { const v = a[0]; if (VIEWS[v]) { ui.go(v); } else out(`[err]no page ${v}[/]`); },
@@ -210,11 +354,12 @@ const MODEL_ARGS = ['serve', 'mesh', 'meta', 'wrap', 'optimize', 'allocate', 'pl
 const FLAGS = {
   serve: ['--auto', '--engine', '--replicas', '--ttft', '--itl', '--gpu', '--quant', '--name'],
   mesh: ['--gpu', '--quant'], wrap: ['--gpu', '--quant'], optimize: ['--gpu', '--quant', '--ttft', '--itl'],
-  allocate: ['--gpu', '--quant', '--replicas'], plan: ['--gpus', '--gpu', '--seq'], scale: ['--replicas'],
+  allocate: ['--gpu', '--quant', '--replicas'], plan: ['--gpus', '--gpu', '--seq'], scale: ['--replicas'], export: ['--backend'],
 };
 const VALUES = {
   '--engine': ['vllm', 'sglang', 'trt'], '--gpu': Object.keys(E.HW), '--quant': ['fp8', 'bf16', 'int4'],
   '--gpus': ['64', '128', '256', '512', '1024', '2048', '4096'], '--seq': ['4096', '8192', '16384', '32768', '131072'],
+  '--backend': ['ray', 'k8s', 'slurm', 'skypilot', 'torchrun', 'monolith', 'kserve', 'dynamo', 'llmd', 'triton'],
   '--replicas': ['2', '4', '8', '16', '32'], '--ttft': ['0.3', '0.6', '1.2', '2.5'], '--itl': ['20', '30', '40', '60'],
 };
 function candidates(line) {
@@ -223,6 +368,7 @@ function candidates(line) {
   const words = toks.slice(lead), cur = words[words.length - 1] ?? '', i = words.length - 1;
   let opts = [];
   if (i <= 0) opts = [...Object.keys(CMDS), ...(lead ? [] : ['crucible'])];
+  else if (words[0] === 'ray') opts = i === 1 ? ['status', 'list', 'job'] : i === 2 && words[1] === 'list' ? ['actors', 'placement-groups'] : i === 2 && words[1] === 'job' ? ['list', 'submit'] : words[1] === 'status' ? (words[i - 1] === '--address' ? ctx.F.jobs.filter((j) => j.state === 'running').map((j) => 'ray-' + j.id) : ['--address']) : [];
   else {
     const cmd = words[0], prev = words[i - 1];
     if (VALUES[prev]) opts = VALUES[prev];
@@ -230,13 +376,15 @@ function candidates(line) {
     else if (i === 1 && ['forecast', 'kv', 'scale'].includes(cmd)) opts = ctx.F.deps.map((d) => d.id);
     else if (i === 1 && cmd === 'logs') opts = [...ctx.F.jobs.map((j) => j.id), ...ctx.F.deps.map((d) => d.id)];
     else if (i === 1 && cmd === 'open') opts = Object.keys(VIEWS);
-    else if (i === 1 && cmd === 'explain') opts = ['fsdp'];
+    else if (i === 1 && cmd === 'explain') opts = Object.keys(EXPLAIN);
+    else if (i === 1 && cmd === 'export') opts = [...ctx.F.jobs.map((j) => j.id), ...ctx.F.deps.map((d) => d.id)];
+    else if (i === 1 && cmd === 'serve' && 'status'.startsWith(cur)) opts = ['status', ...Object.keys(E.ARCH), ...VERS().map(([v]) => v)];
     else opts = (FLAGS[cmd] || []).filter((f) => !words.slice(1, -1).includes(f));
   }
   return { head: toks.slice(0, toks.length - 1).join(' '), cur, list: [...new Set(opts)].filter((o) => o.startsWith(cur)) };
 }
 /* What each suggestion is, shown on the right of the dropdown. */
-const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'How FSDP runs a step', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
+const CMD_DESC = { serve: 'Registry to serving canary, all six steps', mesh: 'Device mesh and tensor parallel size', meta: 'Architecture, KV bytes, shard map', wrap: 'Load, quantize, kernels, CUDA graphs', optimize: 'Sweep configs against an SLO', allocate: 'Gang-schedule GPUs for replicas', plan: 'Training layouts: TP, PP, DP, recompute', status: 'Jobs and deployments', models: 'Registry versions', top: 'GPU telemetry snapshot', forecast: 'Next 24 h of demand and replicas', kv: 'KV cache capacity and hit rate', scale: 'Set replicas for a deployment', logs: 'Recent events for a job', explain: 'FSDP, KV cache, MoE, TP, PP and more', export: 'Render a job for Ray, Kubernetes, Slurm…', backends: 'Ray and its alternatives', ray: 'Ray cluster: status, actors, jobs', open: 'Open a console page', help: 'All commands', clear: 'Clear the screen', history: 'Commands you ran', crucible: 'The CLI' };
 const FLAG_DESC = { '--auto': 'Run every step without pausing', '--engine': 'vllm, sglang or trt', '--replicas': 'Number of replicas', '--ttft': 'TTFT p90 SLO, seconds', '--itl': 'ITL p90 SLO, ms', '--gpu': 'h100, h200, b200, l40s', '--quant': 'fp8, bf16, int4', '--name': 'Deployment name', '--gpus': 'GPU budget for training', '--seq': 'Sequence length' };
 function describe(o) {
   if (CMD_DESC[o]) return CMD_DESC[o];
@@ -247,6 +395,9 @@ function describe(o) {
   const d = ctx.F.dep(o); if (d) return `${d.name} · ${d.engine}`;
   const j = ctx.F.job(o); if (j) return `${j.name} · ${j.state}`;
   if (VIEWS[o]) return 'Console page';
+  if (EXPLAIN[o]) return EXPLAIN[o][0];
+  const BD = { k8s: 'Kubeflow PyTorchJob + Kueue', slurm: 'sbatch + srun torchrun', skypilot: 'Any cloud, spot recovery', torchrun: 'Plain PyTorch launcher', monolith: 'One colocated SPMD job', kserve: 'KServe InferenceService', dynamo: 'NVIDIA Dynamo, disaggregated', llmd: 'llm-d on Kubernetes', triton: 'Triton + TensorRT-LLM', actors: 'Live actors', 'placement-groups': 'GPU reservations', submit: 'Submit a script', list: 'List', status: 'Cluster or app status', job: 'Jobs on the cluster' };
+  if (BD[o]) return BD[o];
   return { vllm: 'vLLM 0.11', sglang: 'SGLang 0.5', trt: 'TensorRT-LLM 1.1', fp8: '1 byte per weight', bf16: '2 bytes per weight', int4: 'AWQ, ~0.56 bytes per weight' }[o] || '';
 }
 

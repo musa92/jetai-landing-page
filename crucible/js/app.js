@@ -9,6 +9,7 @@ import './v-more.js?v=20261030-1';
 import './v-ops.js?v=20261030-1';
 import './v-term.js?v=20261030-1';
 import './v-fsdp.js?v=20261030-1';
+import './v-backends.js?v=20261030-1';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -34,7 +35,7 @@ export const SECTIONS = [
   ['training', 'Training', [['runs', 'Runs'], ['planner', 'Parallelism planner'], ['fsdp', 'How FSDP works'], ['data', 'Datasets']]],
   ['post', 'Post-training', [['pipelines', 'Pipelines'], ['rl', 'RL runs'], ['evals', 'Evaluations']]],
   ['inference', 'Inference', [['deployments', 'Deployments'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
-  ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters']]],
+  ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
   ['models', 'Models', [['registry', 'Registry']]],
   ['dev', 'Developers', [['terminal', 'Terminal'], ['review', 'Design review'], ['sdk', 'SDK and API']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations']]],
