@@ -63,7 +63,9 @@ export function trainStep(arch, c) {
   const peak = c.fp8 ? hw.fp8 * 0.55 : hw.flops;
   // Matmul efficiency drops when each GPU's slice of work gets small.
   const work = c.micro * c.seq / (c.cp || 1) * arch.hidden / c.tp;
-  const kEff = 0.63 * Math.min(1, 0.55 + 0.45 * Math.min(1, work / 16.7e6));
+  // Narrow models (small hidden size) run smaller, less efficient GEMMs and relatively more norm/attention overhead.
+  const width = 0.7 + 0.3 * Math.min(1, arch.hidden / 8192);
+  const kEff = 0.63 * width * Math.min(1, 0.55 + 0.45 * Math.min(1, work / 16.7e6));
   const recompute = c.recompute === 'full' ? 4 / 3 : c.recompute === 'selective' ? 1.04 : 1;
   const compute = tokens * flopsPerToken * recompute / (gpus * peak * kEff);
   const m = c.accum, v = c.vpp || 1;

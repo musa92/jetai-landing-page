@@ -1,9 +1,9 @@
 /* Terminal: the crucible CLI in the browser. `crucible serve <model> --auto`
    runs the whole serving pipeline (mesh, meta, wrap, allocate, optimize,
    serve) against the same cost models the console uses. */
-import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261030-4';
-import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261030-4';
-import { lower, RULES } from './v-lib.js?v=20261030-4';
+import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261030-5';
+import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261030-5';
+import { lower, RULES } from './v-lib.js?v=20261030-5';
 
 const T = S.term = S.term || { lines: [], hist: [], hi: 0, busy: false, steps: null, model: null };
 const STEPS = [['mesh', 'Build device mesh'], ['meta', 'Read model metadata'], ['wrap', 'Wrap in engine'], ['optimize', 'Optimize for SLO'], ['allocate', 'Allocate GPUs'], ['serve', 'Serve as canary']];
@@ -324,8 +324,9 @@ INFO trainer.py: torch.distributed initialized, backend=nccl, world_size=8
     const gpus = +flag(a, 'gpus', 256), hw = flag(a, 'gpu', 'h100'), seq = +flag(a, 'seq', 8192);
     const r = E.plan(E.ARCH[arch], { hw, gpus, seq, maxResults: 5 });
     out(`[b]plan[/] ${E.ARCH[arch].name} · ${gpus} × ${E.HW[hw].name} · seq ${fmt(seq)} · ${r.feasible} of ${r.considered} layouts fit`);
-    out(`  [dim]${pad('TP', 4)}${pad('PP', 6)}${pad('DP', 6)}${pad('shard', 8)}${pad('recompute', 11)}${lpad('mem/GPU', 9)}${lpad('MFU', 7)}${lpad('tokens/s', 10)}[/]`);
-    for (const x of r.best) out(`  ${pad(x.c.tp, 4)}${pad(x.c.pp + (x.c.vpp > 1 ? '×' + x.c.vpp : ''), 6)}${pad(x.c.dp, 6)}${pad(x.c.zero >= 3 ? 'FSDP' : 'ZeRO-1', 8)}${pad(x.c.recompute, 11)}${lpad(gb(x.mem.total), 9)}${lpad((x.perf.mfu * 100).toFixed(1) + '%', 7)}${lpad(si(x.perf.tps), 10)}`);
+    out(`  [dim]${pad('TP', 4)}${pad('PP', 6)}${pad('DP', 6)}${pad('micro×acc', 11)}${pad('shard', 8)}${pad('recompute', 11)}${lpad('mem/GPU', 9)}${lpad('MFU', 7)}${lpad('tokens/s', 10)}${lpad('/GPU', 8)}[/]`);
+    for (const x of r.best) out(`  ${pad(x.c.tp, 4)}${pad(x.c.pp + (x.c.vpp > 1 ? '×' + x.c.vpp : ''), 6)}${pad(x.c.dp, 6)}${pad(x.c.micro + '×' + x.c.accum, 11)}${pad(x.c.zero >= 3 ? 'FSDP' : 'ZeRO-1', 8)}${pad(x.c.recompute, 11)}${lpad(gb(x.mem.total), 9)}${lpad((x.perf.mfu * 100).toFixed(1) + '%', 7)}${lpad(si(x.perf.tps), 10)}${lpad(si(x.perf.tps / gpus), 8)}`);
+    out('  [dim]MFU counts 6·params FLOPs per token (attention FLOPs excluded), against BF16 peak. Excludes data loading, checkpoints and restarts.[/]');
   },
   status: () => {
     const F = ctx.F;

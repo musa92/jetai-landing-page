@@ -1,6 +1,6 @@
 /* Shared console state and helpers. Every view module imports this one file
    (same URL, so one instance) and registers into VIEWS, ACTIONS and CLICKS. */
-import * as E from './sim.js?v=20261030-4';
+import * as E from './sim.js?v=20261030-5';
 export { E };
 
 export const $ = (s, r = document) => r.querySelector(s);
