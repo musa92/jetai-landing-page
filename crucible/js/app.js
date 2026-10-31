@@ -1,16 +1,17 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90 } from './core.js?v=20261030-2';
-import { initChartHover } from './charts.js?v=20261030-2';
-import './v-train.js?v=20261030-2';
-import './v-infer.js?v=20261030-2';
-import './v-compute.js?v=20261030-2';
-import './v-more.js?v=20261030-2';
-import './v-ops.js?v=20261030-2';
-import './v-term.js?v=20261030-2';
-import './v-fsdp.js?v=20261030-2';
-import './v-backends.js?v=20261030-2';
-import './v-lib.js?v=20261030-2';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90 } from './core.js?v=20261030-4';
+import { initChartHover } from './charts.js?v=20261030-4';
+import './v-train.js?v=20261030-4';
+import './v-infer.js?v=20261030-4';
+import './v-compute.js?v=20261030-4';
+import './v-more.js?v=20261030-4';
+import './v-ops.js?v=20261030-4';
+import './v-term.js?v=20261030-4';
+import './v-fsdp.js?v=20261030-4';
+import './v-backends.js?v=20261030-4';
+import './v-lib.js?v=20261030-4';
+import './v-perf.js?v=20261030-4';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -35,8 +36,8 @@ export const SECTIONS = [
   ['home', 'Home', [['overview', 'Overview']]],
   ['training', 'Training', [['runs', 'Runs'], ['planner', 'Parallelism planner'], ['fsdp', 'How FSDP works'], ['data', 'Datasets']]],
   ['post', 'Post-training', [['pipelines', 'Pipelines'], ['rl', 'RL runs'], ['evals', 'Evaluations']]],
-  ['inference', 'Inference', [['deployments', 'Deployments'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
-  ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
+  ['inference', 'Inference', [['deployments', 'Deployments'], ['tenant', 'Tenant optimizer'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
+  ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['kernels', 'Kernels and memory'], ['tenants', 'Tenants and cost'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
   ['models', 'Models', [['registry', 'Registry']]],
   ['dev', 'Developers', [['library', 'Crucible library'], ['terminal', 'Terminal'], ['review', 'Design review'], ['sdk', 'SDK and API']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations']]],
@@ -457,6 +458,14 @@ VIEWS.overview = () => {
     <div class="card c3 kpi good"><b>${(gp * 100).toFixed(1)}%</b><span>Training goodput</span><small>Productive time over wall time, weighted by GPUs</small></div>
     <div class="card c3 kpi"><b>${si(tokS)}</b><span>Output tokens per second</span><small>${si(now.reduce((a, [, s]) => a + s.total, 0))} requests/s across ${F.deps.length} deployments</small></div>
     <div class="card c3 kpi"><b>${usd(cost)}</b><span>Blended cost per 1M output tokens</span><small>At list GPU-hour prices, current load</small></div>
+    <div class="card c12"><h3>Runtime efficiency <span class="right"><a href="#" data-go="kernels">Kernels and memory ›</a></span></h3><div class="rt-tiles">${[
+      ['SM busy, training', '84%', 'gpu', 'bubbles and waits are the rest'],
+      ['Tensor-core use, training', '41%', 'kernels', 'of FP8 peak, FA3 + FP8 GEMMs'],
+      ['HBM bandwidth, decode', '79%', 'kernels', 'decode is memory-bound'],
+      ['L2 hit, GEMMs', '78%', 'kernels', 'tile swizzling on'],
+      ['KV cache in use', Math.round(now.reduce((a, [, x]) => a + x.kvActive + x.kvCached, 0) / now.length * 100) + '%', 'kv', 'active + cached prefixes'],
+      ['FlashAttention-3', '100%', 'kernels', 'of attention kernels, all fleets'],
+    ].map(([k, v, go, sub]) => `<button class="rt" data-go="${go}"><b>${v}</b><span>${k}</span><small>${sub}</small></button>`).join('')}</div></div>
     <div class="card c8"><h3>Needs your attention</h3>${items.length ? `<div class="inbox">${items.map((x, i) => `<button class="inbox-item" data-inbox="${i}"><span><b>${h(x.t)}</b><span>${h(x.m)}</span></span><i>›</i></button>`).join('')}</div>` : `<div class="empty"><b>You're all caught up.</b>Failures, SLO breaches and reviews for your role appear here.</div>`}</div>
     <div class="card c4"><h3>Serving SLOs <span class="right"><a href="#" data-go="deployments">All ›</a></span></h3><ul class="checks">${now.map(([d, s]) => { const q = p90(s), ok = q.ttft <= d.slo.ttft && q.itl <= d.slo.itl; return `<li data-opendep="${d.id}"><span class="tick ${ok ? 'ok' : 'no'}">${ok ? '✓' : '!'}</span><span class="grow1">${h(d.name)}</span><span class="id">${ms(q.ttft)} · ${ms(q.itl)}</span></li>`; }).join('')}</ul></div>
     <div class="card c12"><h3>Training now <span class="right"><a href="#" data-go="runs">All runs ›</a></span></h3><div class="scroll-x"><table class="table"><thead><tr><th>Run</th><th>Kind</th><th class="num">GPUs</th><th>Progress</th><th class="num">MFU</th><th class="num">Tokens</th></tr></thead><tbody>${running.map(runRow).join('')}</tbody></table></div></div>

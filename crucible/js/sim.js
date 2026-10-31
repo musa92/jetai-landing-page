@@ -211,7 +211,8 @@ export function serveCurve(arch, c, slo = { ttft: 2, itl: 0.05 }, points = 28) {
   const rows = [];
   for (let i = 1; i <= points; i++) {
     const r = (hi * i) / points, p = servePoint(arch, c, r);
-    rows.push({ rate: r, ...p, ok: !p.saturated && p.ttft <= slo.ttft && p.itl <= slo.itl });
+    // SLOs are p90; the mean-value model's tails: TTFT ×1.5 (queueing behind prefills), ITL ×1.2.
+    rows.push({ rate: r, ...p, ok: !p.saturated && p.ttft * 1.5 <= slo.ttft && p.itl * 1.2 <= slo.itl });
   }
   const good = rows.filter((x) => x.ok).at(-1) || null;
   const gpus = c.tp + (c.disagg ? c.disagg : 0);

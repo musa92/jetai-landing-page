@@ -1,7 +1,7 @@
 /* Post-training pipelines, evaluations, model registry, design review,
    SDK and API, and settings. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui } from './core.js?v=20261030-2';
-import { EVAL_SUITES } from './v-train.js?v=20261030-2';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui, icon, match, F_ } from './core.js?v=20261030-4';
+import { EVAL_SUITES } from './v-train.js?v=20261030-4';
 
 /* ───────────────────────── pipelines ───────────────────────── */
 
@@ -52,7 +52,7 @@ VIEWS.registry = () => {
   const m = E.MODELS.find((x) => x.id === S.model) || E.MODELS[0], a = E.ARCH[m.id];
   const deps = ctx.F.deps;
   const stage = { Production: 'ok', Canary: 'blue', Evaluating: 'warn', Training: 'live', Registered: '' };
-  return head('Registry', 'Every model version with what made it: data snapshot, run, checkpoint, evaluations and where it serves.') + `<div class="grid"><div class="card c12 lcm"><div class="lcm-list"><div class="lcm-rows">${E.MODELS.map((x) => `<button class="lcm-row nodot${x.id === m.id ? ' on' : ''}" data-modelsel="${x.id}"><span><b>${h(x.name)}</b><small>${si(E.ARCH[x.id].params)} params${E.ARCH[x.id].active ? `, ${si(E.ARCH[x.id].active)} active` : ''}</small></span><em>${x.versions.length}</em></button>`).join('')}</div></div>
+  return head('Registry', 'Every model version with what made it: data snapshot, run, checkpoint, evaluations and where it serves.') + `<div class="grid"><div class="card c12 lcm"><div class="lcm-list"><label class="search lsearch">${icon('search')}<input data-filter="models" value="${h(F_['models'] || '')}" placeholder="Search models and versions"></label><div class="lcm-rows">${E.MODELS.filter((x) => match('models', x.name, x.id, ...x.versions.flat())).map((x) => `<button class="lcm-row nodot${x.id === m.id ? ' on' : ''}" data-modelsel="${x.id}"><span><b>${h(x.name)}</b><small>${si(E.ARCH[x.id].params)} params${E.ARCH[x.id].active ? `, ${si(E.ARCH[x.id].active)} active` : ''}</small></span><em>${x.versions.length}</em></button>`).join('')}</div></div>
     <div class="lcm-detail"><div class="lcm-head"><div><h2>${h(m.name)}</h2><p>${a.layers} layers · hidden ${fmt(a.hidden)} · ${a.heads} heads, ${a.kv} KV heads (GQA)${a.experts ? ` · ${a.experts} experts, top ${a.topk}` : ''} · vocab ${fmt(a.vocab)}</p></div></div>
     ${m.versions.map(([v, method, run, st, data]) => { const d = deps.filter((x) => x.model === v || (x.canary && x.canary.to === v)); return `<div class="ver-card"><div class="row between"><div><b class="mono">${h(v)}</b> ${pill(stage[st] || '', st)}</div><span class="note">${h(method)}</span></div><div class="chain">${[['Data', data], ['Run', run], ['Checkpoint', `s3://acme-ckpt/${run}/final`], ['Evals', st === 'Evaluating' ? '17 of 18 pass' : st === 'Training' ? 'pending' : '18 of 18 pass'], ['Serving', d.map((x) => x.name).join(', ') || 'not deployed']].map(([k, val]) => `<span><small>${k}</small>${h(val)}</span>`).join('<i>›</i>')}</div><p class="note">Training data approved by the governance platform; snapshot pinned. Weights signed (cosign), digest in the transparency log.</p></div>`; }).join('')}
     </div></div></div>`;

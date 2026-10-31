@@ -1,7 +1,8 @@
 /* Inference views: deployments (SLOs, tuning, canary rollout, autoscaling,
    engine config), the capacity planner and engine benchmarks. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, sleep, p90 } from './core.js?v=20261030-2';
-import { tsChart } from './charts.js?v=20261030-2';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, sleep, p90, icon, match, F_ } from './core.js?v=20261030-4';
+import { tsChart } from './charts.js?v=20261030-4';
+import { WORK as KWORK } from './v-perf.js?v=20261030-4';
 
 const DSTATE = { healthy: 'ok', canary: 'blue', degraded: 'warn', 'rolling back': 'warn' };
 const effCfg = (d) => (d.issue ? { ...d.cfg, prompt: 5800 } : d.cfg);
@@ -14,20 +15,20 @@ VIEWS.deployments = () => {
   const F = ctx.F;
   if (!F.dep(S.dep)) S.dep = F.deps[0].id;
   const d = F.dep(S.dep);
-  const list = F.deps.map((x) => { const s = F.servingNow(x), ok = sloOk(x, s); const badge = !ok || x.state === 'degraded' ? '<span class="badge warn">SLO breach</span>' : x.canary ? `<span class="badge blue">Canary ${x.canary.steps[x.canary.step - 1]}%</span>` : ''; return `<button class="lcm-row nodot${x.id === S.dep ? ' on' : ''}" data-opendep="${x.id}"><span><b>${h(x.name)}</b><small>${h(x.engine)} · ${x.replicas} × TP${x.cfg.tp}${x.cfg.disagg ? ' + prefill' : ''} · ${si(s.total)} req/s</small></span>${badge}</button>`; }).join('');
-  return head('Deployments', 'Every model serving traffic: engine, layout, SLOs and cost per token. Tune a deployment, then roll the change out as a canary gated on its SLOs.') + `<div class="grid"><div class="card c12 lcm"><div class="lcm-list"><div class="lcm-rows">${list}</div></div><div class="lcm-detail">${depDetail(d)}</div></div></div>`;
+  const list = F.deps.filter((x) => match('deps', x.name, x.id, x.model, x.engine, x.region, E.TEAMS[x.team].name, x.state)).map((x) => { const s = F.servingNow(x), ok = sloOk(x, s); const badge = !ok || x.state === 'degraded' ? '<span class="badge warn">SLO breach</span>' : x.canary ? `<span class="badge blue">Canary ${x.canary.steps[x.canary.step - 1]}%</span>` : ''; return `<button class="lcm-row nodot${x.id === S.dep ? ' on' : ''}" data-opendep="${x.id}"><span><b>${h(x.name)}</b><small>${h(x.engine)} · ${x.replicas} × TP${x.cfg.tp}${x.cfg.disagg ? ' + prefill' : ''} · ${si(s.total)} req/s</small></span>${badge}</button>`; }).join('');
+  return head('Deployments', 'Every model serving traffic: engine, layout, SLOs and cost per token. Tune a deployment, then roll the change out as a canary gated on its SLOs.') + `<div class="grid"><div class="card c12 lcm"><div class="lcm-list"><label class="search lsearch">${icon('search')}<input data-filter="deps" value="${h(F_['deps'] || '')}" placeholder="Search deployments, models, engines"></label><div class="lcm-rows">${list || '<p class="note">No deployments match.</p>'}</div></div><div class="lcm-detail">${depDetail(d)}</div></div></div>`;
 };
 CLICKS.push(['opendep', (id) => { S.dep = id; if (S.view !== 'deployments') ui.go('deployments'); }]);
 CLICKS.push(['deptab', (k) => { S.depTab = k; }]);
 
 function depDetail(d) {
   const F = ctx.F, s = F.servingNow(d), a = E.ARCH[d.arch], hw = E.HW[d.cfg.hw];
-  const tabs = [['overview', 'Overview'], ['tuning', 'Tuning'], ['rollout', 'Rollout'], ['autoscaling', 'Autoscaling'], ['config', 'Engine config']];
+  const tabs = [['overview', 'Overview'], ['runtime', 'Runtime'], ['tuning', 'Tuning'], ['rollout', 'Rollout'], ['autoscaling', 'Autoscaling'], ['config', 'Engine config']];
   return `<div class="lcm-head"><div><h2>${h(d.name)} <span>${pill(DSTATE[d.state] || '', d.state)}</span></h2><p>${h(d.model)} · ${h(d.engine)} ${h(d.version)} · ${h(d.region)} · ${h(E.TEAMS[d.team].name)}</p></div></div>
     <div class="lcm-facts"><span><small>Model</small>${h(a.name)}</span><span><small>Replicas</small>${d.replicas} (${d.min} to ${d.max})</span><span><small>GPUs</small>${fmt(s.gpus)} × ${h(hw.name)}</span><span><small>Per replica</small>TP ${d.cfg.tp}${d.cfg.ep ? ` · EP ${d.cfg.ep}` : ''}${d.cfg.disagg ? ` · +${d.cfg.disagg} prefill GPUs` : ''}</span><span><small>Weights / KV</small>${d.cfg.quant.toUpperCase()} / ${d.cfg.kvq.toUpperCase()}</span><span><small>Speculative</small>${specLabel(d.cfg)}</span></div>
     ${d.issue ? `<div class="lcm-banner warn"><b>SLO breach.</b> ${h(d.issue)} The autoscaler is pinned at max replicas, so more replicas cannot help. <button class="link" data-deptab="tuning">See the tuning fix ›</button></div>` : ''}
     ${seg('deptab', S.depTab, tabs)}
-    ${({ overview: depOverview, tuning: depTuning, rollout: depRollout, autoscaling: depScale, config: depConfig })[S.depTab](d, s)}`;
+    ${({ overview: depOverview, runtime: depRuntime, tuning: depTuning, rollout: depRollout, autoscaling: depScale, config: depConfig })[S.depTab](d, s)}`;
 }
 
 function depOverview(d, s) {
@@ -45,6 +46,33 @@ function depOverview(d, s) {
     <div class="card-sub"><h4>Latency p90, 24 hours</h4>${tsChart([{ name: 'TTFT', color: C.purple, points: lat.map(([t, x]) => [t, x.ttft * 1000]) }, { name: 'ITL', color: C.teal, points: lat.map(([t, x]) => [t, x.itl * 1000]) }], { range: '24h', w: 400, height: 150, fmt: (v) => Math.round(v) + ' ms', threshold: { value: d.slo.ttft * 1000, label: 'TTFT SLO' } })}</div></div>
     <div class="card-sub"><h4>KV cache per replica: ${si(s.cap.kvTokens)} tokens in ${gb(s.cap.kvBytes)}</h4>${stack([['Active sequences', s.kvActive, C.blue], ['Cached prefixes', s.kvCached, C.teal], ['Free', Math.max(0, 1 - s.kvActive - s.kvCached), 'var(--fill-2)']], (v) => (v * 100).toFixed(0) + '%')}<p class="note">Prefix hit rate ${((d.cfg.prefixHit || 0) * 100).toFixed(0)}%: shared system prompts and earlier turns skip prefill. The router hashes the prefix to send a conversation back to the replica that holds its cache.</p></div>
     <div class="card-sub"><h4>Features</h4><div class="tags">${d.features.map((f) => pill('blue', f)).join('')}</div></div>`;
+}
+
+/* ── runtime: where a decode step goes on this deployment's GPUs ── */
+function depRuntime(d, s) {
+  const a = E.ARCH[d.arch], c = d.cfg, hw = E.HW[c.hw];
+  const ctxTok = c.prompt + c.out / 2;
+  const wBytes = a.params * E.WBYTES_(c.quant) / c.tp, kvBytes = s.B * ctxTok * E.kvPerToken(a, c.kvq) / c.tp;
+  const step = E.decodeStep(a, c, Math.max(1, s.B), ctxTok);
+  const memT = (wBytes + kvBytes) / (hw.bw * 0.78);
+  const ai = (2 * E.active(a) * Math.max(1, s.B) / c.tp) / (wBytes + kvBytes);
+  const ks = KWORK[d.arch === 'moe-235b' ? 'moe' : 'decode'].kernels;
+  const colors = [C.blue, C.purple, C.amber, C.teal, C.gray, C.pink];
+  return `<div class="lcm-tiles">
+      <div class="lcm-tile"><span>Decode step</span><b>${ms(step)}</b><small>batch ${Math.round(s.B)}, ${fmt(ctxTok)} avg context</small></div>
+      <div class="lcm-tile"><span>Bytes read per step, per GPU</span><b>${gb(wBytes + kvBytes)}</b><small>${gb(wBytes)} weights · ${gb(kvBytes)} KV</small></div>
+      <div class="lcm-tile"><span>HBM time</span><b>${ms(memT)}</b><small>${Math.round(memT / step * 100)}% of the step</small></div>
+      <div class="lcm-tile"><span>Arithmetic intensity</span><b>${ai.toFixed(0)} FLOP/B</b><small>ridge ${Math.round((c.quant === 'fp8' ? hw.fp8 : hw.flops) / hw.bw)}: ${ai < (hw.flops / hw.bw) ? 'memory-bound' : 'compute-bound'}</small></div>
+      <div class="lcm-tile"><span>KV in use</span><b>${Math.round((s.kvActive + s.kvCached) * 100)}%</b><small>${Math.round(s.kvActive * 100)}% active, rest cached prefixes</small></div>
+      <div class="lcm-tile"><span>Attention kernel</span><b>${c.hw === 'l40s' ? 'FA2' : 'FA3'}</b><small>paged, split-KV decode</small></div></div>
+    <div class="card-sub"><h4>Where a decode step goes</h4>${stack(ks.map((k, i) => [k[0].split(' (')[0], k[1], colors[i % colors.length]]), (v) => v + '%')}</div>
+    <div class="card-sub"><h4>Levers for this deployment</h4><div class="recs">${[
+      c.kvq !== 'fp8' ? ['FP8 KV cache', `Halves the ${gb(kvBytes)} of KV read per step and doubles capacity to ${si(E.serveCapacity(a, { ...c, kvq: 'fp8' }).kvTokens)} tokens.`] : null,
+      c.quant === 'bf16' ? ['FP8 weights', `Cuts weight reads from ${gb(wBytes)} to ${gb(wBytes / 2)} per GPU per step.`] : null,
+      ai < 150 ? ['Raise the batch', `At ${ai.toFixed(0)} FLOP/B the GPU waits on HBM. More concurrent sequences or speculative decoding (k+1 tokens per weight read) raise intensity.`] : null,
+      ['L2 persistence for the shared prefix', `Pin the system-prompt KV blocks (${(d.cfg.prefixHit * 100).toFixed(0)}% hit rate) in L2 with an access-policy window so every sequence reads them from L2, not HBM.`],
+      ['Fuse RoPE and norm into the QKV GEMM epilogue', 'Removes two small, latency-bound kernels per layer from the CUDA graph.'],
+    ].filter(Boolean).map(([t, x]) => `<div class="rec"><div><b>${t}</b><p>${h(x)}</p></div></div>`).join('')}</div><div class="row"><button class="btn" data-go="kernels">Open kernels and memory</button><button class="btn" data-go="kv">Open KV cache</button></div></div>`;
 }
 
 /* ── tuning: search configurations, pick the cheapest that meets the SLO ── */

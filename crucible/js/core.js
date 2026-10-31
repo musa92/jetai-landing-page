@@ -1,6 +1,6 @@
 /* Shared console state and helpers. Every view module imports this one file
    (same URL, so one instance) and registers into VIEWS, ACTIONS and CLICKS. */
-import * as E from './sim.js?v=20261030-2';
+import * as E from './sim.js?v=20261030-4';
 export { E };
 
 export const $ = (s, r = document) => r.querySelector(s);
@@ -71,7 +71,7 @@ export const bars = (rows, cls = '') => {
 /** Horizontal stacked bar with legend: parts = [[label, value, color]]. */
 export const stack = (parts, fmtv = (v) => v.toFixed(2)) => {
   const tot = parts.reduce((a, p) => a + p[1], 0) || 1;
-  return `<div class="stack">${parts.filter((p) => p[1] > 0).map(([k, v, c]) => `<i style="width:${(100 * v / tot).toFixed(2)}%;background:${c}" title="${h(k)}: ${fmtv(v)}"></i>`).join('')}</div><div class="stack-lg">${parts.filter((p) => p[1] > 0).map(([k, v, c]) => `<span><i style="background:${c}"></i>${h(k)} <b>${fmtv(v)}</b> <em>${(100 * v / tot).toFixed(0)}%</em></span>`).join('')}</div>`;
+  return `<div class="stack">${parts.filter((p) => p[1] > 0).map(([k, v, c]) => `<i style="width:${(100 * v / tot).toFixed(2)}%;background:${c}" title="${h(k)}: ${fmtv(v)}"></i>`).join('')}</div><div class="stack-lg">${parts.filter((p) => p[1] > 0).map(([k, v, c]) => `<span><i style="background:${c}"></i>${h(k)} <b>${fmtv(v)}</b>${String(fmtv(v)).endsWith('%') ? '' : ` <em>${(100 * v / tot).toFixed(0)}%</em>`}</span>`).join('')}</div>`;
 };
 export const seg = (attr, cur, opts) => `<div class="seg">${opts.map(([k, t]) => `<button class="${String(k) === String(cur) ? 'on' : ''}" data-${attr}="${h(k)}">${t}</button>`).join('')}</div>`;
 export const F_ = {};

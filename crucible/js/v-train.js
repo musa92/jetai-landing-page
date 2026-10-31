@@ -1,7 +1,7 @@
 /* Training views: runs (pretraining, post-training, RL, eval) with detail
    tabs, the parallelism planner and training datasets. */
-import { E, $, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, roleNote, me, toast, ui, sleep } from './core.js?v=20261030-2';
-import { tsChart } from './charts.js?v=20261030-2';
+import { E, $, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, roleNote, me, toast, ui, sleep, icon, match, F_ } from './core.js?v=20261030-4';
+import { tsChart } from './charts.js?v=20261030-4';
 
 const KIND = { pretrain: ['blue', 'Pretraining'], post: ['', 'Post-training'], rl: ['purple', 'RL'], eval: ['', 'Evaluation'] };
 const STATE = { running: 'live', queued: 'pending', succeeded: 'ok', failed: 'deny', stopped: '' };
@@ -16,7 +16,7 @@ const progress = (F, j) => (j.kind === 'pretrain' ? F.tokensAt(j) / j.targetToke
 function runsView(preset) {
   const F = ctx.F;
   const filter = preset === 'rl' ? 'rl' : S.runFilter;
-  const rows = F.jobs.filter(FILTERS[filter][1]);
+  const rows = F.jobs.filter(FILTERS[filter][1]).filter((j) => match('runs', j.name, j.id, j.method, j.owner, E.TEAMS[j.team].name, E.ARCH[j.arch].name, j.state));
   if (!rows.some((j) => j.id === S.run)) S.run = rows[0]?.id;
   const j = F.job(S.run);
   const title = preset === 'rl' ? head('RL runs', 'Reinforcement learning on Ray: rollouts on an inference engine, rewards from verifiers, training on FSDP, weights synced every step.') : head('Runs', 'Every training job on the fleet: pretraining, post-training, RL and evaluation. Select a run to see its loss, throughput, layout and checkpoints.');
@@ -25,7 +25,7 @@ function runsView(preset) {
     const badge = x.state === 'failed' ? '<span class="badge deny">Failed</span>' : x.state === 'queued' ? '<span class="badge">Queued</span>' : x.straggler ? '<span class="badge warn">Straggler</span>' : x.state === 'succeeded' ? '<span class="badge ok">Done</span>' : `<em>${(p * 100).toFixed(0)}%</em>`;
     return `<button class="lcm-row nodot${x.id === S.run ? ' on' : ''}" data-openrun="${x.id}"><span><b>${h(x.name)}</b><small>${KIND[x.kind][1]}${x.method ? ' · ' + x.method : ''} · ${fmt(E.jobGpus(x))} GPUs</small></span>${badge}</button>`;
   }).join('');
-  return title + `<div class="grid"><div class="card c12 lcm"><div class="lcm-list">${preset === 'rl' ? '' : seg('runfilter', filter, Object.entries(FILTERS).map(([k, [t]]) => [k, t]))}<div class="lcm-rows">${list}</div></div><div class="lcm-detail">${j ? runDetail(j) : ''}</div></div></div>`;
+  return title + `<div class="grid"><div class="card c12 lcm"><div class="lcm-list"><label class="search lsearch">${icon('search')}<input data-filter="runs" value="${h(F_['runs'] || '')}" placeholder="Search runs, owners, models"></label>${preset === 'rl' ? '' : seg('runfilter', filter, Object.entries(FILTERS).map(([k, [t]]) => [k, t]))}<div class="lcm-rows">${list || '<p class="note">No runs match.</p>'}</div></div><div class="lcm-detail">${j ? runDetail(j) : ''}</div></div></div>`;
 }
 VIEWS.runs = () => runsView('all');
 VIEWS.rl = () => runsView('rl');
