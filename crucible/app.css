@@ -1102,3 +1102,30 @@ body { background: var(--bg); }
 .modal.ed { width: min(860px, 100%); }
 .ed-ta { width: 100%; min-height: 420px; border: 0; border-top: 1px solid var(--rule); padding: 14px 18px; font: 12.5px/1.6 var(--mono); background: #1d1d1f; color: #e5e5ea; resize: vertical; outline: none; tab-size: 2; }
 .tjobs { list-style: none; display: grid; gap: 6px; margin: 6px 0 10px; } .tjobs li { display: grid; gap: 1px; font-size: 11.5px; } .tjobs em { font-style: normal; color: var(--ink-3); }
+
+/* submissions */
+.life { display: flex; gap: 0; overflow-x: auto; padding: 4px 0; }
+.lstep { flex: 1; min-width: 86px; display: grid; justify-items: center; gap: 3px; position: relative; text-align: center; }
+.lstep::before { content: ''; position: absolute; top: 11px; left: -50%; width: 100%; height: 2px; background: var(--fill-2); z-index: 0; }
+.lstep:first-child::before { display: none; }
+.lstep.done::before, .lstep.on::before { background: #34c759; }
+.lstep i { position: relative; z-index: 1; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--fill-2); color: #fff; font-style: normal; font-size: 11px; font-weight: 700; }
+.lstep.done i { background: #34c759; } .lstep.on i { background: var(--blue); box-shadow: 0 0 0 4px var(--blue-soft); } .lstep.off i { background: var(--red-soft); }
+.lstep b { font-size: 11.5px; font-weight: 600; } .lstep small { font-size: 10.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.pcpu { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 8px; }
+.pnode { border: 1px solid var(--hair); border-radius: 8px; padding: 8px; display: grid; gap: 6px; background: var(--surface); }
+.pnode.cpu { background: var(--surface-2); }
+.pn-h { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; } .pn-h b { font-size: 11px; } .pn-h span { color: var(--ink-3); }
+.pgpus { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.pgpus i { height: 22px; border-radius: 4px; color: #fff; font: 600 9.5px/22px var(--mono); text-align: center; font-style: normal; }
+.pn-f { font-size: 10.5px; color: var(--ink-3); }
+.sbx { display: grid; grid-template-columns: repeat(64, 1fr); gap: 2px; } .sbx i { aspect-ratio: 1; border-radius: 1px; background: rgba(48,176,199,.55); }
+.bflow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bop { flex: 1; min-width: 170px; border: 1px solid var(--hair); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; }
+.bop-h b { display: block; font: 600 12.5px var(--mono); } .bop-h span { font-size: 11px; color: var(--ink-3); } .bop small { font-size: 11px; color: var(--ink-2); }
+.barrow { color: var(--ink-3); }
+.shardstrip { display: grid; grid-template-columns: repeat(64, 1fr); gap: 2px; } .shardstrip i { height: 14px; border-radius: 2px; }
+.ed-bar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-top: 1px solid var(--rule); font-size: 12px; }
+.ed-bar select { height: 26px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); padding: 0 8px; font: 12px var(--mono); color: var(--ink); }
+.lcm-list > .btn.primary { justify-self: start; }

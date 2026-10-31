@@ -1,7 +1,7 @@
 /* Performance and capacity: kernel and memory-hierarchy dashboard (roofline,
    SM, L1/SMEM, L2, HBM, FlashAttention), the tenant placement optimizer, and
    tenant cost and chargeback. */
-import { E, h, fmt, si, gb, ms, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, p90 } from './core.js?v=20261031-3';
+import { E, h, fmt, si, gb, ms, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, p90 } from './core.js?v=20261031-4';
 
 /* ───────────────────────── kernels and memory ───────────────────────── */
 

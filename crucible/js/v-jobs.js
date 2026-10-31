@@ -2,7 +2,7 @@
    parser with line-numbered validation, and the submit pipeline that shows
    how a job is decomposed onto the fleet: code package, data shards per
    rank, CPU preprocessing tasks, GPU placement, Ray cluster, live logs. */
-import { E, ctx, S, me, ui, si, gb, fmt } from './core.js?v=20261031-3';
+import { E, ctx, S, me, ui, si, gb, fmt } from './core.js?v=20261031-4';
 
 /* ───────────────────────── workspace ───────────────────────── */
 
@@ -218,6 +218,9 @@ export function validate(spec, lineOf) {
 
 let SEQ = 41;
 export const SUBMITTED = S.submitted = S.submitted || [];
+/* Submission records: what the dashboard shows. Same pipeline whether the terminal or the UI submitted. */
+export const SUBS = S.subs = S.subs || [];
+const refresh = () => { if (S.view === 'jobs') ui.render(); };
 
 function nodeNames(cl, n, off = 0) { return Array.from({ length: n }, (_, i) => `${cl.slice(0, 6)}-n${String(140 + off + i * 3).padStart(4, '0')}`); }
 
@@ -227,7 +230,8 @@ export function jobCommands(api) {
   const fileArg = (p) => (p || '').replace(/^\.\//, '');
   const bar = (f, w = 24) => '█'.repeat(Math.round(f * w)) + '░'.repeat(w - Math.round(f * w));
 
-  async function step(label, text, ms = 260) { await sleep(ms); out(`  [ok]✓[/] ${pad(label, 13)}${text}`); }
+  let cur = null;
+  async function step(label, text, ms = 260) { if (cur) { cur.active = label; refresh(); } await sleep(ms); out(`  [ok]✓[/] ${pad(label, 13)}${text}`); if (cur) { cur.steps.push([label, text, Date.now()]); cur.active = null; refresh(); } }
 
   async function submitTraining(spec, file, dry) {
     const s = spec.spec, md = spec.metadata, hw = s.resources.gpuType || 'h100', gpus = s.resources.gpus;
@@ -252,14 +256,15 @@ export function jobCommands(api) {
     if (nodes > 6) out(`  [dim]… ${nodes - 6} more nodes[/]`);
     out(`  ${pad('cpu pool', 16)}${pad('-', 12)}${pad(`${Math.ceil((s.data.preprocessCpus || 128) / 64)} × 64-core nodes`, 26)}preprocess tasks`);
     out('');
-    if (dry) { out('[warn]--dry-run: nothing was started.[/]'); return; }
+    cur.topo = { kind: 'train', cluster: cl.id, hw, nodes, names: nodeNames(cl.id, nodes), tp: plan.c.tp, dp, per, shards: d.shards, dataset: d.id, cpus: s.data.preprocessCpus || 128, mem: plan.mem.total, mfu: plan.perf.mfu, tps: plan.perf.tps, gpus, seq };
+    if (dry) { out('[warn]--dry-run: nothing was started.[/]'); cur.state = 'dry run'; refresh(); return; }
     const id = `${md.name}-${(SEQ++).toString(36)}`;
     const job = { id, name: md.name, kind: s.method === 'pretrain' ? 'pretrain' : 'post', method: (s.method || 'sft').toUpperCase(), arch, team: md.team, owner: me().name, cluster: cl.id, state: 'queued', priority: md.priority || 'P2', cfg: { ...plan.c, hw, chunkedLoss: true }, steps: s.maxSteps || 1000, started: null, step: 0, base: s.model, dataset: d.id, wait: 8, ckptEvery: 600, file };
     ctx.F.jobs.unshift(job); SUBMITTED.unshift(id);
     ctx.F.event(Date.now(), id, 'submitted', `${me().name} submitted ${file}: ${gpus} × ${E.HW[hw].name}, TP ${plan.c.tp}, ${plan.c.zero >= 3 ? 'FSDP' : 'DP'} ${plan.c.dp}.`);
     await step('ray', `KubeRay cluster ray-${id}: head + ${nodes} GPU workers + ${Math.ceil((s.data.preprocessCpus || 128) / 64)} CPU workers ready`, 500);
     await step('launch', `TorchTrainer(${gpus} workers) · init_process_group(nccl) · ${gpus} ranks connected`, 400);
-    job.state = 'running'; job.started = Date.now();
+    job.state = 'running'; job.started = Date.now(); cur.state = 'running'; cur.jobId = id; refresh();
     ctx.F.event(Date.now(), id, 'admitted', `Running on ${cl.id}: ${gpus} GPUs, ${nodes} nodes.`);
     ui.renderChrome();
     out(`\n[ok]● ${id} running[/]  · crucible job logs ${id} · crucible job describe ${id}`);
@@ -284,12 +289,14 @@ export function jobCommands(api) {
     await step('roles', `rollout ${engines} × ${s.rollout.engine} (TP ${s.rollout.tensorParallel}) · trainer FSDP ${s.trainer.gpus} GPUs · ${fmt(s.reward.sandboxes)} sandboxes · reference colocated with trainer`);
     await step('placement', `pg-rollout ${engines} × {GPU: ${s.rollout.tensorParallel}} STRICT_PACK · pg-trainer ${s.trainer.gpus / 8} × {GPU: 8} · pg-verify ${s.reward.sandboxes} × {CPU: 1} SPREAD`);
     await step('weights', `trainer → engines over NCCL broadcast, bucketed: ${gb(a.params * 2)} per step`);
-    if (dry) { out('[warn]--dry-run: nothing was started.[/]'); return; }
+    cur.topo = { kind: 'rl', cluster: cl.id, hw, engines, tpE: s.rollout.tensorParallel || 4, rollout: s.rollout.gpus, trainer: s.trainer.gpus, sandboxes: s.reward.sandboxes, engine: s.rollout.engine, names: nodeNames(cl.id, (s.rollout.gpus + s.trainer.gpus) / 8), dataset: s.data.dataset, gpus: s.rollout.gpus + s.trainer.gpus };
+    if (dry) { out('[warn]--dry-run: nothing was started.[/]'); cur.state = 'dry run'; refresh(); return; }
     const id = `${md.name}-${(SEQ++).toString(36)}`;
     const job = { id, name: md.name, kind: 'rl', method: (s.algorithm || 'grpo').toUpperCase(), arch, team: md.team, owner: me().name, cluster: cl.id, state: 'running', priority: md.priority || 'P1', cfg: { hw, tp: 4, pp: 1, cp: 1, dp: s.trainer.gpus / 4, micro: 1, accum: 1, zero: 3, recompute: 'full', vpp: 1, seq: 16384, fp8: false, chunkedLoss: true }, rl: { rolloutGpus: s.rollout.gpus, trainGpus: s.trainer.gpus, rmGpus: 0, verifiers: s.reward.sandboxes, group: s.rollout.samplesPerPrompt || 16, promptsPerStep: 256, maxLen: 16384, async: 1, engine: s.rollout.engine === 'sglang' ? 'SGLang 0.5' : 'vLLM 0.11', sync: 'NCCL broadcast, bucketed' }, steps: s.maxSteps || 800, started: Date.now(), step: 0, base: s.policy, dataset: s.data.dataset, file };
     ctx.F.jobs.unshift(job); SUBMITTED.unshift(id);
     ctx.F.event(Date.now(), id, 'admitted', `${me().name} submitted ${file}: RL with ${s.rollout.gpus + s.trainer.gpus} GPUs.`);
     await step('ray', `driver started; ${engines} engines loaded weights; ${s.trainer.gpus} trainer ranks connected`, 500);
+    cur.state = 'running'; cur.jobId = id; refresh();
     ui.renderChrome();
     out(`\n[ok]● ${id} running[/]  · crucible job describe ${id}`);
   }
@@ -302,9 +309,10 @@ export function jobCommands(api) {
     out('\n  [dim]operator               resources        tasks/actors[/]');
     s.pipeline.forEach((st) => out(`  ${pad(st.stage, 23)}${pad(st.gpus ? `${st.gpus} × ${E.HW[st.gpuType || 'l40s'].name}` : `${st.cpus} CPUs`, 17)}${st.gpus ? `${st.gpus} GPU actors, batch ${st.batchSize || 256}` : `${st.cpus} tasks in flight`}`));
     out('');
-    if (dry) { out('[warn]--dry-run: nothing was started.[/]'); return; }
+    cur.topo = { kind: 'batch', input: s.input, output: s.output, rows, stages: s.pipeline.map((st) => ({ ...st, frac: 0 })), gpus: s.pipeline.reduce((x, st) => x + (st.gpus || 0), 0), cpus: s.pipeline.reduce((x, st) => x + (st.cpus || 0), 0) };
+    if (dry) { out('[warn]--dry-run: nothing was started.[/]'); cur.state = 'dry run'; refresh(); return; }
     const id = `${md.name}-${(SEQ++).toString(36)}`;
-    SUBMITTED.unshift(id);
+    SUBMITTED.unshift(id); cur.jobId = id; cur.state = 'running';
     ctx.F.event(Date.now(), id, 'submitted', `${me().name} submitted ${file}: Ray Data batch job.`);
     await step('ray', `cluster ray-${id}: ${Math.ceil(s.pipeline.reduce((x, st) => x + (st.cpus || 0), 0) / 64)} CPU nodes + ${Math.ceil(s.pipeline.reduce((x, st) => x + (st.gpus || 0), 0) / 8)} GPU nodes`, 400);
     out('');
@@ -313,8 +321,10 @@ export function jobCommands(api) {
     const rate = { read: 1.0, chunk_and_tokenize: 0.92, embed: 0.84, write: 0.8 };
     for (let k = 1; k <= 12; k++) {
       await sleep(300);
-      s.pipeline.forEach((st, j) => { const f = Math.min(1, (k / 12) * (rate[st.stage] || 0.8) * (1 + 0.05 * j) - j * 0.04); const ff = Math.max(0, k === 12 ? 1 : f); setLine(idx[j], `  ${pad(st.stage, 23)}${bar(ff)} ${lpad((ff * 100).toFixed(0), 3)}%  ${lpad(si(rows * ff), 6)} rows  ${st.gpus ? `${st.gpus} actors · GPU util ${80 + j}%` : `${st.cpus} tasks`}${j === 2 && k < 12 && k > 3 ? '  [dim]backpressure on read[/]' : ''}`); });
+      if (cur.topo) refresh();
+      s.pipeline.forEach((st, j) => { const f = Math.min(1, (k / 12) * (rate[st.stage] || 0.8) * (1 + 0.05 * j) - j * 0.04); const ff = Math.max(0, k === 12 ? 1 : f); cur.topo.stages[j].frac = ff; cur.topo.stages[j].backpressure = j === 2 && k < 12 && k > 3; setLine(idx[j], `  ${pad(st.stage, 23)}${bar(ff)} ${lpad((ff * 100).toFixed(0), 3)}%  ${lpad(si(rows * ff), 6)} rows  ${st.gpus ? `${st.gpus} actors · GPU util ${80 + j}%` : `${st.cpus} tasks`}${j === 2 && k < 12 && k > 3 ? '  [dim]backpressure on read[/]' : ''}`); });
     }
+    cur.state = 'succeeded'; cur.ended = Date.now(); refresh();
     out(`\n[ok]✓ ${id} succeeded[/] in ${Math.round((T0() - start) / 1000 * 210)} s (modeled) · ${si(rows)} rows · ${si(rows / 210)} rows/s · output ${s.output}`);
   }
   const T0 = () => Date.now();
@@ -325,6 +335,8 @@ export function jobCommands(api) {
     let spec, lineOf;
     try { ({ doc: spec, lineOf } = parseYaml(text)); } catch (e) { return out(`[err]✗ ${file}: ${e.message}[/]`); }
     const v = validate(spec, lineOf);
+    cur = { id: 'sub-' + (SUBS.length + 1001), file, name: spec.metadata && spec.metadata.name, kind: spec.kind, t: Date.now(), user: me().name, via: api.via || 'CLI', steps: [], issues: v.issues, gpus: v.gpus, text, state: v.errors ? 'rejected' : 'submitting', team: spec.metadata && spec.metadata.team, priority: spec.metadata && spec.metadata.priority };
+    SUBS.unshift(cur); refresh();
     out(`[b]${dry ? 'dry run' : 'submit'}[/] ${file} · ${spec.kind} ${spec.metadata && spec.metadata.name} · ${v.gpus} GPUs`);
     for (const [lvl, msg, ln] of v.issues) out(`  ${lvl === 'error' ? '[err]✗ error' : '[warn]! warning'}[/] ${file}:${ln}  ${msg}`);
     if (v.errors) return out(`[err]✗ ${v.errors} error${v.errors > 1 ? 's' : ''}; nothing submitted.[/] Fix with [acc]edit ${file}[/]`);
@@ -336,6 +348,7 @@ export function jobCommands(api) {
   const jobById = (id) => ctx.F.jobs.find((j) => j.id === id || j.id.startsWith(id || '¶'));
 
   return {
+    submitFile,
     ls: (a) => { const dir = fileArg(a[0] || '').replace(/\/$/, ''); const items = new Set(Object.keys(FS).filter((f) => !dir || f.startsWith(dir + '/')).map((f) => { const rest = dir ? f.slice(dir.length + 1) : f; return rest.includes('/') ? rest.split('/')[0] + '/' : rest; })); if (!items.size) return out(`[err]ls: ${dir}: no such directory[/]`); out([...items].sort().map((x) => (x.endsWith('/') ? `[acc]${x}[/]` : x)).join('   ')); },
     tree: () => { const dirs = {}; for (const f of Object.keys(FS)) { const [d, n] = f.split('/'); (dirs[d] ||= []).push(n); } out('.'); Object.entries(dirs).forEach(([d, fs], i, all) => { out(`${i === all.length - 1 ? '└──' : '├──'} [acc]${d}/[/]`); fs.forEach((f, k) => out(`${i === all.length - 1 ? '    ' : '│   '}${k === fs.length - 1 ? '└──' : '├──'} ${f}  [dim]${FS[`${d}/${f}`].split('\n').length} lines[/]`)); }); },
     cat: (a) => { const t = FS[fileArg(a[0])]; if (!t) return out(`[err]cat: ${a[0] || ''}: no such file[/]`); t.replace(/\n$/, '').split('\n').forEach((l, i) => out(`[dim]${lpad(i + 1, 3)}[/]  ${l}`)); },
