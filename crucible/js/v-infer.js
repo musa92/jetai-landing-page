@@ -1,8 +1,8 @@
 /* Inference views: deployments (SLOs, tuning, canary rollout, autoscaling,
    engine config), the capacity planner and engine benchmarks. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, sleep, p90, icon, match, F_ } from './core.js?v=20261031-4';
-import { tsChart, RANGES } from './charts.js?v=20261031-4';
-import { WORK as KWORK } from './v-perf.js?v=20261031-4';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, DRAWERS, EV, EXPORTS, head, pill, glist, stack, seg, C, xyChart, can, me, toast, ui, sleep, p90, icon, match, F_ } from './core.js?v=20261101-2';
+import { tsChart, RANGES } from './charts.js?v=20261101-2';
+import { WORK as KWORK } from './v-perf.js?v=20261101-2';
 
 const DSTATE = { healthy: 'ok', canary: 'blue', degraded: 'warn', 'rolling back': 'warn' };
 const effCfg = (d) => (d.issue ? { ...d.cfg, prompt: 5800 } : d.cfg);

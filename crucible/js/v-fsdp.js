@@ -1,7 +1,7 @@
 /* FSDP: the sharding configuration of each FSDP job, its measured cost per
    wrapped unit, peak memory over a step, the generated FSDP2 code, and
    config changes applied at the next checkpoint restart. */
-import { E, h, fmt, si, gb, ms, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, stack, C, xyChart, can, me, toast } from './core.js?v=20261031-4';
+import { E, h, fmt, si, gb, ms, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, stack, C, xyChart, can, me, toast } from './core.js?v=20261101-2';
 
 S.fsdp = { job: null, draft: null };
 const STRATS = { full: 'FULL_SHARD', grad: 'SHARD_GRAD_OP', hybrid: 'HYBRID_SHARD (HSDP)' };

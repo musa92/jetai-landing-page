@@ -1,12 +1,12 @@
 /* Submissions dashboard: every job submitted from the CLI or this page, with
    its lifecycle, GPU placement (nodes, ranks, tensor-parallel groups), data
    shard distribution, CPU preprocessing, batch pipeline progress, spec and logs. */
-import { E, $, h, fmt, si, gb, ms, ago, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui } from './core.js?v=20261031-4';
-import { FS, SUBS, jobCommands, parseYaml, validate } from './v-jobs.js?v=20261031-4';
+import { E, $, h, fmt, si, gb, ms, ago, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui } from './core.js?v=20261101-2';
+import { FS, SUBS, jobCommands, parseYaml, validate } from './v-jobs.js?v=20261101-2';
 
 const quiet = (via) => jobCommands({ out: () => {}, setLine: () => {}, pad: (x, n) => String(x).padEnd(n), lpad: (x, n) => String(x).padStart(n), flag: () => undefined, has: () => false, sleep: (t) => new Promise((r) => setTimeout(r, t)), openEditor: () => {}, lineCount: () => 0, via });
 S.subsel = S.subsel || null; S.subtab = S.subtab || 'overview';
-const LIFE = { TrainingJob: ['package', 'resolve', 'plan', 'data', 'preprocess', 'admission', 'placement', 'ray', 'launch'], RLJob: ['package', 'resolve', 'roles', 'placement', 'weights', 'ray'], BatchJob: ['package', 'input', 'ray'] };
+const LIFE = { TrainingJob: ['package', 'resolve', 'plan', 'data', 'preprocess', 'admission', 'placement', 'head', 'ray', 'launch'], RLJob: ['package', 'resolve', 'roles', 'placement', 'weights', 'head', 'ray'], BatchJob: ['package', 'input', 'head', 'ray'] };
 const STATE = { running: 'live', succeeded: 'ok', rejected: 'deny', submitting: 'warn', 'dry run': '', stopped: '', cancelled: '' };
 const tpCol = [C.blue, C.purple, C.teal, C.indigo, C.pink, C.amber, C.green, C.gray];
 
@@ -51,6 +51,47 @@ function placement(t) {
     <p class="note">Streaming execution: every operator runs at once; rows flow through object-store blocks. When the GPU embed stage falls behind, Ray Data slows the readers instead of buffering everything in memory.</p>`;
 }
 
+/* The Ray head node: control plane for this job's cluster, and the sequence it runs to distribute the work. */
+function controlPlane(r, t) {
+  const cl = t.cluster || 'usw2-h100-a', headName = `${cl.slice(0, 6)}-h001`;
+  const cpuW = t.kind === 'train' ? Math.ceil(t.cpus / 64) : t.kind === 'rl' ? Math.ceil(t.sandboxes / 64) : Math.ceil(t.cpus / 64);
+  const gpuNames = t.names || Array.from({ length: Math.ceil(t.gpus / 8) }, (_, i) => `${cl.slice(0, 6)}-n${String(140 + i * 3).padStart(4, '0')}`);
+  const workers = gpuNames.length + cpuW;
+  const wname = (i) => (i < gpuNames.length ? gpuNames[i] : `${cl.slice(0, 6)}-c${String(20 + i - gpuNames.length).padStart(3, '0')}`);
+  const wkind = (i) => (i < gpuNames.length ? '8 GPUs' : '64 CPUs');
+  const showIdx = [...Array.from({ length: Math.min(gpuNames.length, 9) }, (_, i) => i), ...Array.from({ length: Math.min(cpuW, 3) }, (_, i) => gpuNames.length + i)];
+  const live = r.state === 'running' || r.state === 'succeeded';
+  const hb = (i) => (live ? `${((Date.now() / 1000 + i * 0.37) % 1).toFixed(1)} s` : 'n/a');
+  const seq = t.kind === 'train' ? [
+    ['Job supervisor starts the driver', `Runs <code>${h((r.text.match(/entrypoint: (.*)/) || [])[1] || 'python train.py')}</code> on the head with the packaged working_dir.`],
+    ['Driver asks the GCS for a placement group', `${t.nodes} bundles of {GPU: 8, CPU: 96}, STRICT_SPREAD: one bundle per node.`],
+    ['GCS reserves bundles on raylets', 'Two-phase commit: every raylet prepares its bundle, then the GCS commits. All or nothing, so no half-started gang.'],
+    ['Autoscaler fills gaps', 'If a bundle cannot fit, the autoscaler asks KubeRay for nodes; pending bundles wait in the GCS.'],
+    ['Raylets start worker processes', `${t.gpus} TorchTrainer workers, one per GPU, each pinned with CUDA_VISIBLE_DEVICES.`],
+    ['Ray Train sets up torch.distributed', `Ranks 0 to ${t.gpus - 1}; MASTER_ADDR is worker rank 0 (not the head). NCCL rendezvous, then GPU traffic flows directly between workers.`],
+    ['Ray Data schedules preprocessing', `The streaming executor on the head splits ${fmt(t.shards)} shards into blocks and sends CPU tasks to ${cpuW} CPU nodes; blocks stream to each rank's iterator.`],
+    ['Supervision', 'Raylets heartbeat to the GCS every second. A missed node is marked dead after 30 s; Ray Train restarts the worker group from the last checkpoint.'],
+  ] : t.kind === 'rl' ? [
+    ['Job supervisor starts the RL driver', 'The single controller that runs the generate, score, train, sync loop.'],
+    ['Driver requests three placement groups', `rollout ${t.engines} × {GPU: ${t.tpE}} STRICT_PACK, trainer ${t.trainer / 8} × {GPU: 8}, sandboxes ${fmt(t.sandboxes)} × {CPU: 1} SPREAD.`],
+    ['GCS places actors', 'Each role is an actor group; the GCS records which node every actor lives on and restarts it on failure.'],
+    ['Driver calls actors', 'engine.generate.remote(), sandbox.score.remote(), trainer.step.remote(): futures resolve through the object store.'],
+    ['Weights move outside the head', 'Trainer broadcasts new weights to engines over NCCL; only control messages go through Ray.'],
+  ] : [
+    ['Head plans the pipeline', 'The Ray Data streaming executor turns read, map, map_batches and write into operators with resource budgets.'],
+    ['Tasks and actors go to raylets', 'CPU operators run as tasks; the embed stage is a pool of GPU actors that keep the model loaded.'],
+    ['Blocks stream through object stores', 'Outputs live in the producing node\'s object store and are pulled by the next operator; the head only tracks ownership.'],
+    ['Backpressure', 'When the GPU stage falls behind, the executor stops launching read tasks so memory stays bounded.'],
+  ];
+  return `<div class="cp">
+    <div class="cp-head"><div class="pn-h"><b class="mono">${headName}</b><span>head · 32 CPUs · no GPUs</span></div>
+      <div class="cp-comps">${[['GCS', 'nodes, actors, placement groups, job table'], [t.kind === 'batch' ? 'Streaming executor' : 'Driver', t.kind === 'batch' ? 'Ray Data operator scheduling' : 'your entrypoint, run by the job supervisor'], ['Autoscaler', 'requests nodes from KubeRay'], ['Dashboard', ':8265, metrics, logs']].map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join('')}</div></div>
+    <div class="cp-arrow"><span>control plane: scheduling, actor calls, heartbeats</span></div>
+    <div class="cp-workers"><b>${workers} worker nodes: ${gpuNames.length} GPU, ${cpuW} CPU</b><div class="cp-wlist">${showIdx.map((i) => `<div class="cp-w${i >= gpuNames.length ? ' cpu' : ''}"><span class="mono">${h(wname(i))} <small>${wkind(i)}</small></span><em>raylet ${live ? '●' : '○'} · heartbeat ${hb(i)} · object store ${(8 + (i * 7) % 20)} / ${i < gpuNames.length ? 96 : 48} GB</em></div>`).join('')}${workers > showIdx.length ? `<div class="cp-w more">… ${workers - showIdx.length} more</div>` : ''}</div></div>
+    <div class="cp-data"><span>data plane: ${t.kind === 'batch' ? 'object-store blocks between nodes' : 'NCCL over NVLink and InfiniBand, worker to worker'}. The head is never on this path.</span></div></div>
+    <h4 class="insp-h">How the head distributes this job</h4><ol class="steps">${seq.map(([k, v], i) => `<li class="${live || i < 2 ? 'done' : ''}"><span class="dot">${live || i < 2 ? '✓' : ''}</span><div><b>${k}</b><p>${v}</p></div><span></span></li>`).join('')}</ol>`;
+}
+
 function dataView(t) {
   if (t.kind === 'batch') return glist([['Input', `<span class="mono">${h(t.input)}</span>`], ['Rows', si(t.rows)], ['Output', `<span class="mono">${h(t.output)}</span>`], ['CPUs / GPUs', `${t.cpus} / ${t.gpus}`]]);
   if (t.kind === 'rl') return glist([['Prompts', h(t.dataset)], ['Per step', 'prompts sharded across rollout engines; samples gathered by the driver'], ['Rewards', `${fmt(t.sandboxes)} sandboxes behind a queue`]]);
@@ -69,12 +110,14 @@ VIEWS.jobs = () => {
   const list = SUBS.map((x) => { const j = x.jobId && ctx.F.job(x.jobId), st = j && j.state !== 'running' ? j.state : x.state; return `<button class="lcm-row nodot${x.id === S.subsel ? ' on' : ''}" data-subsel="${x.id}"><span><b>${h(x.name || x.file)}</b><small>${h(x.kind)} · ${x.gpus} GPUs · ${h(x.user)} via ${x.via} · ${ago(x.t)}</small></span><span class="badge ${STATE[st] === 'deny' ? 'deny' : STATE[st] === 'live' ? 'blue' : STATE[st] === 'ok' ? 'ok' : ''}">${st}</span></button>`; }).join('');
   if (!r) return head('Submissions', 'Jobs submitted from the CLI, SDK or this page.') + `<div class="grid"><div class="card c12"><div class="empty"><b>Loading submissions…</b></div></div></div>`;
   const t = r.topo;
-  const tabs = [['overview', 'Overview'], ['placement', 'Placement'], ['data', 'Data'], ['spec', 'Spec'], ['logs', 'Logs']];
+  const tabs = [['overview', 'Overview'], ['control', 'Head node'], ['placement', 'Placement'], ['data', 'Data'], ['spec', 'Spec'], ['logs', 'Logs']];
   let body = '';
   if (S.subtab === 'overview') body = `${lifecycle(r)}${r.issues.length ? `<div class="lcm-banner ${r.state === 'rejected' ? 'deny' : 'warn'}">${r.issues.map(([lvl, msg, ln]) => `<div><b>${lvl === 'error' ? 'Error' : 'Warning'}</b> ${h(r.file)}:${ln} ${h(msg)}</div>`).join('')}</div>` : ''}
     ${t ? `<div class="lcm-tiles">${t.kind === 'train' ? `<div class="lcm-tile"><span>GPUs</span><b>${t.gpus}</b><small>${t.nodes} nodes · ${E.HW[t.hw].name}</small></div><div class="lcm-tile"><span>Layout</span><b>TP ${t.tp} · DP ${t.dp}</b><small>FSDP within DP</small></div><div class="lcm-tile"><span>Memory / GPU</span><b>${gb(t.mem)}</b><small>planned</small></div><div class="lcm-tile"><span>Shards / rank</span><b>${t.per % 1 ? t.per.toFixed(1) : t.per}</b><small>${fmt(t.shards)} total</small></div><div class="lcm-tile"><span>CPU preprocessing</span><b>${t.cpus}</b><small>Ray Data tasks</small></div><div class="lcm-tile"><span>Modeled</span><b>${si(t.tps)}/s</b><small>MFU ${(t.mfu * 100).toFixed(0)}%</small></div>` : t.kind === 'rl' ? `<div class="lcm-tile"><span>GPUs</span><b>${t.gpus}</b><small>${t.rollout} rollout · ${t.trainer} trainer</small></div><div class="lcm-tile"><span>Engines</span><b>${t.engines}</b><small>${h(t.engine)} TP ${t.tpE}</small></div><div class="lcm-tile"><span>Sandboxes</span><b>${fmt(t.sandboxes)}</b><small>CPU actors</small></div>` : `<div class="lcm-tile"><span>Rows</span><b>${si(t.rows)}</b><small>input</small></div><div class="lcm-tile"><span>CPUs</span><b>${t.cpus}</b><small>read, chunk, write</small></div><div class="lcm-tile"><span>GPUs</span><b>${t.gpus}</b><small>embedding actors</small></div><div class="lcm-tile"><span>Progress</span><b>${Math.round(t.stages.at(-1).frac * 100)}%</b><small>written</small></div>`}</div>
+    <div class="card-sub"><h4>Head node and workers</h4>${controlPlane(r, t).split('<h4 class="insp-h">How the head')[0]}</div>
     <div class="card-sub"><h4>Placement</h4>${placement(t)}</div>` : ''}`;
   if (S.subtab === 'placement') body = t ? placement(t) : '<p class="note">Not placed.</p>';
+  if (S.subtab === 'control') body = t ? controlPlane(r, t) : '<p class="note">No cluster yet.</p>';
   if (S.subtab === 'data') body = t ? dataView(t) : '<p class="note">No data plan.</p>';
   if (S.subtab === 'spec') body = `<pre class="code">${h(r.text)}</pre>`;
   if (S.subtab === 'logs') { const ev = r.jobId ? ctx.F.events.filter((e) => e.subject === r.jobId) : []; body = `<pre class="code">${h([...r.steps.map(([k, x, tt]) => `${new Date(tt).toISOString().slice(11, 19)}  ${k.padEnd(12)} ${x}`), ...ev.reverse().map((e) => `${new Date(e.t).toISOString().slice(11, 19)}  ${e.kind.padEnd(12)} ${e.text}`)].join('\n'))}</pre>`; }

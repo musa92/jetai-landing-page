@@ -1,7 +1,7 @@
 /* Post-training pipelines, evaluations, model registry, design review,
    SDK and API, and settings. */
-import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui, icon, match, F_ } from './core.js?v=20261031-4';
-import { EVAL_SUITES } from './v-train.js?v=20261031-4';
+import { E, h, fmt, si, gb, ms, dur, ago, usd, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui, icon, match, F_ } from './core.js?v=20261101-2';
+import { EVAL_SUITES } from './v-train.js?v=20261101-2';
 
 /* ───────────────────────── pipelines ───────────────────────── */
 

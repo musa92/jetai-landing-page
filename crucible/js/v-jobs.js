@@ -2,7 +2,7 @@
    parser with line-numbered validation, and the submit pipeline that shows
    how a job is decomposed onto the fleet: code package, data shards per
    rank, CPU preprocessing tasks, GPU placement, Ray cluster, live logs. */
-import { E, ctx, S, me, ui, si, gb, fmt } from './core.js?v=20261031-4';
+import { E, ctx, S, me, ui, si, gb, fmt } from './core.js?v=20261101-2';
 
 /* ───────────────────────── workspace ───────────────────────── */
 
@@ -262,6 +262,7 @@ export function jobCommands(api) {
     const job = { id, name: md.name, kind: s.method === 'pretrain' ? 'pretrain' : 'post', method: (s.method || 'sft').toUpperCase(), arch, team: md.team, owner: me().name, cluster: cl.id, state: 'queued', priority: md.priority || 'P2', cfg: { ...plan.c, hw, chunkedLoss: true }, steps: s.maxSteps || 1000, started: null, step: 0, base: s.model, dataset: d.id, wait: 8, ckptEvery: 600, file };
     ctx.F.jobs.unshift(job); SUBMITTED.unshift(id);
     ctx.F.event(Date.now(), id, 'submitted', `${me().name} submitted ${file}: ${gpus} × ${E.HW[hw].name}, TP ${plan.c.tp}, ${plan.c.zero >= 3 ? 'FSDP' : 'DP'} ${plan.c.dp}.`);
+    await step('head', `ray-${id}-head on ${cl.id.slice(0, 6)}-h001 (32 CPUs, no GPUs): GCS, job supervisor, autoscaler, dashboard :8265`, 350);
     await step('ray', `KubeRay cluster ray-${id}: head + ${nodes} GPU workers + ${Math.ceil((s.data.preprocessCpus || 128) / 64)} CPU workers ready`, 500);
     await step('launch', `TorchTrainer(${gpus} workers) · init_process_group(nccl) · ${gpus} ranks connected`, 400);
     job.state = 'running'; job.started = Date.now(); cur.state = 'running'; cur.jobId = id; refresh();
@@ -295,6 +296,7 @@ export function jobCommands(api) {
     const job = { id, name: md.name, kind: 'rl', method: (s.algorithm || 'grpo').toUpperCase(), arch, team: md.team, owner: me().name, cluster: cl.id, state: 'running', priority: md.priority || 'P1', cfg: { hw, tp: 4, pp: 1, cp: 1, dp: s.trainer.gpus / 4, micro: 1, accum: 1, zero: 3, recompute: 'full', vpp: 1, seq: 16384, fp8: false, chunkedLoss: true }, rl: { rolloutGpus: s.rollout.gpus, trainGpus: s.trainer.gpus, rmGpus: 0, verifiers: s.reward.sandboxes, group: s.rollout.samplesPerPrompt || 16, promptsPerStep: 256, maxLen: 16384, async: 1, engine: s.rollout.engine === 'sglang' ? 'SGLang 0.5' : 'vLLM 0.11', sync: 'NCCL broadcast, bucketed' }, steps: s.maxSteps || 800, started: Date.now(), step: 0, base: s.policy, dataset: s.data.dataset, file };
     ctx.F.jobs.unshift(job); SUBMITTED.unshift(id);
     ctx.F.event(Date.now(), id, 'admitted', `${me().name} submitted ${file}: RL with ${s.rollout.gpus + s.trainer.gpus} GPUs.`);
+    await step('head', `ray-${id}-head on ${cl.id.slice(0, 6)}-h001: GCS + driver (RL controller) + autoscaler`, 350);
     await step('ray', `driver started; ${engines} engines loaded weights; ${s.trainer.gpus} trainer ranks connected`, 500);
     cur.state = 'running'; cur.jobId = id; refresh();
     ui.renderChrome();
@@ -314,6 +316,7 @@ export function jobCommands(api) {
     const id = `${md.name}-${(SEQ++).toString(36)}`;
     SUBMITTED.unshift(id); cur.jobId = id; cur.state = 'running';
     ctx.F.event(Date.now(), id, 'submitted', `${me().name} submitted ${file}: Ray Data batch job.`);
+    await step('head', `ray-${id}-head: GCS + Ray Data streaming executor (plans operators, schedules tasks)`, 350);
     await step('ray', `cluster ray-${id}: ${Math.ceil(s.pipeline.reduce((x, st) => x + (st.cpus || 0), 0) / 64)} CPU nodes + ${Math.ceil(s.pipeline.reduce((x, st) => x + (st.gpus || 0), 0) / 8)} GPU nodes`, 400);
     out('');
     const start = T0(), idx = [];
@@ -365,6 +368,8 @@ export function jobCommands(api) {
         const gpus = E.jobGpus(j), nodes = Math.ceil(gpus / 8), c = j.cfg;
         out(`[b]${j.id}[/]  ${j.kind} · ${j.method || ''} · ${E.ARCH[j.arch].name} · ${j.state}${j.file ? ` · from ${j.file}` : ''}`);
         out(`  cluster ${j.cluster} · ray-${j.id} · priority ${j.priority} · team ${j.team}`);
+        out(`  head     ${j.cluster.slice(0, 6)}-h001 · GCS (nodes, actors, placement groups) · job supervisor runs the driver · autoscaler · dashboard :8265`);
+        out(`  control  driver → GCS → raylets (scheduling, heartbeats 1 s) · data plane NCCL GPU↔GPU, never through the head`);
         out(`  layout   TP ${c.tp} · PP ${c.pp} · ${c.zero >= 3 ? 'FSDP' : 'DP'} ${c.dp} · micro ${c.micro} × accum ${c.accum} · seq ${fmt(c.seq)} · ${c.recompute} recompute`);
         if (j.rl) out(`  roles    rollout ${j.rl.rolloutGpus / 4} engines × TP 4 · trainer ${j.rl.trainGpus} GPUs · ${fmt(j.rl.verifiers)} sandboxes`);
         const d = E.DATASETS.find((x) => x.id === (j.dataset || j.mix));

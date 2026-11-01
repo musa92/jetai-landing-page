@@ -1,18 +1,18 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261031-4';
-import { initChartHover } from './charts.js?v=20261031-4';
-import './v-train.js?v=20261031-4';
-import './v-infer.js?v=20261031-4';
-import './v-compute.js?v=20261031-4';
-import './v-more.js?v=20261031-4';
-import './v-ops.js?v=20261031-4';
-import './v-term.js?v=20261031-4';
-import './v-fsdp.js?v=20261031-4';
-import './v-backends.js?v=20261031-4';
-import './v-lib.js?v=20261031-4';
-import './v-perf.js?v=20261031-4';
-import './v-jobsui.js?v=20261031-4';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261101-2';
+import { initChartHover } from './charts.js?v=20261101-2';
+import './v-train.js?v=20261101-2';
+import './v-infer.js?v=20261101-2';
+import './v-compute.js?v=20261101-2';
+import './v-more.js?v=20261101-2';
+import './v-ops.js?v=20261101-2';
+import './v-term.js?v=20261101-2';
+import './v-fsdp.js?v=20261101-2';
+import './v-backends.js?v=20261101-2';
+import './v-lib.js?v=20261101-2';
+import './v-perf.js?v=20261101-2';
+import './v-jobsui.js?v=20261101-2';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -146,7 +146,7 @@ document.addEventListener('click', (e) => {
   SORTS[key] = { c: +c, d: cur && cur.c === +c ? -cur.d : -1 };
   applySorts();
 });
-const LIVE = new Set(['overview', 'runs', 'rl', 'deployments', 'fleet', 'ray', 'gpu']);
+const LIVE = new Set(['overview', 'runs', 'rl', 'deployments', 'fleet', 'ray', 'gpu', 'jobs']);
 setInterval(() => {
   if (!ctx.F || $('#app').hidden) return;
   const a = document.activeElement;
