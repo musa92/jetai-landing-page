@@ -1,10 +1,10 @@
 /* Terminal: the crucible CLI in the browser. `crucible serve <model> --auto`
    runs the whole serving pipeline (mesh, meta, wrap, allocate, optimize,
    serve) against the same cost models the console uses. */
-import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261101-2';
-import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261101-2';
-import { lower, RULES } from './v-lib.js?v=20261101-2';
-import { jobCommands, fileNames, FS } from './v-jobs.js?v=20261101-2';
+import { E, $, h, fmt, si, gb, ms, ctx, S, VIEWS, AFTER, ui, me, sleep, p90, usd, dur } from './core.js?v=20261102-2';
+import { BACKENDS, genTrain, genRL, genServe } from './v-backends.js?v=20261102-2';
+import { lower, RULES } from './v-lib.js?v=20261102-2';
+import { jobCommands, fileNames, FS } from './v-jobs.js?v=20261102-2';
 
 const T = S.term = S.term || { lines: [], hist: [], hi: 0, busy: false, steps: null, model: null };
 const STEPS = [['mesh', 'Build device mesh'], ['meta', 'Read model metadata'], ['wrap', 'Wrap in engine'], ['optimize', 'Optimize for SLO'], ['allocate', 'Allocate GPUs'], ['serve', 'Serve as canary']];

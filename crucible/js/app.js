@@ -1,18 +1,20 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261101-2';
-import { initChartHover } from './charts.js?v=20261101-2';
-import './v-train.js?v=20261101-2';
-import './v-infer.js?v=20261101-2';
-import './v-compute.js?v=20261101-2';
-import './v-more.js?v=20261101-2';
-import './v-ops.js?v=20261101-2';
-import './v-term.js?v=20261101-2';
-import './v-fsdp.js?v=20261101-2';
-import './v-backends.js?v=20261101-2';
-import './v-lib.js?v=20261101-2';
-import './v-perf.js?v=20261101-2';
-import './v-jobsui.js?v=20261101-2';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261102-2';
+import { initChartHover } from './charts.js?v=20261102-2';
+import './v-train.js?v=20261102-2';
+import './v-infer.js?v=20261102-2';
+import './v-compute.js?v=20261102-2';
+import './v-more.js?v=20261102-2';
+import './v-ops.js?v=20261102-2';
+import './v-term.js?v=20261102-2';
+import './v-fsdp.js?v=20261102-2';
+import './v-backends.js?v=20261102-2';
+import './v-lib.js?v=20261102-2';
+import './v-perf.js?v=20261102-2';
+import './v-jobsui.js?v=20261102-2';
+import './v-host.js?v=20261102-2';
+import './v-scale.js?v=20261102-2';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -39,7 +41,7 @@ export const SECTIONS = [
   ['post', 'Post-training', [['pipelines', 'Pipelines'], ['rl', 'RL runs'], ['evals', 'Evaluations']]],
   ['inference', 'Inference', [['deployments', 'Deployments'], ['tenant', 'Tenant optimizer'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
   ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['kernels', 'Kernels and memory'], ['tenants', 'Tenants and cost'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
-  ['models', 'Models', [['registry', 'Registry']]],
+  ['models', 'Models', [['catalog', 'Catalog'], ['lifecycle', 'Lifecycle'], ['hosting', 'Tiers and tenancy'], ['gateway', 'Gateway'], ['mobs', 'Observability'], ['coldstart', 'Cold start and scaling'], ['simulate', 'Scaling simulator'], ['registry', 'Registry']]],
   ['dev', 'Developers', [['library', 'Crucible library'], ['terminal', 'Terminal'], ['review', 'Design review'], ['sdk', 'SDK and API']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations']]],
 ];

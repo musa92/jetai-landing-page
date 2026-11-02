@@ -1148,3 +1148,49 @@ body { background: var(--bg); }
 .cp-w.more { color: var(--ink-3); align-content: center; }
 @media (max-width: 900px) { .cp-comps { grid-template-columns: 1fr 1fr; } }
 .cp-w small { font-family: var(--text); color: var(--ink-3); font-size: 10px; margin-left: 4px; } .cp-w.cpu { background: var(--fill); }
+
+/* Model hosting */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hspark { display: block; }
+.pstage .big, .card h3 .big { font: 600 22px/1.1 var(--display); font-variant-numeric: tabular-nums; color: var(--ink); }
+.recs { display: grid; gap: 8px; }
+.rec { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px; border: 1px solid var(--hair); border-radius: 10px; }
+.rec b { font-size: 13px; } .rec p { margin-top: 2px; font-size: 12px; color: var(--ink-2); }
+.tierc .glist { margin-top: 10px; }
+.poolmap { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; }
+.poolmap i { height: 18px; border-radius: 3px; background: var(--fill-2); }
+.mini { display: inline-block; width: 60px; height: 6px; border-radius: 3px; background: var(--fill-2); margin-right: 8px; vertical-align: middle; overflow: hidden; }
+.mini i { display: block; height: 100%; border-radius: 3px; }
+.table tr.warnrow td { background: var(--amber-soft); }
+.srcs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.srcs div { display: grid; gap: 2px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
+.srcs b { font-size: 12.5px; } .srcs span { font-size: 11.5px; color: var(--ink-3); }
+.lever { display: grid; gap: 4px; align-content: start; }
+.lever span { font-size: 12px; color: var(--ink-3); } .lever b { font: 600 17px/1.2 var(--display); font-variant-numeric: tabular-nums; } .lever p { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+@media (max-width: 900px) { .grid2, .srcs { grid-template-columns: 1fr; } .poolmap { grid-template-columns: repeat(12, 1fr); } }
+
+/* Scaling simulator */
+.simbar .row { gap: 10px; } .simbar .sp { flex: 1; }
+.field.inline { display: inline-flex; align-items: center; gap: 6px; }
+.simkpis { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.simk { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.simk span { font-size: 11px; color: var(--ink-3); } .simk small { font-size: 10.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.simk b { font: 600 18px/1.2 var(--display); font-variant-numeric: tabular-nums; } .simk b em { font-style: normal; color: var(--blue); font-size: 14px; }
+.simk.warn b { color: var(--amber); } .simk.bad b { color: var(--red); }
+.simlog { display: grid; gap: 6px; max-height: 236px; overflow: auto; align-content: start; }
+.sl { display: grid; grid-template-columns: 40px 1fr; gap: 8px; font-size: 11.5px; line-height: 1.35; padding-left: 8px; border-left: 2px solid var(--hair); }
+.sl time { font: 11px var(--mono); color: var(--ink-3); }
+.sl.up { border-color: var(--blue); } .sl.down { border-color: var(--gray, #8e8e93); } .sl.ok { border-color: var(--green); } .sl.warn { border-color: var(--amber); }
+.simreps { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.simr { border: 1px solid var(--hair); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; align-content: start; }
+.simr b { font: 600 12px var(--mono); } .simr small { font-size: 11px; color: var(--ink-3); }
+.simr.start { border-color: rgba(0,113,227,.45); background: var(--blue-soft); } .simr.drain { opacity: .55; }
+.simg { display: flex; gap: 3px; } .simg i { flex: 1; height: 8px; border-radius: 2px; background: var(--fill-2); }
+.simg i.on { background: var(--green); } .simg i.ld { background: var(--blue); opacity: .5; } .simg i.dr { background: var(--ink-3); }
+.simbarx { height: 6px; border-radius: 3px; background: var(--fill-2); overflow: hidden; } .simbarx i { display: block; height: 100%; background: var(--green); transition: width .25s linear; }
+.simbarx.ld i { background: var(--blue); }
+.simsh { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; }
+.simsh i { height: 10px; border-radius: 2px; background: linear-gradient(90deg, var(--blue) calc(var(--f) * 100%), var(--fill-2) 0); }
+.simsh i.done { background: var(--green); }
+@media (max-width: 1100px) { .simkpis { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 600px) { .simkpis { grid-template-columns: repeat(2, 1fr); } }

@@ -1,8 +1,8 @@
 /* Submissions dashboard: every job submitted from the CLI or this page, with
    its lifecycle, GPU placement (nodes, ranks, tensor-parallel groups), data
    shard distribution, CPU preprocessing, batch pipeline progress, spec and logs. */
-import { E, $, h, fmt, si, gb, ms, ago, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui } from './core.js?v=20261101-2';
-import { FS, SUBS, jobCommands, parseYaml, validate } from './v-jobs.js?v=20261101-2';
+import { E, $, h, fmt, si, gb, ms, ago, ctx, S, VIEWS, ACTIONS, CLICKS, head, pill, glist, seg, C, can, me, toast, ui } from './core.js?v=20261102-2';
+import { FS, SUBS, jobCommands, parseYaml, validate } from './v-jobs.js?v=20261102-2';
 
 const quiet = (via) => jobCommands({ out: () => {}, setLine: () => {}, pad: (x, n) => String(x).padEnd(n), lpad: (x, n) => String(x).padStart(n), flag: () => undefined, has: () => false, sleep: (t) => new Promise((r) => setTimeout(r, t)), openEditor: () => {}, lineCount: () => 0, via });
 S.subsel = S.subsel || null; S.subtab = S.subtab || 'overview';

@@ -2,7 +2,7 @@
    parser with line-numbered validation, and the submit pipeline that shows
    how a job is decomposed onto the fleet: code package, data shards per
    rank, CPU preprocessing tasks, GPU placement, Ray cluster, live logs. */
-import { E, ctx, S, me, ui, si, gb, fmt } from './core.js?v=20261101-2';
+import { E, ctx, S, me, ui, si, gb, fmt } from './core.js?v=20261102-2';
 
 /* ───────────────────────── workspace ───────────────────────── */
 
