@@ -1194,3 +1194,46 @@ body { background: var(--bg); }
 .simsh i.done { background: var(--green); }
 @media (max-width: 1100px) { .simkpis { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 600px) { .simkpis { grid-template-columns: repeat(2, 1fr); } }
+
+/* ═════════ Quiet navigation: one row per section, pages as tabs ═════════ */
+.app { grid-template-columns: 212px minmax(0, 1fr) 320px; }
+.app.no-insp { grid-template-columns: 212px minmax(0, 1fr) 0; }
+.side { padding: 12px 10px 10px; }
+.brand { padding: 6px 8px 18px; }
+#nav { display: grid; gap: 2px; align-content: start; }
+.nav-item { height: 32px; padding: 0 10px; gap: 10px; border-radius: 8px; font-size: 13px; color: var(--ink-2); }
+.nav-item .ic { width: 17px; height: 17px; color: var(--ink-3); }
+.nav-item:hover { background: var(--hover); color: var(--ink); }
+.nav-item.on { background: var(--hover-2); color: var(--ink); font-weight: 600; }
+.nav-item.on .ic { color: var(--blue); }
+.nav-item.on .count { color: var(--ink-3); }
+.nav-item .count.alert { color: #fff; }
+.nav-bottom { border-top: 0; padding-top: 0; }
+.side-foot { padding: 12px 10px 2px; border-top: 1px solid var(--hair); margin-top: 8px; }
+
+.subnav { flex: none; display: flex; gap: 22px; height: 40px; padding: 0 clamp(16px, 2.4vw, 28px); border-bottom: 1px solid var(--hair); background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); overflow-x: auto; scrollbar-width: none; }
+.subnav::-webkit-scrollbar { display: none; }
+.subnav[hidden] { display: none; }
+.sub-tab { position: relative; flex: none; border: 0; background: none; padding: 0; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.sub-tab:hover { color: var(--ink); }
+.sub-tab.on { color: var(--ink); font-weight: 600; }
+.sub-tab.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); }
+@media (max-width: 1100px) { .app, .app.no-insp { grid-template-columns: 212px minmax(0, 1fr) 0; } }
+@media (max-width: 760px) { .app, .app.no-insp { grid-template-columns: 1fr; } .subnav { gap: 18px; padding: 0 16px; } }
+
+/* Weight tiering */
+.wt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; }
+.wt-ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.wt-ctl .seg button { height: 24px; padding: 0 10px; font-size: 12px; }
+.wt-tier { display: grid; gap: 2px; align-content: start; }
+.wt-tier > span { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-3); }
+.wt-dot { width: 8px; height: 8px; border-radius: 50%; }
+.wt-tier b { font: 600 22px/1.2 var(--display); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.wt-tier p { font-size: 12.5px; color: var(--ink-2); }
+.wt-tier small { font-size: 11.5px; color: var(--ink-3); }
+.wt-grid { display: grid; grid-template-columns: repeat(32, 1fr); gap: 3px; }
+@media (max-width: 900px) { .wt-grid { grid-template-columns: repeat(16, 1fr); } }
+.wt-grid i { aspect-ratio: 1; border-radius: 3px; transition: background .3s var(--ease); }
+.wt-key { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--ink-2); }
+.wt-key i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+@media (max-width: 900px) { .wt-tier { grid-column: span 12; } }

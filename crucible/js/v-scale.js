@@ -1,8 +1,8 @@
 /* Scaling simulator: one model endpoint through a day of traffic. Demand
    forecast, autoscaling policy, replica cold starts with parallel weight
    loading, serving latency and GPU cost, all stepped live. */
-import { E, h, fmt, si, usd, S, VIEWS, AFTER, ACTIONS, CLICKS, head, pill, seg, xyChart, C, toast } from './core.js?v=20261102-2';
-import { OSS, SRC, sizeB, coldStart } from './v-host.js?v=20261102-2';
+import { E, h, fmt, si, usd, S, VIEWS, AFTER, ACTIONS, CLICKS, head, pill, seg, xyChart, C, toast } from './core.js?v=20261102-3';
+import { OSS, SRC, sizeB, coldStart } from './v-host.js?v=20261102-3';
 
 const MODELS = {
   'llama-3.3-70b': { cap: 7.2, peak: 64, slo: 1.0, max: 16 },

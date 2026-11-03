@@ -1,6 +1,6 @@
 /* Open-weights model hosting: catalog and approval, lifecycle and tiering,
    tenancy, gateway, observability, cold start and scale to zero. */
-import { E, h, fmt, si, usd, ctx, S, VIEWS, ACTIONS, CLICKS, EXPORTS, head, pill, glist, seg, stack, kpi2, xyChart, C, can, me, toast, icon, match, F_, ui } from './core.js?v=20261102-2';
+import { E, h, fmt, si, usd, ctx, S, VIEWS, ACTIONS, CLICKS, EXPORTS, head, pill, glist, seg, stack, kpi2, xyChart, C, can, me, toast, icon, match, F_, ui } from './core.js?v=20261102-3';
 
 const D = 864e5;
 const BYTES = { bf16: 2, fp8: 1.02, mxfp4: 0.55 };

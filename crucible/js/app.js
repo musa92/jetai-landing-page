@@ -1,20 +1,21 @@
 /* Crucible console shell: sign-in, sidebar, toolbar, Inspector, palette,
    notifications, create workflows and the live tick. Views live in v-*.js. */
-import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261102-2';
-import { initChartHover } from './charts.js?v=20261102-2';
-import './v-train.js?v=20261102-2';
-import './v-infer.js?v=20261102-2';
-import './v-compute.js?v=20261102-2';
-import './v-more.js?v=20261102-2';
-import './v-ops.js?v=20261102-2';
-import './v-term.js?v=20261102-2';
-import './v-fsdp.js?v=20261102-2';
-import './v-backends.js?v=20261102-2';
-import './v-lib.js?v=20261102-2';
-import './v-perf.js?v=20261102-2';
-import './v-jobsui.js?v=20261102-2';
-import './v-host.js?v=20261102-2';
-import './v-scale.js?v=20261102-2';
+import { E, $, h, fmt, time, initials, si, usd, store, ctx, S, VIEWS, AFTER, ACTIONS, CLICKS, EXPORTS, DRAWERS, EV, icon, pill, toast, ui, F_, csv, me, date, ago, gb, ms, p90, head, kpi2 } from './core.js?v=20261102-3';
+import { initChartHover } from './charts.js?v=20261102-3';
+import './v-train.js?v=20261102-3';
+import './v-infer.js?v=20261102-3';
+import './v-compute.js?v=20261102-3';
+import './v-more.js?v=20261102-3';
+import './v-ops.js?v=20261102-3';
+import './v-term.js?v=20261102-3';
+import './v-fsdp.js?v=20261102-3';
+import './v-backends.js?v=20261102-3';
+import './v-lib.js?v=20261102-3';
+import './v-perf.js?v=20261102-3';
+import './v-jobsui.js?v=20261102-3';
+import './v-host.js?v=20261102-3';
+import './v-scale.js?v=20261102-3';
+import './v-tier.js?v=20261102-3';
 
 /* ───────────────────────── sign-in ───────────────────────── */
 
@@ -41,7 +42,7 @@ export const SECTIONS = [
   ['post', 'Post-training', [['pipelines', 'Pipelines'], ['rl', 'RL runs'], ['evals', 'Evaluations']]],
   ['inference', 'Inference', [['deployments', 'Deployments'], ['tenant', 'Tenant optimizer'], ['forecast', 'Demand forecast'], ['kv', 'KV cache'], ['moe', 'Mixture of experts'], ['capacity', 'Capacity planner'], ['benchmarks', 'Benchmarks']]],
   ['compute', 'Compute', [['fleet', 'Fleet'], ['gpu', 'GPU telemetry'], ['kernels', 'Kernels and memory'], ['tenants', 'Tenants and cost'], ['queue', 'Queue and quotas'], ['ray', 'Ray clusters'], ['backends', 'Execution backends']]],
-  ['models', 'Models', [['catalog', 'Catalog'], ['lifecycle', 'Lifecycle'], ['hosting', 'Tiers and tenancy'], ['gateway', 'Gateway'], ['mobs', 'Observability'], ['coldstart', 'Cold start and scaling'], ['simulate', 'Scaling simulator'], ['registry', 'Registry']]],
+  ['models', 'Models', [['catalog', 'Catalog'], ['lifecycle', 'Lifecycle'], ['hosting', 'Tiers and tenancy'], ['gateway', 'Gateway'], ['mobs', 'Observability'], ['coldstart', 'Cold start and scaling'], ['simulate', 'Scaling simulator'], ['tiering', 'Weight tiering'], ['registry', 'Registry']]],
   ['dev', 'Developers', [['library', 'Crucible library'], ['terminal', 'Terminal'], ['review', 'Design review'], ['sdk', 'SDK and API']]],
   ['settings', 'Settings', [['org', 'Organization'], ['integrations', 'Integrations']]],
 ];
@@ -81,10 +82,9 @@ function renderChrome() {
   if (!ctx.F) return;
   const c = counts(), cur = SECTION_OF[S.view];
   S.open.add(cur);
-  const item = ([k, t, tabs]) => {
-    if (tabs.length === 1) return `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${tabs[0][0]}">${icon(k)}${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`;
-    return `<div class="nav-sec"><h6>${t}<span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></h6>${tabs.map(([v, tt]) => `<button class="nav-link${S.view === v ? ' on' : ''}" data-go="${v}">${tt}</button>`).join('')}</div>`;
-  };
+  S.last = S.last || {};
+  S.last[cur] = S.view;
+  const item = ([k, t, tabs]) => `<button class="nav-item${cur === k ? ' on' : ''}" data-go="${S.last[k] || tabs[0][0]}">${icon(k)}<span>${t}</span><span class="count${c[k] === '!' ? ' alert' : ''}">${c[k] ?? ''}</span></button>`;
   $('#nav').innerHTML = SECTIONS.filter(([k]) => k !== 'settings').map(item).join('');
   $('#nav-bottom').innerHTML = item(SECTIONS.find(([k]) => k === 'settings'));
   $('#bar-ctx').innerHTML = `<button class="ctx-btn" data-act="env"><span class="dot-ok"></span>Production<i>▾</i></button><div class="seg range">${['1h', '24h', '7d', '30d'].map((r) => `<button class="${S.range === r ? 'on' : ''}" data-range="${r}">${r}</button>`).join('')}</div><span class="live"><span class="live-dot"></span>Live</span>`;
@@ -93,7 +93,11 @@ function renderChrome() {
   const r = me();
   $('#btn-role').innerHTML = `<span class="av">${initials(r.name)}</span>${h(r.name.split(' ')[0])} <small>${h(r.title)}</small>`;
   const sec = SECTIONS.find(([k]) => k === cur);
-  $('#bar-title').innerHTML = sec[2].length > 1 ? `<span class="crumb">${sec[1]}</span><span class="crumb-sep">›</span><span>${TITLES[S.view]}</span>` : `<span>${sec[1]}</span>`;
+  $('#bar-title').innerHTML = `<span>${sec[1]}</span>`;
+  const sub = $('#subnav');
+  sub.hidden = sec[2].length < 2;
+  sub.innerHTML = sec[2].length < 2 ? '' : sec[2].map(([v, tt]) => `<button class="sub-tab${S.view === v ? ' on' : ''}" data-go="${v}">${tt}</button>`).join('');
+  sub.querySelector('.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   const F = ctx.F, total = E.CLUSTERS.reduce((a, cl) => a + cl.nodes * 8, 0);
   const used = F.jobs.filter((j) => j.state === 'running').reduce((a, j) => a + E.jobGpus(j), 0) + F.deps.reduce((a, d) => a + d.replicas * (d.cfg.tp + (d.cfg.disagg || 0)), 0);
   const degraded = F.deps.some((d) => d.state === 'degraded');
