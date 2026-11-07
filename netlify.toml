@@ -2,36 +2,11 @@
   publish = "."
   command = ""
 
-# Must precede the catch-all: without it, /fl-demo/app.js and friends get
-# rewritten to the landing page and the demo loads a blank shell.
-[[redirects]]
-  from = "/fl-demo/*"
-  to   = "/fl-demo/:splat"
-  status = 200
-
-# Same reason as /fl-demo: without this the article's css/js get rewritten to
+# Must precede the catch-all: without it, the article's css/js get rewritten to
 # the landing page and the page loads unstyled.
 [[redirects]]
   from = "/research/*"
   to   = "/research/:splat"
-  status = 200
-
-# Custodian governance demo: same passthrough as /fl-demo.
-[[redirects]]
-  from = "/custodian/*"
-  to   = "/custodian/:splat"
-  status = 200
-
-# Cadence inference demo: same passthrough as /fl-demo.
-[[redirects]]
-  from = "/cadence/*"
-  to   = "/cadence/:splat"
-  status = 200
-
-# Crucible training and inference demo: same passthrough.
-[[redirects]]
-  from = "/crucible/*"
-  to   = "/crucible/:splat"
   status = 200
 
 # Turbofan page disabled for now; remove this rule to bring it back.

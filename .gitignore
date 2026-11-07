@@ -1,9 +1,13 @@
 # Local scope / planning docs — not deployed
 scope/
 
-# Interview demo — local only, never deployed/pushed
-fl-demo/node_modules/
-fl-demo/.DS_Store
+# Interview demos — local only, never deployed/pushed
+fl-demo/
+custodian/
+cadence/
+crucible/
+netlify/edge-functions/custodian-gate.js
+netlify/edge-functions/crucible-gate.js
 
 # OS
 .DS_Store
@@ -11,4 +15,3 @@ fl-demo/.DS_Store
 # Editor
 .vscode/
 .idea/
-fl-demo/python/**/__pycache__/
