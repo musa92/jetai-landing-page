@@ -129,6 +129,68 @@
     if (!playing) dotsEl[0].style.setProperty('--p', '100%');
   })();
 
+  /* ── turbine → edge GPU → screens: lines measured from the real cards and devices ── */
+  var flowSec = $('#apps'), flowSvg = $('#apps .flow-lines');
+  if (flowSec && flowSvg) (function () {
+    var NS = 'http://www.w3.org/2000/svg';
+    var A = {}; $$('#apps [data-anchor]').forEach(function (el) { A[el.dataset.anchor] = el; });
+    function box(el) {
+      var r = el.getBoundingClientRect(), s = flowSec.getBoundingClientRect();
+      return r.width ? { l: r.left - s.left, t: r.top - s.top, r: r.right - s.left, b: r.bottom - s.top, cx: (r.left + r.right) / 2 - s.left, cy: (r.top + r.bottom) / 2 - s.top } : null;
+    }
+    function path(d, cls) { var p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); p.setAttribute('class', cls); flowSvg.appendChild(p); }
+    function label(x, y, t, cls) { var e = document.createElementNS(NS, 'text'); e.setAttribute('x', x); e.setAttribute('y', y); e.setAttribute('text-anchor', 'middle'); if (cls) e.setAttribute('class', cls); e.textContent = t; flowSvg.appendChild(e); }
+    function draw() {
+      flowSvg.textContent = '';
+      var T = box(A.turbine), E = box(A.edge);
+      if (!T || !E) return;
+      var stacked = E.t > T.b - 4, d;
+      if (stacked) d = 'M' + T.cx + ' ' + T.b + ' C' + T.cx + ' ' + (T.b + 30) + ' ' + E.cx + ' ' + (E.t - 30) + ' ' + E.cx + ' ' + E.t;
+      else d = 'M' + T.r + ' ' + T.cy + ' C' + (T.r + 40) + ' ' + T.cy + ' ' + (E.l - 40) + ' ' + E.cy + ' ' + E.l + ' ' + E.cy;
+      path(d, 'base'); path(d, 'raw');
+      if (stacked) label(T.cx + 52, (T.b + E.t) / 2 + 4, 'RAW SIGNALS'); else label((T.r + E.l) / 2, T.cy - 12, 'RAW');
+      ['mac', 'phone', 'watch'].forEach(function (k) {
+        var D = A[k] && box(A[k]); if (!D) return;
+        var sx = E.cx, sy = E.b, tx = D.cx, ty = D.t + (k === 'mac' ? 6 : 10), k2 = Math.max(40, (ty - sy) * 0.55);
+        var dd = 'M' + sx + ' ' + sy + ' C' + sx + ' ' + (sy + k2) + ' ' + tx + ' ' + (ty - k2) + ' ' + tx + ' ' + ty;
+        path(dd, 'base'); path(dd, 'ins');
+      });
+      label(E.cx + 40, E.b + 22, 'INSIGHT', 'blue');
+    }
+    var queued = false;
+    function q() { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; draw(); }); } }
+    window.addEventListener('scroll', q, { passive: true });
+    window.addEventListener('resize', q, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(q).observe(flowSec);
+    setTimeout(q, 300); window.addEventListener('load', q);
+
+    /* live sensor readings and the edge model's log */
+    var F = {}; $$('#apps [data-flow]').forEach(function (el) { F[el.dataset.flow] = el; });
+    var log = $('#apps .flow-log'), vis = false, n = 0;
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { vis = e[0].isIntersecting; }).observe(flowSec);
+    var UNITS = [['GT-07', function () { return 'anomaly ' + (0.85 + Math.random() * 0.04).toFixed(2) + ' · nozzle coking'; }, true],
+      ['GT-01', function () { return 'efficiency −2.1% · fouling'; }, false], ['GT-04', function () { return 'normal · ' + (0.08 + Math.random() * 0.06).toFixed(2); }, false],
+      ['GT-02', function () { return 'normal · ' + (0.07 + Math.random() * 0.06).toFixed(2); }, false]];
+    function row(ago) {
+      var d = new Date(Date.now() - (ago || 0) * 1000), u = UNITS[n++ % UNITS.length];
+      var li = document.createElement('li'); if (u[2]) li.className = 'warn';
+      var t = document.createElement('span'); t.textContent = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      var b = document.createElement('b'); b.textContent = u[0];
+      var em = document.createElement('em'); em.textContent = u[1]();
+      li.append(t, b, em); log.prepend(li);
+      while (log.children.length > 7) log.lastChild.remove();
+    }
+    if (log) { for (var i = 6; i >= 1; i--) row(i * 1.5); }
+    setInterval(function () {
+      if (!vis || document.hidden) return;
+      if (log) row();
+      if (F.vib) F.vib.textContent = (3.0 + Math.random() * 0.2).toFixed(1) + ' mm/s';
+      if (F.egt) F.egt.textContent = Math.round(613 + Math.random() * 3) + ' °C';
+      if (F.dp) F.dp.textContent = (1.78 + Math.random() * 0.08).toFixed(2) + ' psi';
+      if (F.ff) F.ff.textContent = (7.9 + Math.random() * 0.08).toFixed(2) + ' kg/s';
+    }, 1500);
+  })();
+
   if (REDUCED) return; // everything below is motion
 
   /* ═════════ damped scroll engine ═════════ */
@@ -280,12 +342,20 @@
       document.head.appendChild(el);
     });
   }
+  /* three.js plus the studio helpers, fetched once for every 3D scene on the page */
+  var threeP = null;
+  function loadThree() {
+    if (!threeP) threeP = loadScript('https://unpkg.com/three@0.134.0/build/three.min.js').then(function () {
+      return Promise.all(['environments/RoomEnvironment.js', 'geometries/RoundedBoxGeometry.js'].map(function (f) { return loadScript('https://unpkg.com/three@0.134.0/examples/js/' + f).catch(function () {}); }));
+    });
+    return threeP;
+  }
+
   if (dive && 'IntersectionObserver' in window) {
     var visible = false, booted = false;
     var boot = function () {
       booted = true;
-      loadScript('https://unpkg.com/three@0.134.0/build/three.min.js')
-        .then(function () { return Promise.all(['environments/RoomEnvironment.js', 'geometries/RoundedBoxGeometry.js'].map(function (f) { return loadScript('https://unpkg.com/three@0.134.0/examples/js/' + f).catch(function () {}); })); })
+      loadThree()
         .then(function () { return loadScript('js/turbofan.js?v=20261020-9'); })
         .then(function () {
           /* eslint-disable-next-line no-undef */

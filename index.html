@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="apple-touch-icon" href="assets/turbnetic-logo.png">
   <link rel="preload" as="image" href="assets/shots/edge-console.webp">
-  <link rel="stylesheet" href="css/apple.css?v=20261020-3">
+  <link rel="stylesheet" href="css/apple.css?v=20261108-6">
   <link rel="stylesheet" href="css/devices.css?v=20261020-4">
 </head>
 <body>
@@ -39,10 +39,9 @@
       </a>
       <ul class="gn-links">
         <li><a href="#edge">Edge Intelligence</a></li>
+        <li><a href="#how">How it works</a></li>
         <li><a href="#turbofan">Turbofan</a></li>
-        <li><a href="#hospital">Hospital</a></li>
-        <li><a href="#plant">Plant</a></li>
-        <li><a href="#agriculture">Agriculture</a></li>
+        <li><a href="#industries">Industries</a></li>
         <li><a href="research/uap/">Research</a></li>
       </ul>
       <a class="gn-cta" href="#contact">Request a demo</a>
@@ -50,10 +49,9 @@
     </nav>
     <div class="gn-menu" id="gn-menu" hidden>
       <a href="#edge">Edge Intelligence</a>
+      <a href="#how">How it works</a>
       <a href="#turbofan">Turbofan</a>
-      <a href="#hospital">Hospital</a>
-      <a href="#plant">Plant &amp; Process</a>
-      <a href="#agriculture">Agriculture</a>
+      <a href="#industries">Industries</a>
       <a href="research/uap/">Research</a>
       <a href="#contact" class="cta">Request a demo</a>
     </div>
@@ -64,11 +62,12 @@
     <!-- ═════════ 1 · EDGE INTELLIGENCE (the platform) ═════════ -->
     <section class="hero center" data-nav="light" id="edge">
       <div class="wrap stack-md">
+        <p class="eyebrow hero-eyebrow">Turbnetic</p>
         <h1 class="h-hero">Edge Intelligence</h1>
-        <p class="lede">AI that runs next to the machine, not in someone else's cloud.</p>
+        <p class="lede">AI that runs on the machine, not in someone else's cloud. One platform, from gas turbines to hospital wards.</p>
         <div class="ctas">
           <a class="pill" href="#contact">Request a demo</a>
-          <a class="pill ghost" href="#stack">Learn more</a>
+          <a class="pill ghost" href="#how">How it works</a>
         </div>
       </div>
       <div class="hero-pin" id="hero-pin">
@@ -124,10 +123,90 @@
     </section>
     </div>
 
+    <!-- ═════════ MISSION ═════════ -->
+    <section class="manifesto" id="mission" data-nav="light" aria-label="Our mission">
+      <p class="eyebrow mission-eyebrow">Our mission</p>
+      <p class="wrap" data-fill>Put intelligence where the data is born. Your machines already know when something is about to go wrong. Edge Intelligence listens beside them, answers in twelve milliseconds, and never sends the data away.</p>
+    </section>
+
+    <!-- ═════════ HOW EDGE INTELLIGENCE WORKS: a live machine → edge → people diagram ═════════ -->
+    <section class="edge-live" id="how" data-nav="dark" aria-label="How Edge Intelligence works">
+      <div class="wrap wide center">
+        <p class="el-eyebrow">How Edge Intelligence works</p>
+        <h2 class="h-section" data-wipe>The model lives on the machine.<br><span class="soft">The data never leaves.</span></h2>
+        <div class="el-switch" role="tablist" aria-label="Choose a machine">
+          <button type="button" role="tab" aria-selected="true" data-m="turbine">Gas turbine</button>
+          <button type="button" role="tab" aria-selected="false" data-m="ward">Hospital ward</button>
+          <button type="button" role="tab" aria-selected="false" data-m="line">Production line</button>
+          <button type="button" role="tab" aria-selected="false" data-m="field">Farm field</button>
+          <i class="el-thumb" aria-hidden="true"></i>
+        </div>
+      </div>
+
+      <div class="el-stage wrap wide" id="el-stage" data-m="turbine">
+        <!-- 1 · the machine -->
+        <article class="el-col el-machine">
+          <p class="el-step"><b>1</b> Sense</p>
+          <div class="el-card">
+            <div class="el-head"><span class="el-led"></span><div><b data-k="name">GT-07</b><span data-k="where">Frame 7 gas turbine · Plant Alpha</span></div></div>
+            <ul class="el-sensors" data-k="sensors"></ul>
+          </div>
+          <p class="el-cap">Sensors stream thousands of readings a second.</p>
+        </article>
+
+        <div class="el-wire raw" aria-hidden="true"><i></i></div>
+
+        <!-- 2 · the edge computer, with the cloud it does not need -->
+        <article class="el-col el-edge">
+          <div class="el-top">
+            <p class="el-step"><b>2</b> Think on site</p>
+            <div class="el-cloud" aria-label="Cloud not required">
+              <svg viewBox="0 0 48 32" aria-hidden="true"><path d="M14 27h22a8 8 0 0 0 .8-16A11 11 0 0 0 15.4 9.6 8.7 8.7 0 0 0 14 27z"/><path class="x" d="M17 7l16 22"/></svg>
+              <span>Cloud</span><b><span data-k="bytes">0 bytes</span> sent</b>
+            </div>
+          </div>
+          <div class="el-chip">
+            <div class="el-glow" aria-hidden="true"></div>
+            <svg class="el-pins" viewBox="0 0 200 200" aria-hidden="true"><path d="M60 30V8M80 30V8M100 30V8M120 30V8M140 30V8M60 192v-22M80 192v-22M100 192v-22M120 192v-22M140 192v-22M30 60H8M30 80H8M30 100H8M30 120H8M30 140H8M192 60h-22M192 80h-22M192 100h-22M192 120h-22M192 140h-22"/></svg>
+            <div class="el-die">
+              <span class="el-die-l">Edge computer</span>
+              <b class="el-ms"><span data-k="ms">11.4</span><small>ms</small></b>
+              <span class="el-die-m" data-k="model">Turbofan 4.2 · 7.8 MB</span>
+            </div>
+          </div>
+          <p class="el-cap"><span data-k="count">1,284,302</span> predictions today, on site.</p>
+        </article>
+
+        <div class="el-wire ins" aria-hidden="true"><i></i></div>
+
+        <!-- 3 · the people -->
+        <article class="el-col el-people">
+          <p class="el-step"><b>3</b> Act</p>
+          <div class="el-mid">
+          <div class="el-note" data-k="note">
+            <div class="el-note-h"><span class="el-app" data-k="appicon"></span><b data-k="app">Turbofan</b><span>now</span></div>
+            <b class="el-note-t" data-k="title">GT-07 combustion instability</b>
+            <p data-k="body">Can 4 dynamic pressure up 18% in six hours. Inspect before the next start.</p>
+          </div>
+          <div class="el-devices" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="11" rx="1.6"/><path d="M1.5 19h21"/></svg>
+            <svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/></svg>
+            <svg viewBox="0 0 24 24"><rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3"/></svg>
+          </div>
+          </div>
+          <p class="el-cap">The alert and its cause reach Mac, iPhone and Apple Watch.</p>
+        </article>
+      </div>
+
+      <div class="wrap wide center el-foot">
+        <p><span class="el-status" data-k="status">Live today as Turbofan Intelligence</span> · <a class="link" href="#industries">See every product</a></p>
+      </div>
+    </section>
+
     <!-- ═════════ 2 · TURBOFAN INTELLIGENCE (live) ═════════ -->
     <section class="product dark center" data-nav="dark" id="turbofan">
       <div class="wrap stack-sm">
-        <p class="eyebrow new" style="justify-content:center">Now live</p>
+        <p class="eyebrow new" style="justify-content:center">Now live · Our first Edge Intelligence product</p>
         <h2 class="h-chapter" data-wipe>Turbofan Intelligence</h2>
         <p class="lede">Stop turbine failures before they start.</p>
         <div class="ctas" style="margin-top:10px">
@@ -170,18 +249,46 @@
     <!-- ═════════ 3 · TURBOFAN APPS ═════════ -->
     <section class="ptile grey center" data-nav="light" id="apps">
       <div class="wrap">
-        <h2 class="h-section" data-wipe>Your fleet.<br><span class="soft">On every screen.</span></h2>
-        <p class="lede" style="max-width:34ch;margin:18px auto 0;color:var(--ink-2)">Turbofan Intelligence for Mac, iPhone and Apple Watch. Alerts, remaining life and the maintenance plan, wherever your team is.</p>
-        <div class="ctas" style="margin-top:22px"><a class="pill" href="#turbofan">Learn more</a><a class="pill ghost" href="#contact">Request a demo</a></div>
+        <h2 class="h-section" data-wipe>From the turbine.<br><span class="soft">To every screen.</span></h2>
+        <p class="lede" style="max-width:36ch;margin:18px auto 0;color:var(--ink-2)">Sensor data streams into an edge GPU beside the machine. The model's answer reaches Mac, iPhone and Apple Watch in seconds.</p>
       </div>
-      <div class="hero-stage" style="margin-top:48px">
-        <div class="ui-fit app-window" data-app="turbofan-mac" data-w="1400" data-frame="macbook" data-name="Turbofan"><img class="ui-fallback" src="assets/shots/app-mac.webp" width="2560" height="1220" alt="Turbofan Intelligence for Mac: fleet overview with a critical combustion alert on GT-07, an exhaust gas temperature chart and four turbines" loading="lazy" decoding="async"></div>
-        <div class="ui-fit app-watch" data-app="turbofan-watch" data-w="260" aria-label="Turbofan for Apple Watch: GT-07 combustion alert with a work order button"></div>
-        <div class="ui-fit app-phone" data-app="turbofan-ios" data-w="433"><img class="ui-fallback" src="assets/shots/app-iphone.webp" width="866" height="1784" alt="Turbofan Intelligence for iPhone: critical alert for GT-07 and 552 hours of remaining useful life" loading="lazy" decoding="async"></div>
+      <div class="flow" id="flow">
+        <svg class="flow-lines" aria-hidden="true"></svg>
+        <div class="flow-row">
+          <figure class="flow-card turbine" data-anchor="turbine">
+            <img src="assets/shots/engine-package.webp" width="2400" height="1076" alt="Render of the GT-07 gas turbine package: inlet filter house, gas turbine, exhaust stack and generator on one skid" loading="lazy" decoding="async">
+            <figcaption><b>GT-07</b><span>Frame 7 gas turbine · Plant Alpha</span></figcaption>
+            <ul class="flow-sensors">
+              <li>Vibration <b data-flow="vib">3.1 mm/s</b></li>
+              <li>Exhaust temp <b data-flow="egt">614 °C</b></li>
+              <li>Dynamic pressure <b data-flow="dp">1.82 psi</b></li>
+              <li>Fuel flow <b data-flow="ff">7.94 kg/s</b></li>
+            </ul>
+          </figure>
+          <div class="flow-card edge" data-anchor="edge">
+            <div class="flow-edge-h">
+              <svg class="chip" viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="9" width="22" height="22" rx="4"/><rect x="14" y="14" width="12" height="12" rx="2" class="core"/><path d="M14 9V4M20 9V4M26 9V4M14 36v-5M20 36v-5M26 36v-5M9 14H4M9 20H4M9 26H4M36 14h-5M36 20h-5M36 26h-5"/></svg>
+              <div><b>Edge GPU</b><span>NVIDIA Jetson-class · beside the turbine</span></div>
+            </div>
+            <div class="flow-model"><span>Model</span><b>Turbofan 4.2</b><span>Raw data</span><b>Stays on site</b></div>
+            <ol class="flow-log" aria-live="off"></ol>
+          </div>
+        </div>
+      </div>
+      <div class="hero-stage flow-devices" style="margin-top:12px">
+        <div class="ui-fit app-window" data-anchor="mac" data-app="turbofan-mac" data-w="1400" data-frame="macbook" data-name="Turbofan"><img class="ui-fallback" src="assets/shots/app-mac.webp" width="2560" height="1220" alt="Turbofan Intelligence for Mac: fleet overview with a critical combustion alert on GT-07, an exhaust gas temperature chart and four turbines" loading="lazy" decoding="async"></div>
+        <div class="ui-fit app-watch" data-anchor="watch" data-app="turbofan-watch" data-w="260" aria-label="Turbofan for Apple Watch: GT-07 combustion alert with a work order button"></div>
+        <div class="ui-fit app-phone" data-anchor="phone" data-app="turbofan-ios" data-w="433"><img class="ui-fallback" src="assets/shots/app-iphone.webp" width="866" height="1784" alt="Turbofan Intelligence for iPhone: critical alert for GT-07 and 552 hours of remaining useful life" loading="lazy" decoding="async"></div>
       </div>
     </section>
 
     <!-- ═════════ 4 · PRODUCT GRID ═════════ -->
+    <section class="industries-h center" id="industries" data-nav="light">
+      <div class="wrap">
+        <h2 class="h-section" data-wipe>Turbines first.<br><span class="soft">Then every machine with a sensor.</span></h2>
+        <p class="lede">Each product is Edge Intelligence, trained for a new kind of machine. Same platform, same privacy, same 12 ms.</p>
+      </div>
+    </section>
     <section class="pgrid" aria-label="Products" data-nav="light">
       <article class="gtile" id="hospital" data-reveal>
         <p class="status">In development</p>
@@ -216,11 +323,6 @@
       </article>
     </section>
 
-    <!-- ═════════ STATEMENT ═════════ -->
-    <section class="manifesto" data-nav="light" aria-label="Why edge">
-      <p class="wrap" data-fill>Your machines already know when something is about to go wrong. Edge Intelligence listens where the data is born, answers in twelve milliseconds, and never sends it away.</p>
-    </section>
-
     <!-- ═════════ EDGE STACK ═════════ -->
     <section class="pad center" data-nav="light" id="stack">
       <div class="wrap wide">
@@ -246,7 +348,7 @@
     <!-- ═════════ COMPARE ═════════ -->
     <section class="cmp pad" data-nav="light" id="compare">
       <div class="wrap wide">
-        <h2 class="h-section center" data-wipe>Which product is right for you?</h2>
+        <h2 class="h-section center" data-wipe>One edge stack.<br><span class="soft">Tuned for each machine.</span></h2>
         <div class="cmp-grid">
         <div class="cmp-col" data-reveal>
           <span class="cmp-icon" style="background:#ff9500"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5c1.6 1.6 1.6 3.6 0 4.6-1.6-1-1.6-3 0-4.6zM14.5 8c-1.6 1.6-3.6 1.6-4.6 0 1-1.6 3-1.6 4.6 0zM8 14.5c-1.6-1.6-1.6-3.6 0-4.6 1.6 1 1.6 3 0 4.6zM1.5 8c1.6-1.6 3.6-1.6 4.6 0-1 1.6-3 1.6-4.6 0z"/></svg></span>
@@ -335,6 +437,7 @@
   </footer>
 
   <script src="js/devices.js?v=20261020-8" defer></script>
-  <script src="js/apple.js?v=20261020-9" defer></script>
+  <script src="js/apple.js?v=20261021-6" defer></script>
+  <script src="js/edge-live.js?v=20261108-1" defer></script>
 </body>
 </html>
